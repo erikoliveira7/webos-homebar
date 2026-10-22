@@ -70,8 +70,7 @@ def config_js(spec, version, platform, extra=()):
     inputs = [{"id": "com.webos.app.hdmi%d" % i, "title": "HDMI %d" % i, "detail": "", "present": True} for i in range(1, 5)]
     values = [("version", version), ("platform", platform), ("apps", []),
               ("favourites", spec["favourites"][:7]), ("styles", spec.get("styles", {})),
-              ("inputs", inputs), ("excluded", spec.get("excluded", []) + [APP]),
-              ("favouritesKey", spec.get("favouritesKey", "favourites"))] + list(extra)
+              ("inputs", inputs), ("excluded", spec.get("excluded", []) + [APP])] + list(extra)
     return (".pragma library\n" + "\n".join(
         "var %s = %s;" % (name, json.dumps(value, ensure_ascii=False)) for name, value in values) + "\n").encode()
 
@@ -126,6 +125,7 @@ def release_files(spec, version):
     files = [
         ("install.sh", (ROOT / "install.sh").read_bytes(), exe),
         ("uninstall.sh", (ROOT / "uninstall.sh").read_bytes(), exe),
+        ("update.sh", (ROOT / "update.sh").read_bytes(), exe),
         ("VERSION", (version + "\n").encode()),
         ("LICENSE", (ROOT / "LICENSE").read_bytes()),
         ("README.md", (ROOT / "README.md").read_bytes()),

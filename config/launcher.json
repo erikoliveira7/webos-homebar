@@ -1,5 +1,5 @@
 {
-  "_comment": "Defaults baked into the launcher. favourites: app ids shown first in order, up to 7 (empty: the home screen offers an Add favourites tile; favourites added on the TV by holding OK in Apps are stored on the TV). styles: glow colour per app. excluded: launch points never listed. favouritesKey: storage slot; a new value makes TVs start once more from this list.",
+  "_comment": "Defaults baked into the launcher. favourites: app ids shown first in order, up to 7 (empty: the home screen offers an Add favourites tile; favourites added on the TV by holding OK in Apps are stored on the TV). styles: glow colour per app. excluded: launch points never listed. The favourites list is only the starting point: once favourites are edited on the TV, that list is kept across updates.",
   "favourites": [],
   "styles": {
     "netflix": {
@@ -34,6 +34,5 @@
     "com.webos.app.lifeonscreen",
     "amazon.alexa.view",
     "com.webos.app.camera"
-  ],
-  "favouritesKey": "favourites"
+  ]
 }

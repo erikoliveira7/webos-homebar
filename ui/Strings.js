@@ -5,6 +5,13 @@ var languages = ["en", "es", "de", "pl"];
 var names = {en: "English", es: "Español", de: "Deutsch", pl: "Polski"};
 var table = {
     en: {
+        set_update: "Updates", set_beta: "Test builds", val_on: "On", val_off: "Off",
+        upd_idle: "Version {version}", upd_checking: "Checking for updates…", upd_current: "Up to date · version {version}",
+        upd_available: "Version {version} is available", upd_downloading: "Downloading {version}…",
+        upd_ready: "{version} downloaded and verified", upd_installing: "Installing {version}… the launcher restarts by itself",
+        upd_done: "Updated. Press HOME.", upd_err_check: "Could not reach GitHub. Check the internet connection.",
+        upd_err_download: "The download failed.", upd_err_install: "The update failed; see /tmp/rawin-launcher-update/install.log",
+        hint_check: "check for updates", hint_download: "download", hint_install: "install",
         set_title: "App name", val_name_show: "Shown", val_name_hide: "Hidden",
         add_favs_title: "Add favourites", add_favs_sub: "Open Apps and hold OK on an app",
         tv_settings: "TV settings",
@@ -32,6 +39,13 @@ var table = {
         val_show: "Shown", val_hide: "Hidden"
     },
     es: {
+        set_update: "Actualizaciones", set_beta: "Versiones de prueba", val_on: "Sí", val_off: "No",
+        upd_idle: "Versión {version}", upd_checking: "Buscando actualizaciones…", upd_current: "Actualizado · versión {version}",
+        upd_available: "Versión {version} disponible", upd_downloading: "Descargando {version}…",
+        upd_ready: "{version} descargada y verificada", upd_installing: "Instalando {version}… el launcher se reinicia solo",
+        upd_done: "Actualizado. Pulsa HOME.", upd_err_check: "No se pudo conectar con GitHub. Comprueba la conexión a internet.",
+        upd_err_download: "La descarga ha fallado.", upd_err_install: "La actualización ha fallado; ver /tmp/rawin-launcher-update/install.log",
+        hint_check: "buscar actualizaciones", hint_download: "descargar", hint_install: "instalar",
         set_title: "Nombre de la app", val_name_show: "Visible", val_name_hide: "Oculto",
         add_favs_title: "Añadir favoritos", add_favs_sub: "Abre Aplicaciones y mantén OK sobre una app",
         tv_settings: "Ajustes del TV",
@@ -59,6 +73,13 @@ var table = {
         val_show: "Visible", val_hide: "Oculta"
     },
     de: {
+        set_update: "Updates", set_beta: "Testversionen", val_on: "An", val_off: "Aus",
+        upd_idle: "Version {version}", upd_checking: "Suche nach Updates…", upd_current: "Aktuell · Version {version}",
+        upd_available: "Version {version} ist verfügbar", upd_downloading: "{version} wird heruntergeladen…",
+        upd_ready: "{version} heruntergeladen und geprüft", upd_installing: "{version} wird installiert… der Launcher startet von selbst neu",
+        upd_done: "Aktualisiert. Drücke HOME.", upd_err_check: "GitHub ist nicht erreichbar. Prüfe die Internetverbindung.",
+        upd_err_download: "Der Download ist fehlgeschlagen.", upd_err_install: "Das Update ist fehlgeschlagen; siehe /tmp/rawin-launcher-update/install.log",
+        hint_check: "nach Updates suchen", hint_download: "herunterladen", hint_install: "installieren",
         set_title: "App-Name", val_name_show: "Sichtbar", val_name_hide: "Ausgeblendet",
         add_favs_title: "Favoriten hinzufügen", add_favs_sub: "Öffne Apps und halte OK auf einer App",
         tv_settings: "TV-Einstellungen",
@@ -86,6 +107,13 @@ var table = {
         val_show: "Sichtbar", val_hide: "Ausgeblendet"
     },
     pl: {
+        set_update: "Aktualizacje", set_beta: "Wersje testowe", val_on: "Włączone", val_off: "Wyłączone",
+        upd_idle: "Wersja {version}", upd_checking: "Szukanie aktualizacji…", upd_current: "Aktualna · wersja {version}",
+        upd_available: "Dostępna wersja {version}", upd_downloading: "Pobieranie {version}…",
+        upd_ready: "{version} pobrana i sprawdzona", upd_installing: "Instalowanie {version}… launcher uruchomi się ponownie sam",
+        upd_done: "Zaktualizowano. Naciśnij HOME.", upd_err_check: "Brak połączenia z GitHubem. Sprawdź internet.",
+        upd_err_download: "Pobieranie nie powiodło się.", upd_err_install: "Aktualizacja nie powiodła się; zobacz /tmp/rawin-launcher-update/install.log",
+        hint_check: "sprawdź aktualizacje", hint_download: "pobierz", hint_install: "zainstaluj",
         set_title: "Nazwa aplikacji", val_name_show: "Widoczna", val_name_hide: "Ukryta",
         add_favs_title: "Dodaj ulubione", add_favs_sub: "Wejdź w Aplikacje i przytrzymaj OK na aplikacji",
         tv_settings: "Ustawienia TV",

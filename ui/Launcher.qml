@@ -18,8 +18,6 @@ FocusScope {
     property var applications: Config.apps
     // Favourites are app ids; edited on the TV (hold OK) and saved by FavouriteStore.qml.
     property var favouriteIds: Config.favourites.slice(0)
-    // A new key (set per build) starts the TV from the default list once.
-    readonly property string favouritesKey: Config.favouritesKey ? Config.favouritesKey : "favourites"
     readonly property var favourites: resolveFavourites(favouriteIds, applications)
     readonly property var favouriteKeys: favourites.map(function(f) { return f.id; })
     readonly property int favCount: favourites.length
@@ -39,11 +37,16 @@ FocusScope {
     // lang: "system" or a code from Strings.languages; exitTo (webOS 10 only,
     // sent to the helper): "last" or an HDMI input app id; clock: the top bar;
     // title: the big name of the focused app on Home and Apps.
-    property var settings: ({lang: "system", exitTo: "last", clock: true, title: true})
+    // beta: updates also offer test builds (GitHub pre-releases).
+    property var settings: ({lang: "system", exitTo: "last", clock: true, title: true, beta: false})
     property string systemLang: ""
+    // The updater (Launcher settings → Updates): idle, checking, current,
+    // available, downloading, ready, installing, done or failed; latest is the
+    // version found, failed the text key of the failed step.
+    property var updateInfo: ({state: "idle", latest: "", failed: ""})
     readonly property string lang: settings.lang && settings.lang !== "system" ? settings.lang : (Strings.supported(systemLang) || "en")
     readonly property var tools: toolsFor(lang, applications)
-    readonly property var settingsItems: settingsFor(lang, settings, systemLang)
+    readonly property var settingsItems: settingsFor(lang, settings, systemLang, updateInfo)
     // In place of the favourites while there are none: OK opens Apps.
     readonly property var addFavouritesTile: ({title: t("add_favs_title"), action: "apps", symbol: "add"})
     signal stockRequested()
@@ -73,7 +76,7 @@ FocusScope {
     readonly property bool showTitle: settings.title !== false || page === "system" || page === "settings"
     readonly property int heroBaseline: (page === "apps" ? 700 : 842) - (showTitle ? (hero.sub ? 36 : 0) : 20)
     readonly property var hero: heroFor(page, selected, applications, favourites, editIndex, launching, message, notice, settingsItems, tools)
-    readonly property var hints: hintsFor(page, selected, favouriteKeys, editIndex, lang)
+    readonly property var hints: hintsFor(page, selected, favouriteKeys, editIndex, lang, updateInfo)
     property color glowColor: hero.color
     Behavior on glowColor { ColorAnimation { duration: 300 } }
 
@@ -104,7 +107,7 @@ FocusScope {
             return !(x.optional && !installed(x.id, apps)) && !(x.stock && Config.stockHome === false);
         });
     }
-    function settingsFor(language, s, sysLang) {
+    function settingsFor(language, s, sysLang, upd) {
         var langValue = s.lang === "system"
             ? Strings.format(t("val_system"), {lang: Strings.names[Strings.supported(sysLang) || "en"]})
             : Strings.names[s.lang];
@@ -114,10 +117,61 @@ FocusScope {
                        value: s.exitTo === "last" ? t("val_last_input") : "HDMI " + s.exitTo.slice(-1)});
         list.push({key: "clock", title: t("set_clock"), value: s.clock ? t("val_show") : t("val_hide"), symbol: "clock", action: "setting"});
         list.push({key: "title", title: t("set_title"), value: s.title ? t("val_name_show") : t("val_name_hide"), symbol: "title", action: "setting"});
+        list.push({key: "update", title: t("set_update"), value: updateText(upd), symbol: "update", action: "update"});
+        list.push({key: "beta", title: t("set_beta"), value: s.beta ? t("val_on") : t("val_off"), symbol: "flask", action: "setting"});
         return list;
     }
+    function updateText(u) {
+        var v = {version: u.latest};
+        if (u.state === "checking") return t("upd_checking");
+        if (u.state === "current") return Strings.format(t("upd_current"), {version: Config.version});
+        if (u.state === "available") return Strings.format(t("upd_available"), v);
+        if (u.state === "downloading") return Strings.format(t("upd_downloading"), v);
+        if (u.state === "ready") return Strings.format(t("upd_ready"), v);
+        if (u.state === "installing") return Strings.format(t("upd_installing"), v);
+        if (u.state === "done") return t("upd_done");
+        if (u.state === "failed") return t(u.failed);
+        return Strings.format(t("upd_idle"), {version: Config.version});
+    }
+    // OK on Updates: check, download what was found, install what was downloaded.
+    function updateAction() {
+        var s = updateInfo.state;
+        if (s === "available") updateStep("download");
+        else if (s === "ready") updateStep("install");
+        else if (s === "idle" || s === "current" || s === "failed") updateStep("check");
+    }
+    function isUpdateIdle() {
+        return ["checking", "downloading", "installing", "done"].indexOf(updateInfo.state) < 0;
+    }
+    function updateStep(step) {
+        var busy = {check: "checking", download: "downloading", install: "installing"}[step];
+        if (busy) setUpdate({state: busy});
+        updateRun(step, settings.beta ? "test" : "stable");
+    }
+    function setUpdate(change) {
+        var next = {}, k;
+        for (k in updateInfo) next[k] = updateInfo[k];
+        for (k in change) next[k] = change[k];
+        updateInfo = next;
+    }
+    // The answer of one update.sh step (null: no answer).
+    function updateResult(step, r) {
+        var ok = !!(r && r.ok);
+        if (step === "check") setUpdate(ok ? {state: r.newer ? "available" : "current", latest: r.latest} : {state: "failed", failed: "upd_err_check"});
+        else if (step === "download") setUpdate(ok ? {state: "ready"} : {state: "failed", failed: "upd_err_download"});
+        else if (step === "install") {
+            if (ok) installPoll.restart();
+            else setUpdate({state: "failed", failed: "upd_err_install"});
+        } else if (step === "status" && ok) {
+            // On success the installer restarts the launcher, which ends this
+            // panel; "done" shows only if it is still here.
+            if (r.state === "failed") { installPoll.stop(); setUpdate({state: "failed", failed: "upd_err_install"}); }
+            else if (r.state === "done") { installPoll.stop(); setUpdate({state: "done"}); }
+        }
+    }
+    Timer { id: installPoll; interval: 2000; repeat: true; onTriggered: updateRun("status", "stable") }
     function cycleSetting(key) {
-        var next = {lang: settings.lang, exitTo: settings.exitTo, clock: settings.clock, title: settings.title};
+        var next = {lang: settings.lang, exitTo: settings.exitTo, clock: settings.clock, title: settings.title, beta: settings.beta};
         if (key === "lang") {
             var langs = ["system"].concat(Strings.languages);
             next.lang = langs[(langs.indexOf(settings.lang) + 1) % langs.length];
@@ -126,9 +180,11 @@ FocusScope {
             next.exitTo = targets[(targets.indexOf(settings.exitTo) + 1) % targets.length];
         } else if (key === "clock") next.clock = !settings.clock;
         else if (key === "title") next.title = !settings.title;
+        else if (key === "beta") next.beta = !settings.beta;
         settings = next;
         saveSettings();
         if (key === "exitTo") exitTargetChosen(next.exitTo);
+        if (key === "beta" && isUpdateIdle()) updateStep("check");
     }
     function saveSettings() {
         try { if (store.item) store.item.save(settings, "settings"); } catch (e) {}
@@ -140,7 +196,8 @@ FocusScope {
                 lang: s.lang === "system" || Strings.languages.indexOf(s.lang) >= 0 ? s.lang : "system",
                 exitTo: /^(last|com\.webos\.app\.hdmi[1-4])$/.test(s.exitTo) ? s.exitTo : "last",
                 clock: s.clock !== false,
-                title: s.title !== false
+                title: s.title !== false,
+                beta: s.beta === true
             };
         } catch (e) {}
         if (Config.exitTarget) exitTargetChosen(settings.exitTo);
@@ -194,14 +251,22 @@ FocusScope {
         else if (note) h.sub = note;
         return h;
     }
-    function hintsFor(currentPage, index, keys, editing, language) {
+    function hintsFor(currentPage, index, keys, editing, language, upd) {
         if (currentPage === "apps") {
             var app = applications[index];
             var fav = app && keys.indexOf(app.id) >= 0;
             return [["OK", t("hint_open")], [t("hint_hold_ok"), fav ? t("hint_remove_fav") : t("hint_add_fav")], [t("hint_back"), t("hint_favourites")]];
         }
         if (currentPage === "system") return [["OK", t("hint_open")], [t("hint_back"), t("hint_favourites")]];
-        if (currentPage === "settings") return [["OK", t("hint_change")], [t("hint_back"), t("hint_system")]];
+        if (currentPage === "settings") {
+            var item = settingsItems[index];
+            if (item && item.action === "update") {
+                var verb = upd.state === "available" ? "hint_download" : upd.state === "ready" ? "hint_install"
+                    : ["idle", "current", "failed"].indexOf(upd.state) >= 0 ? "hint_check" : "";
+                return verb ? [["OK", t(verb)], [t("hint_back"), t("hint_system")]] : [[t("hint_back"), t("hint_system")]];
+            }
+            return [["OK", t("hint_change")], [t("hint_back"), t("hint_system")]];
+        }
         if (editing >= 0) return [["OK", t("hint_done")]];
         if (index < keys.length) return [["OK", t("hint_open")], [t("hint_hold_ok"), t("hint_edit_favs")]];
         return [["OK", t("hint_open")]];
@@ -209,13 +274,17 @@ FocusScope {
 
     function saveFavourites() {
         if (!store.item) { message = t("err_store_unavailable"); return; }
-        try { store.item.save(favouriteIds, favouritesKey); }
+        try { store.item.save(favouriteIds, "favourites"); }
         catch (e) { message = t("err_save"); }
     }
+    // The list saved on the TV wins over the build's defaults. With nothing
+    // saved yet, the build's preset becomes the TV's own list at once, so a
+    // later version with other defaults (an update) never changes it.
     function loadFavourites() {
         try {
-            var ids = store.item.load(favouritesKey);
+            var ids = store.item.load("favourites");
             if (ids && ids.length !== undefined) favouriteIds = ids;
+            else if (favouriteIds.length) store.item.save(favouriteIds, "favourites");
         } catch (e) {}
     }
     function setFavourites(ids) { favouriteIds = ids; saveFavourites(); }
@@ -277,7 +346,14 @@ FocusScope {
         if (item.action === "stock") { stockRequested(); return; }
         if (item.action === "close") { closeHome(); return; }
         if (item.action === "setting") { cycleSetting(item.key); return; }
-        if (item.action === "launcherSettings") { page = "settings"; selected = 0; return; }
+        if (item.action === "update") { updateAction(); return; }
+        if (item.action === "launcherSettings") {
+            page = "settings"; selected = 0;
+            // Look for a new version each time the settings open, unless one is already found.
+            var s = updateInfo.state;
+            if (s === "idle" || s === "current" || s === "failed") updateStep("check");
+            return;
+        }
         if (item.action === "apps" || item.action === "system") {
             page = item.action; selected = 0; return;
         }
@@ -444,6 +520,25 @@ FocusScope {
             if (next.length) inputs = next;
         }
     }
+    // Updates: update.sh, run as root through the Homebrew Channel's exec.
+    function updateRun(step, channel) {
+        updateService.step = step;
+        updateService.callService({command: "sh /var/lib/webosbrew/rawin-launcher/update.sh " + step + " " + channel});
+    }
+    Service {
+        id: updateService
+        property string step: ""
+        appId: "com.webos.app.home"
+        service: "org.webosbrew.hbchannel.service"
+        method: "exec"
+        onCallSuccess: {
+            var r = null;
+            try { r = JSON.parse(String(response.stdoutString || "").trim().split("\n").pop()); } catch (e) {}
+            updateResult(step, r);
+        }
+        onCallFailure: updateResult(step, null)
+        onError: updateResult(step, null)
+    }
     Timer { id: launchTimeout; interval: 8000; onTriggered: { launching=false; message=t("err_slow"); } }
     Timer { interval: 30000; repeat: true; running: shell.foreground; onTriggered: clock = Qt.formatTime(new Date(), "hh:mm") }
 
@@ -486,6 +581,12 @@ FocusScope {
             c.moveTo(10,6); c.lineTo(10,34); c.moveTo(20,6); c.lineTo(20,34); c.moveTo(30,6); c.lineTo(30,34); c.stroke();
             c.beginPath(); c.roundedRect(6,22,8,6,2,2); c.roundedRect(16,10,8,6,2,2); c.roundedRect(26,18,8,6,2,2);
             c.fillStyle = c.strokeStyle; c.fill();
+        } else if (symbol === "update") {
+            c.moveTo(20,7); c.lineTo(20,25); c.moveTo(13,18); c.lineTo(20,25); c.lineTo(27,18);
+            c.moveTo(8,26); c.lineTo(8,33); c.lineTo(32,33); c.lineTo(32,26);
+        } else if (symbol === "flask") {
+            c.moveTo(15,7); c.lineTo(25,7); c.moveTo(17,7); c.lineTo(17,17); c.lineTo(8,32); c.lineTo(32,32); c.lineTo(23,17); c.lineTo(23,7);
+            c.moveTo(12,25); c.lineTo(28,25);
         } else if (symbol === "apps") {
             c.roundedRect(7,7,11,11,3,3); c.roundedRect(22,7,11,11,3,3); c.roundedRect(7,22,11,11,3,3); c.roundedRect(22,22,11,11,3,3);
         }

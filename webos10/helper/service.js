@@ -4,6 +4,7 @@
 // because WebOSServices.Service gives a developer QML app no answers on webOS 10.
 // Icons are copied once into the app's cache/ folder and served from there.
 const Service = require('webos-service');
+const { execFile } = require('child_process');
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
@@ -55,6 +56,18 @@ async function inventory() {
     apps.push({ id: p.id, title: p.title || p.id, icon: cachedIcon(p.id, p.largeIcon || p.icon) });
   }
   return { returnValue: true, apps };
+}
+
+const UPDATER = '/var/lib/webosbrew/rawin-launcher-home/update.sh';
+
+// One step of update.sh; its last line of output is the JSON answer.
+function updateStep(step, channel) {
+  return new Promise((resolve) => {
+    execFile('sh', [UPDATER, step, channel], { timeout: 180000 }, (err, stdout) => {
+      const line = String(stdout || '').trim().split('\n').pop();
+      try { resolve(JSON.parse(line)); } catch (e) { resolve({ ok: false, error: err ? err.message : 'no answer' }); }
+    });
+  });
 }
 
 // Started by the boot hook (or any Luna call); answers immediately.
@@ -110,6 +123,13 @@ const server = http.createServer(async (req, res) => {
       returner.setTarget(id);
       saveSettings({ exitTo: returner.target || 'last' });
       return send(res, 200, { returnValue: true, exitTo: returner.target || 'last' });
+    }
+    // Updates: update.sh next to the installed launcher (check, download, install, status).
+    if (url.pathname === '/update') {
+      const step = url.searchParams.get('step') || '';
+      if (!['check', 'download', 'install', 'status'].includes(step)) return send(res, 400, { ok: false, error: 'unknown step' });
+      const channel = url.searchParams.get('channel') === 'test' ? 'test' : 'stable';
+      return send(res, 200, await updateStep(step, channel));
     }
     if (url.pathname.startsWith('/cache/')) {
       const name = path.basename(url.pathname);

@@ -57,7 +57,8 @@ cp "$HERE"/home-stub/* "$BASE/app/"
 cp "$UI/icon.png" "$BASE/app/icon.png"
 cp "$HERE/home-takeover.sh" "$BASE/takeover.sh"
 cp "$HERE/uninstall.sh" "$BASE/uninstall.sh"
-chmod 755 "$BASE/takeover.sh" "$BASE/uninstall.sh"
+cp "$HERE/../update.sh" "$HERE/../VERSION" "$BASE/"
+chmod 755 "$BASE/takeover.sh" "$BASE/uninstall.sh" "$BASE/update.sh"
 if [ -n "$KEEP_LG_HOME" ]; then
     touch "$BASE/keep-lg-home"
     sh "$BASE/takeover.sh" restore >/dev/null 2>&1 || true

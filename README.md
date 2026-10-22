@@ -12,7 +12,8 @@ page. The picture stays visible above it.
   starts with none and shows an *Add favourites* tile that opens *Apps*.
 - **System → Launcher settings**: language (system language by default;
   English, Spanish, German, Polish), what to show after holding BACK
-  (webOS 10), the clock bar, and whether the big name of the focused app shows.
+  (webOS 10), the clock bar, whether the big name of the focused app shows,
+  and **Updates**: the launcher updates itself from this repository's releases.
 - LG's promotional apps (LG Channels, Sports, Alexa, …) are hidden from the
   launcher's lists. Nothing is uninstalled.
 - **webOS 10 only:** LG's own Home never appears. A black stand-in takes its
@@ -102,7 +103,7 @@ This always takes the latest release; for another one, download
 [Releases](https://github.com/rawinek/rawin-launcher/releases). On webOS 10,
 add `--keep-lg-home` to leave LG's Home in place. The installer picks
 the variant for the TV's webOS, prints each step and ends with "Press HOME on
-the remote". It can be run again to update.
+the remote".
 
 No internet on the TV, or the download fails (older TVs can lack current TLS
 certificates)? Download `rawin-launcher.tar.gz` on a computer and copy it over:
@@ -112,6 +113,54 @@ cat rawin-launcher.tar.gz | ssh root@<tv-ip> 'cat > /tmp/rawin-launcher.tar.gz'
 ```
 
 and continue on the TV with `tar xzf` and `install.sh` as above.
+
+## Updating
+
+Favourites and settings are kept by every update, manual or from the TV.
+
+### From a version before 0.10.0 (once, by hand)
+
+Versions before 0.10.0 have no updater, so the first update goes the same way
+as the install: log in to the TV as root and run the four install commands
+again.
+
+```sh
+cd /tmp
+curl -fL -o rawin-launcher.tar.gz https://github.com/rawinek/rawin-launcher/releases/latest/download/rawin-launcher.tar.gz
+rm -rf rawin-launcher && tar xzf rawin-launcher.tar.gz
+sh rawin-launcher/install.sh
+```
+
+The installer replaces the old version in place; nothing needs to be
+uninstalled first. On webOS 10 add `--keep-lg-home` again if it was installed
+with it. Press HOME afterwards; *System* shows the new version in its corner.
+
+### From 0.10.0 on (on the TV)
+
+1. Open *System → Launcher settings → Updates*. The launcher checks GitHub
+   each time the settings open and shows *Up to date* or *Version x.y.z is
+   available*.
+2. OK downloads the new release and checks its SHA-256 against the one
+   GitHub publishes (*x.y.z downloaded and verified*).
+3. A second OK installs it with the same `install.sh` (*Installing x.y.z…*).
+   The launcher restarts by itself after a few seconds. On webOS 10 the
+   `--keep-lg-home` choice is kept.
+
+*Launcher settings → Test builds* also offers pre-releases. If a step fails,
+the panel says so and OK tries again; the installer's output is in
+`/tmp/rawin-launcher-update/install.log`.
+
+Behind the button is `update.sh` next to the installed launcher, run as root
+(webOS 4: through the Homebrew Channel's `exec` service; webOS 10: by the
+helper). It can also be run by hand, one step at a time:
+
+```sh
+sh /var/lib/webosbrew/rawin-launcher/update.sh check   # webOS 10: /var/lib/webosbrew/rawin-launcher-home/update.sh
+sh /var/lib/webosbrew/rawin-launcher/update.sh download
+sh /var/lib/webosbrew/rawin-launcher/update.sh install
+```
+
+The manual way above keeps working too, for any version.
 
 ## Uninstall
 
@@ -178,10 +227,10 @@ python3 tools/deploy.py --host <tv-ip>   # build, copy over SSH and run install.
 ```
 
 `config/launcher.json` can preset favourites (up to seven app ids, empty by
-default; apps that are not installed are skipped), the glow colour per app, the apps hidden
-from the lists, and `favouritesKey` (change it to make TVs start once more from
-the defaults instead of their edited list). `tools/make-icon.py` draws
-`ui/icon.png`.
+default; apps that are not installed are skipped), the glow colour per app and
+the apps hidden from the lists. Preset favourites only fill a fresh install:
+once favourites are edited on the TV, that list stays, also through updates.
+`tools/make-icon.py` draws `ui/icon.png`.
 
 Layout: `ui/` the panel shared by both variants (`Launcher.qml`, texts in
 `Strings.js`, LocalStorage in `FavouriteStore.qml`, fonts); `webos4/` the

@@ -60,6 +60,11 @@
         }
     }
     onExitTargetChosen: http("/exit-target?id=" + encodeURIComponent(target))
+    // Updates: update.sh, run by the helper.
+    function updateRun(step, channel) {
+        http("/update?step=" + step + "&channel=" + channel,
+             function(r) { updateResult(step, r); }, function() { updateResult(step, null); });
+    }
     // What stays visible under the overlay: the first card that is not us.
     QtObject {
         id: foregroundInfo
