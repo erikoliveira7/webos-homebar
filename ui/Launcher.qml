@@ -45,7 +45,10 @@ FocusScope {
     // version found, failed the text key of the failed step.
     property var updateInfo: ({state: "idle", latest: "", failed: ""})
     readonly property string lang: settings.lang && settings.lang !== "system" ? settings.lang : (Strings.supported(systemLang) || "en")
-    readonly property var tools: toolsFor(lang, applications)
+    // LG's own Home can be opened: always on webOS 4 (the panel lives in it); on
+    // webOS 10 only when it was kept (the helper says so, see panel-bridge.qml).
+    property bool stockHomeAvailable: Config.stockHome !== false
+    readonly property var tools: toolsFor(lang, applications, stockHomeAvailable)
     readonly property var settingsItems: settingsFor(lang, settings, systemLang, updateInfo)
     // In place of the favourites while there are none: OK opens Apps.
     readonly property var addFavouritesTile: ({title: t("add_favs_title"), action: "apps", symbol: "add"})
@@ -91,7 +94,7 @@ FocusScope {
         for (var i=0; i<apps.length; i++) if (apps[i].id === id) return true;
         return false;
     }
-    function toolsFor(language, apps) {
+    function toolsFor(language, apps, stockHome) {
         var list = [
             {title: t("tv_settings"), id: "com.palm.app.settings", symbol: "settings"},
             {title: t("launcher_settings"), action: "launcherSettings", symbol: "tune"},
@@ -101,10 +104,9 @@ FocusScope {
             {title: t("stock_home"), action: "stock", symbol: "home", stock: true},
             {title: t("back_to_picture"), action: "close", symbol: "back"}
         ];
-        // PicCap only where it is installed; LG's Home only where it is still
-        // reachable (webOS 4, where this panel lives inside it).
+        // PicCap only where it is installed; LG's Home only where it is reachable.
         return list.filter(function(x) {
-            return !(x.optional && !installed(x.id, apps)) && !(x.stock && Config.stockHome === false);
+            return !(x.optional && !installed(x.id, apps)) && !(x.stock && !stockHome);
         });
     }
     function settingsFor(language, s, sysLang, upd) {

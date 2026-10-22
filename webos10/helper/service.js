@@ -97,6 +97,18 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/inputs') {
       return send(res, 200, await luna('luna://com.webos.service.eim/getAllInputStatus', {}));
     }
+    // Whether LG's Home is still the real one (installed with --keep-lg-home, or
+    // the stand-in is not mounted): then the panel offers "Original Home".
+    if (url.pathname === '/home') {
+      // Same test as takeover.sh: the Home folder is the staged stand-in.
+      let mounted = false;
+      try {
+        const home = fs.statSync('/usr/palm/applications/com.webos.app.home');
+        const stage = fs.statSync('/var/lib/webosbrew/rawin-launcher-home/app');
+        mounted = home.ino === stage.ino && home.dev === stage.dev;
+      } catch (e) {}
+      return send(res, 200, { returnValue: true, lgHome: !mounted });
+    }
     if (url.pathname === '/foreground') {
       return send(res, 200, await luna('luna://com.webos.applicationManager/getForegroundAppInfo', { extraInfo: true }));
     }

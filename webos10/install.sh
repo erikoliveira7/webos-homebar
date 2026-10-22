@@ -57,13 +57,17 @@ cp "$HERE"/home-stub/* "$BASE/app/"
 cp "$UI/icon.png" "$BASE/app/icon.png"
 cp "$HERE/home-takeover.sh" "$BASE/takeover.sh"
 cp "$HERE/uninstall.sh" "$BASE/uninstall.sh"
-cp "$HERE/../update.sh" "$HERE/../VERSION" "$BASE/"
+cp "$HERE/../update.sh" "$HERE/../diagnose.sh" "$HERE/../VERSION" "$BASE/"
 chmod 755 "$BASE/takeover.sh" "$BASE/uninstall.sh" "$BASE/update.sh"
 if [ -n "$KEEP_LG_HOME" ]; then
     touch "$BASE/keep-lg-home"
     sh "$BASE/takeover.sh" restore >/dev/null 2>&1 || true
 else
     rm -f "$BASE/keep-lg-home"
+    # Here and not only from the boot hook, which runs it in the background:
+    # over SSH that could end with the session, before LG's Home is stopped.
+    say "LG Home -> black stand-in"
+    sh "$BASE/takeover.sh" apply >/dev/null 2>&1 || say "LG Home kept: the app manager did not take the stand-in"
 fi
 
 say "HOME button -> rawin-launcher (Input Hook)"

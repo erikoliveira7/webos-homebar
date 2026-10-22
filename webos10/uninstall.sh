@@ -22,11 +22,15 @@ done
 luna-send -i -a com.webos.appInstallService luna://com.webos.appInstallService/dev/remove \
     '{"id":"org.rawin.launcher","subscribe":true}' </dev/null >/dev/null 2>&1 &
 PID=$!
+# Done when the package's own files are gone; the helper's icon cache (cache/,
+# not part of the package) stays behind and is removed here.
+APPDIR=/media/developer/apps/usr/palm/applications/org.rawin.launcher
 n=0
-while [ -d /media/developer/apps/usr/palm/applications/org.rawin.launcher ] && [ $n -lt 60 ]; do
+while [ -f "$APPDIR/appinfo.json" ] && [ $n -lt 60 ]; do
     n=$((n + 1)); sleep 1
 done
 kill $PID 2>/dev/null
+[ -f "$APPDIR/appinfo.json" ] || rm -rf "$APPDIR"
 rm -rf "$BASE" /var/lib/webosbrew/rawin-launcher-last-input /var/lib/webosbrew/rawin-launcher-settings.json
 # Favourites and settings (the app's LocalStorage).
 rm -rf /home/root/.local/share/org.rawin.launcher

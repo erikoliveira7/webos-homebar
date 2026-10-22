@@ -30,7 +30,7 @@ page. The picture stays visible above it.
 | :--- | :--- | :--- |
 | 4.x (webOS 4.0/4.5, 2018–2019) | Tested on 4.10 | The panel is loaded *inside* LG's Home app |
 | 10.x (webOS 25, 2025) | Tested on 10.3 | A separate overlay app plus a root helper |
-| 5.x – 9.x, 11.x | Not supported | `install.sh` refuses; untested |
+| 5.x – 9.x, 11.x | Untested | `install.sh` refuses; `--try-webos10` installs the webOS 10 variant with LG's Home kept |
 
 Tested TVs:
 
@@ -42,6 +42,13 @@ Tested TVs:
 Other models with the same webOS major version may work. On webOS 4 the
 installer patches LG's Home QML only if every piece it changes matches the
 tested firmware exactly; otherwise it stops without changing anything.
+
+On webOS 5–9 and 11 nothing has been tested yet. `sh install.sh --try-webos10`
+installs the webOS 10 variant anyway, but leaves LG's Home in place: HOME
+opens the overlay, and *System → Original Home* opens LG's. Add
+`--replace-lg-home` to try the black stand-in too. If you try it, a GitHub
+issue with the file from `diagnose.sh` (see [Troubleshooting](#troubleshooting))
+helps, whether it works or not.
 
 ### How it works on webOS 4
 
@@ -77,7 +84,8 @@ app:
   uses for its own Home on webOS 10), then LG's Flutter Home is stopped. Anything
   that opens Home — an app's exit, Netflix's BACK hold, a BACK hold on an
   input — gets the black page instead, and the helper switches to the input.
-  Install with `--keep-lg-home` to skip this.
+  Install with `--keep-lg-home` to skip this; *System → Original Home* then
+  opens LG's Home.
 
 ## Requirements
 
@@ -215,6 +223,23 @@ Input Hook's log (`/tmp/lginput-hook-*.log`), then change it in
   unmounts it and leaves LG's Home.
 - If a boot hook ever crashes the start-up, the Homebrew Channel's failsafe mode
   skips all hooks on the next boot.
+
+## Troubleshooting
+
+`diagnose.sh` collects what is needed to look into a problem into one file:
+
+```sh
+sh /var/lib/webosbrew/rawin-launcher/diagnose.sh        # webOS 4
+sh /var/lib/webosbrew/rawin-launcher-home/diagnose.sh   # webOS 10 (and --try-webos10)
+sh rawin-launcher/diagnose.sh                           # from the unpacked release
+```
+
+It writes `/tmp/rawin-launcher-diagnose.txt`: the TV model, webOS and firmware
+versions, what is installed, what the launcher sees (apps, HDMI inputs with
+their device names, the app on screen), the HOME button binding and the
+launcher's lines from the logs. No IP addresses, serial numbers or accounts.
+Copy it to a computer with `ssh root@<tv-ip> cat /tmp/rawin-launcher-diagnose.txt > diagnose.txt`
+and attach it to an [issue](https://github.com/rawinek/rawin-launcher/issues).
 
 ## Build from source
 

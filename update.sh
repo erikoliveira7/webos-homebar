@@ -74,9 +74,16 @@ download() {
 install() {
     pkg=$WORK/pkg/rawin-launcher
     [ -f "$pkg/install.sh" ] || fail "download the update first"
-    # Keep the install options: webOS 10 installed with --keep-lg-home leaves a marker.
+    # Keep the install options. The webOS 10 variant (also when tried on another
+    # webOS with --try-webos10) leaves a marker when LG's Home was kept.
     opts=
-    [ -f /var/lib/webosbrew/rawin-launcher-home/keep-lg-home ] && opts=--keep-lg-home
+    case "$HERE" in
+        */rawin-launcher-home)
+            opts=--try-webos10
+            if [ -f "$HERE/keep-lg-home" ]; then opts="$opts --keep-lg-home"
+            else opts="$opts --replace-lg-home"; fi
+            ;;
+    esac
     # Open the launcher again afterwards: on webOS 4 it is LG Home (restarted by
     # the installer), on webOS 10 the overlay app (closed by the package update).
     case "$HERE" in

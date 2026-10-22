@@ -53,10 +53,12 @@
         }
     }
     // The TV's language and the BACK-hold target go through the helper too.
+    // Asked once at start, with whether LG's Home is still there to open.
     QtObject {
         id: localeService
         function callService(p) {
             shell.http("/locale", function(r) { if (r.locale) systemLang = r.locale; });
+            shell.http("/home", function(r) { stockHomeAvailable = !!r.lgHome; });
         }
     }
     onExitTargetChosen: http("/exit-target?id=" + encodeURIComponent(target))

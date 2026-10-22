@@ -77,6 +77,9 @@ case "$1" in
     if mounted; then umount "$HOMEAPP"; fi
     reread
     home_type_is flutter
+    # The black page may still run in the web app manager; sam then takes it for
+    # the running Home and every launch of Home waits on it. Close it there.
+    luna-send -n 1 luna://com.webos.service.webappmanager/killApp '{"appId":"com.webos.app.home"}' </dev/null >/dev/null 2>&1
     luna closeByAppId '{"id":"com.webos.app.home"}' >/dev/null
     logger -t $TAG 'LG Home given back'
     ;;

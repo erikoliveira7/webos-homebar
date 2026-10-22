@@ -88,8 +88,11 @@ def panel_qml():
 
 
 def webos10_ipk(spec, version):
+    # webOS takes only x.y.z as a package version; a test build's suffix
+    # ("0.11.0-test1") shows in the panel, from Config.js.
+    package_version = version.split("-")[0]
     appinfo = json.loads((ROOT / "webos10/app/appinfo.json").read_text())
-    appinfo["version"] = version
+    appinfo["version"] = package_version
     app_dir = "usr/palm/applications/%s/" % APP
     svc_dir = "usr/palm/services/%s/" % SERVICE
     config = config_js(spec, version, "webOS 10", [("stockHome", False), ("exitTarget", True)])
@@ -105,16 +108,16 @@ def webos10_ipk(spec, version):
     files += [(app_dir + "fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
     files += [(svc_dir + p.name, p.read_bytes()) for p in sorted((ROOT / "webos10/helper").glob("*.js"))]
     files += [
-        (svc_dir + "package.json", json.dumps({"name": SERVICE, "version": version, "main": "service.js"}, indent=1).encode()),
+        (svc_dir + "package.json", json.dumps({"name": SERVICE, "version": package_version, "main": "service.js"}, indent=1).encode()),
         (svc_dir + "services.json", json.dumps({"id": SERVICE, "description": "rawin-launcher helper",
                                                 "services": [{"name": SERVICE}]}, indent=1).encode()),
         ("usr/palm/packages/%s/packageinfo.json" % APP, json.dumps(
-            {"id": APP, "version": version, "vendor": "rawin", "app": APP, "services": [SERVICE],
+            {"id": APP, "version": package_version, "vendor": "rawin", "app": APP, "services": [SERVICE],
              "loc_name": "rawin-launcher", "package_format_version": 2}, indent=1).encode()),
     ]
     control = ("Package: %s\nVersion: %s\nSection: misc\nPriority: optional\nArchitecture: all\n"
                "Maintainer: rawin-launcher\nDescription: rawin-launcher, a home screen panel for webOS 10\n"
-               % (APP, version)).encode()
+               % (APP, package_version)).encode()
     return ar([("debian-binary", b"2.0\n"), ("control.tar.gz", tgz([("control", control)])),
                ("data.tar.gz", tgz(files))])
 
@@ -126,6 +129,7 @@ def release_files(spec, version):
         ("install.sh", (ROOT / "install.sh").read_bytes(), exe),
         ("uninstall.sh", (ROOT / "uninstall.sh").read_bytes(), exe),
         ("update.sh", (ROOT / "update.sh").read_bytes(), exe),
+        ("diagnose.sh", (ROOT / "diagnose.sh").read_bytes(), exe),
         ("VERSION", (version + "\n").encode()),
         ("LICENSE", (ROOT / "LICENSE").read_bytes()),
         ("README.md", (ROOT / "README.md").read_bytes()),
