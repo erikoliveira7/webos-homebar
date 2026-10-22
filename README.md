@@ -11,7 +11,8 @@ page. The picture stays visible above it.
   (up to seven), hold **OK** on a favourite to move or remove it. A fresh install
   starts with none and shows an *Add favourites* tile that opens *Apps*.
 - **System → Launcher settings**: language (system language by default;
-  English, Spanish, German, Polish), what to show after holding BACK
+  English, Spanish, German, Polish, French, Italian, Portuguese, Dutch,
+  Czech), what to show after holding BACK
   (webOS 10), the clock bar, whether the big name of the focused app shows,
   and **Updates**: the launcher updates itself from this repository's releases.
 - LG's promotional apps (LG Channels, Sports, Alexa, …) are hidden from the
@@ -263,7 +264,9 @@ patch, boot hook and scripts; `webos10/` the overlay app, helper, HTTP bridge,
 stand-in and scripts; `tools/` build and deploy.
 
 Adding a language: copy the `en` table in `ui/Strings.js`, translate it and add
-the code to `languages` and `names`.
+the code to `languages` and `names`. The Inter font covers Latin, Greek and
+Cyrillic scripts; others would need a font with their glyphs. Corrections to
+the translations are welcome.
 
 ## Credits
 
