@@ -1,0 +1,128 @@
+.pragma library
+// rawin-launcher texts. English is the fallback for a missing language or key.
+// "{n}" and "{lang}" are filled in by format().
+var languages = ["en", "es", "de", "pl"];
+var names = {en: "English", es: "Español", de: "Deutsch", pl: "Polski"};
+var table = {
+    en: {
+        set_title: "App name", val_name_show: "Shown", val_name_hide: "Hidden",
+        add_favs_title: "Add favourites", add_favs_sub: "Open Apps and hold OK on an app",
+        tv_settings: "TV settings",
+        stock_home: "Original Home",
+        back_to_picture: "Back to the picture",
+        launcher_settings: "Launcher settings",
+        edit_sub: "← → move   ▼ remove from favourites",
+        apps_title: "Apps",
+        system_title: "System",
+        opening: "Opening…",
+        hint_open: "open", hint_hold_ok: "hold OK", hint_remove_fav: "remove from favourites",
+        hint_add_fav: "add to favourites", hint_back: "Back", hint_favourites: "favourites",
+        hint_done: "done", hint_edit_favs: "edit favourites", hint_change: "change", hint_system: "system",
+        err_store_unavailable: "Favourites cannot be saved on this TV — the change is lost after a restart.",
+        err_save: "Could not save the favourites.",
+        removed_fav: "Removed from favourites", added_fav: "Added to favourites",
+        max_favs: "You already have {n} favourites — remove one on the home screen",
+        live_tv: "TV",
+        err_launch: "Could not open the app. Try again.",
+        err_unavailable: "The app is unavailable right now.",
+        err_slow: "Opening is taking too long. You can try again.",
+        err_helper: "The launcher helper is not answering.",
+        set_language: "Language", set_exit: "After holding BACK", set_clock: "Clock bar",
+        val_system: "System language ({lang})", val_last_input: "Last input",
+        val_show: "Shown", val_hide: "Hidden"
+    },
+    es: {
+        set_title: "Nombre de la app", val_name_show: "Visible", val_name_hide: "Oculto",
+        add_favs_title: "Añadir favoritos", add_favs_sub: "Abre Aplicaciones y mantén OK sobre una app",
+        tv_settings: "Ajustes del TV",
+        stock_home: "Home original",
+        back_to_picture: "Volver a la imagen",
+        launcher_settings: "Ajustes del launcher",
+        edit_sub: "← → mover   ▼ quitar de favoritos",
+        apps_title: "Aplicaciones",
+        system_title: "Sistema",
+        opening: "Abriendo…",
+        hint_open: "abrir", hint_hold_ok: "mantén OK", hint_remove_fav: "quitar de favoritos",
+        hint_add_fav: "añadir a favoritos", hint_back: "Atrás", hint_favourites: "favoritos",
+        hint_done: "listo", hint_edit_favs: "editar favoritos", hint_change: "cambiar", hint_system: "sistema",
+        err_store_unavailable: "No se pueden guardar los favoritos en este TV: el cambio se pierde al reiniciar.",
+        err_save: "No se pudieron guardar los favoritos.",
+        removed_fav: "Quitado de favoritos", added_fav: "Añadido a favoritos",
+        max_favs: "Ya tienes {n} favoritos: quita uno en la pantalla de inicio",
+        live_tv: "Televisión",
+        err_launch: "No se pudo abrir la aplicación. Inténtalo de nuevo.",
+        err_unavailable: "La aplicación no está disponible ahora.",
+        err_slow: "La apertura está tardando demasiado. Puedes intentarlo de nuevo.",
+        err_helper: "El asistente del launcher no responde.",
+        set_language: "Idioma", set_exit: "Al mantener ATRÁS", set_clock: "Barra con reloj",
+        val_system: "Idioma del sistema ({lang})", val_last_input: "Última entrada",
+        val_show: "Visible", val_hide: "Oculta"
+    },
+    de: {
+        set_title: "App-Name", val_name_show: "Sichtbar", val_name_hide: "Ausgeblendet",
+        add_favs_title: "Favoriten hinzufügen", add_favs_sub: "Öffne Apps und halte OK auf einer App",
+        tv_settings: "TV-Einstellungen",
+        stock_home: "Original-Home",
+        back_to_picture: "Zurück zum Bild",
+        launcher_settings: "Launcher-Einstellungen",
+        edit_sub: "← → verschieben   ▼ aus Favoriten entfernen",
+        apps_title: "Apps",
+        system_title: "System",
+        opening: "Wird geöffnet…",
+        hint_open: "öffnen", hint_hold_ok: "OK halten", hint_remove_fav: "aus Favoriten entfernen",
+        hint_add_fav: "zu Favoriten hinzufügen", hint_back: "Zurück", hint_favourites: "Favoriten",
+        hint_done: "fertig", hint_edit_favs: "Favoriten bearbeiten", hint_change: "ändern", hint_system: "System",
+        err_store_unavailable: "Favoriten können auf diesem TV nicht gespeichert werden – die Änderung geht nach einem Neustart verloren.",
+        err_save: "Die Favoriten konnten nicht gespeichert werden.",
+        removed_fav: "Aus Favoriten entfernt", added_fav: "Zu Favoriten hinzugefügt",
+        max_favs: "Du hast schon {n} Favoriten – entferne einen auf dem Startbildschirm",
+        live_tv: "Fernsehen",
+        err_launch: "Die App konnte nicht geöffnet werden. Bitte erneut versuchen.",
+        err_unavailable: "Die App ist gerade nicht verfügbar.",
+        err_slow: "Das Öffnen dauert zu lange. Du kannst es erneut versuchen.",
+        err_helper: "Der Launcher-Helfer antwortet nicht.",
+        set_language: "Sprache", set_exit: "Nach langem ZURÜCK", set_clock: "Leiste mit Uhr",
+        val_system: "Systemsprache ({lang})", val_last_input: "Letzter Eingang",
+        val_show: "Sichtbar", val_hide: "Ausgeblendet"
+    },
+    pl: {
+        set_title: "Nazwa aplikacji", val_name_show: "Widoczna", val_name_hide: "Ukryta",
+        add_favs_title: "Dodaj ulubione", add_favs_sub: "Wejdź w Aplikacje i przytrzymaj OK na aplikacji",
+        tv_settings: "Ustawienia TV",
+        stock_home: "Oryginalny Home",
+        back_to_picture: "Wróć do obrazu",
+        launcher_settings: "Ustawienia launchera",
+        edit_sub: "← → przesuń   ▼ usuń z ulubionych",
+        apps_title: "Aplikacje",
+        system_title: "System",
+        opening: "Otwieranie…",
+        hint_open: "otwórz", hint_hold_ok: "przytrzymaj OK", hint_remove_fav: "usuń z ulubionych",
+        hint_add_fav: "dodaj do ulubionych", hint_back: "Wstecz", hint_favourites: "ulubione",
+        hint_done: "gotowe", hint_edit_favs: "edytuj ulubione", hint_change: "zmień", hint_system: "system",
+        err_store_unavailable: "Nie można zapisać ulubionych na tym TV — zmiana zniknie po restarcie.",
+        err_save: "Nie udało się zapisać ulubionych.",
+        removed_fav: "Usunięto z ulubionych", added_fav: "Dodano do ulubionych",
+        max_favs: "Masz już {n} ulubionych — usuń jedną na stronie głównej",
+        live_tv: "Telewizja",
+        err_launch: "Nie udało się otworzyć aplikacji. Spróbuj ponownie.",
+        err_unavailable: "Aplikacja jest chwilowo niedostępna.",
+        err_slow: "Uruchamianie trwa zbyt długo. Możesz spróbować ponownie.",
+        err_helper: "Pomocnik launchera nie odpowiada.",
+        set_language: "Język", set_exit: "Po przytrzymaniu WSTECZ", set_clock: "Pasek z zegarem",
+        val_system: "Język systemu ({lang})", val_last_input: "Ostatnie wejście",
+        val_show: "Widoczny", val_hide: "Ukryty"
+    }
+};
+// "pl-PL", "pl_PL" or "pl" → "pl" when supported, else "".
+function supported(locale) {
+    var code = String(locale || "").toLowerCase().slice(0, 2);
+    return languages.indexOf(code) >= 0 ? code : "";
+}
+function get(lang, key) {
+    var t = table[lang] || table.en;
+    return t[key] !== undefined ? t[key] : (table.en[key] !== undefined ? table.en[key] : key);
+}
+function format(text, values) {
+    for (var k in values) text = text.replace("{" + k + "}", values[k]);
+    return text;
+}

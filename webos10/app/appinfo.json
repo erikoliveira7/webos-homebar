@@ -1,0 +1,13 @@
+{
+  "id": "org.rawin.launcher",
+  "version": "0.0.0",
+  "vendor": "rawin",
+  "type": "qml",
+  "main": "main.qml",
+  "title": "rawin-launcher",
+  "icon": "icon.png",
+  "largeIcon": "icon.png",
+  "noSplashOnLaunch": true,
+  "defaultWindowType": "overlay",
+  "visible": false
+}

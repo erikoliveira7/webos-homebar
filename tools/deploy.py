@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""Build a release and install it on a rooted TV over SSH, from a computer.
+
+Usage: tools/deploy.py --host <tv-ip> [--config file.json] [--keep-lg-home] [--uninstall]
+Needs key-based root SSH to the TV (the Homebrew Channel's SSH server).
+The TV runs the same install.sh a user would run by hand.
+"""
+import argparse
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--host", required=True, help="the TV's address")
+    parser.add_argument("--config", help="launcher config (default: config/launcher.json)")
+    parser.add_argument("--keep-lg-home", action="store_true", help="webOS 10: leave LG's Home in place")
+    parser.add_argument("--uninstall", action="store_true", help="remove rawin-launcher from the TV")
+    parser.add_argument("--identity", help="SSH private key (default: ssh's own choice)")
+    args = parser.parse_args()
+
+    ssh = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8"]
+    if args.identity:
+        ssh += ["-i", args.identity, "-o", "IdentitiesOnly=yes"]
+    target = "root@" + args.host
+
+    if args.uninstall:
+        script = ("for u in /var/lib/webosbrew/rawin-launcher/uninstall.sh /var/lib/webosbrew/rawin-launcher-home/uninstall.sh; "
+                  "do [ -f $u ] && sh $u; done; true")
+        sys.exit(subprocess.run(ssh + ["-tt", target, script]).returncode)
+
+    build = [sys.executable, str(ROOT / "tools/build.py")] + (["--config", args.config] if args.config else [])
+    archive = Path(subprocess.run(build, check=True, capture_output=True, text=True).stdout.strip().splitlines()[-1])
+    name = archive.name[:-len(".tar.gz")]
+    print("built " + archive.name)
+    remote = "/tmp/" + archive.name
+    subprocess.run(ssh + [target, "cat > " + remote], input=archive.read_bytes(), check=True)
+    options = " --keep-lg-home" if args.keep_lg_home else ""
+    script = "cd /tmp && rm -rf {n} && tar xzf {a} && sh {n}/install.sh{o}; r=$?; rm -rf {n} {a}; exit $r".format(
+        n=shlex.quote(name), a=shlex.quote(remote), o=options)
+    sys.exit(subprocess.run(ssh + ["-tt", target, script]).returncode)
+
+
+if __name__ == "__main__":
+    main()
