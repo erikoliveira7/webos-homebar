@@ -10,11 +10,10 @@ page. The picture stays visible above it.
 - Favourites are chosen on the TV: hold **OK** on an app in *Apps* to add it
   (up to seven), hold **OK** on a favourite to move or remove it. A fresh install
   starts with none and shows an *Add favourites* tile that opens *Apps*.
-- **System → Launcher settings**: language (system language by default;
-  English, Spanish, German, Polish, French, Italian, Portuguese, Dutch,
-  Czech), what to show after holding BACK
-  (webOS 10), the clock bar, whether the big name of the focused app shows,
-  and **Updates**: the launcher updates itself from this repository's releases.
+- **System → Launcher settings**: language (the TV's language by default, see
+  [Languages](#languages)), what to show after holding BACK (webOS 10), the
+  clock bar, whether the big name of the focused app shows, and **Updates**:
+  the launcher updates itself from this repository's releases.
 - LG's promotional apps (LG Channels, Sports, Alexa, …) are hidden from the
   launcher's lists. Nothing is uninstalled.
 - **webOS 10 only:** LG's own Home never appears. A black stand-in takes its
@@ -24,6 +23,24 @@ page. The picture stays visible above it.
 ## Preview
 
 <img src="docs/screenshots/demo.gif" width="100%" alt="Demo: HOME opens the launcher, System, Launcher settings: languages, clock bar, app name">
+
+## Languages
+
+| Language | Code |
+| :--- | :--- |
+| English | `en` |
+| Spanish (Español) | `es` |
+| German (Deutsch) | `de` |
+| Polish (Polski) | `pl` |
+| French (Français) | `fr` |
+| Italian (Italiano) | `it` |
+| Portuguese (Português) | `pt` |
+| Dutch (Nederlands) | `nl` |
+| Czech (Čeština) | `cs` |
+
+The launcher follows the TV's menu language when it is one of these, and falls
+back to English otherwise. *Launcher settings → Language* picks one by hand.
+Corrections and new languages are welcome, see [Build from source](#build-from-source).
 
 ## Compatibility
 
