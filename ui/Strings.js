@@ -36,6 +36,10 @@ var table = {
         err_slow: "Opening is taking too long. You can try again.",
         err_helper: "The launcher helper is not answering.",
         set_language: "Language", set_exit: "After holding BACK", set_clock: "Clock bar",
+        set_theme: "Theme",
+        theme_default: "Default", theme_lime: "Lime", theme_meadow: "Meadow", theme_lagoon: "Lagoon",
+        theme_midnight: "Midnight", theme_sky: "Sky", theme_terracotta: "Terracotta",
+        theme_cherry: "Cherry", theme_cobalt: "Cobalt", theme_violet: "Violet", theme_indigo: "Indigo",
         val_system: "System language ({lang})", val_last_input: "Last input",
         val_show: "Shown", val_hide: "Hidden"
     },
@@ -70,6 +74,10 @@ var table = {
         err_slow: "La apertura está tardando demasiado. Puedes intentarlo de nuevo.",
         err_helper: "El asistente del launcher no responde.",
         set_language: "Idioma", set_exit: "Al mantener ATRÁS", set_clock: "Barra con reloj",
+        set_theme: "Tema",
+        theme_default: "Predeterminado", theme_lime: "Lima", theme_meadow: "Pradera", theme_lagoon: "Laguna",
+        theme_midnight: "Medianoche", theme_sky: "Cielo", theme_terracotta: "Terracota",
+        theme_cherry: "Cereza", theme_cobalt: "Cobalto", theme_violet: "Violeta", theme_indigo: "Índigo",
         val_system: "Idioma del sistema ({lang})", val_last_input: "Última entrada",
         val_show: "Visible", val_hide: "Oculta"
     },
@@ -104,6 +112,10 @@ var table = {
         err_slow: "Das Öffnen dauert zu lange. Du kannst es erneut versuchen.",
         err_helper: "Der Launcher-Helfer antwortet nicht.",
         set_language: "Sprache", set_exit: "Nach langem ZURÜCK", set_clock: "Leiste mit Uhr",
+        set_theme: "Farbschema",
+        theme_default: "Standard", theme_lime: "Limette", theme_meadow: "Wiese", theme_lagoon: "Lagune",
+        theme_midnight: "Mitternacht", theme_sky: "Himmel", theme_terracotta: "Terrakotta",
+        theme_cherry: "Kirsche", theme_cobalt: "Kobalt", theme_violet: "Violett", theme_indigo: "Indigo",
         val_system: "Systemsprache ({lang})", val_last_input: "Letzter Eingang",
         val_show: "Sichtbar", val_hide: "Ausgeblendet"
     },
@@ -138,6 +150,10 @@ var table = {
         err_slow: "Uruchamianie trwa zbyt długo. Możesz spróbować ponownie.",
         err_helper: "Pomocnik launchera nie odpowiada.",
         set_language: "Język", set_exit: "Po przytrzymaniu WSTECZ", set_clock: "Pasek z zegarem",
+        set_theme: "Motyw",
+        theme_default: "Domyślny", theme_lime: "Limonka", theme_meadow: "Łąka", theme_lagoon: "Laguna",
+        theme_midnight: "Północ", theme_sky: "Niebo", theme_terracotta: "Terakota",
+        theme_cherry: "Wiśnia", theme_cobalt: "Kobalt", theme_violet: "Fiolet", theme_indigo: "Indygo",
         val_system: "Język systemu ({lang})", val_last_input: "Ostatnie wejście",
         val_show: "Widoczny", val_hide: "Ukryty"
     },
@@ -172,6 +188,10 @@ var table = {
         err_slow: "L'ouverture prend trop de temps. Vous pouvez réessayer.",
         err_helper: "L'assistant du launcher ne répond pas.",
         set_language: "Langue", set_exit: "Après un appui long sur RETOUR", set_clock: "Barre avec l'heure",
+        set_theme: "Thème",
+        theme_default: "Par défaut", theme_lime: "Citron vert", theme_meadow: "Prairie", theme_lagoon: "Lagon",
+        theme_midnight: "Minuit", theme_sky: "Ciel", theme_terracotta: "Terre cuite",
+        theme_cherry: "Cerise", theme_cobalt: "Cobalt", theme_violet: "Violet", theme_indigo: "Indigo",
         val_system: "Langue du système ({lang})", val_last_input: "Dernière entrée",
         val_show: "Affichée", val_hide: "Masquée"
     },
@@ -206,6 +226,10 @@ var table = {
         err_slow: "L'apertura sta richiedendo troppo tempo. Puoi riprovare.",
         err_helper: "L'assistente del launcher non risponde.",
         set_language: "Lingua", set_exit: "Tenendo premuto INDIETRO", set_clock: "Barra con l'orologio",
+        set_theme: "Tema",
+        theme_default: "Predefinito", theme_lime: "Lime", theme_meadow: "Prato", theme_lagoon: "Laguna",
+        theme_midnight: "Mezzanotte", theme_sky: "Cielo", theme_terracotta: "Terracotta",
+        theme_cherry: "Ciliegia", theme_cobalt: "Cobalto", theme_violet: "Viola", theme_indigo: "Indaco",
         val_system: "Lingua di sistema ({lang})", val_last_input: "Ultimo ingresso",
         val_show: "Visibile", val_hide: "Nascosta"
     },
@@ -240,6 +264,10 @@ var table = {
         err_slow: "A abertura está a demorar demasiado. Pode tentar novamente.",
         err_helper: "O assistente do launcher não responde.",
         set_language: "Idioma", set_exit: "Ao manter VOLTAR premido", set_clock: "Barra com relógio",
+        set_theme: "Tema",
+        theme_default: "Padrão", theme_lime: "Lima", theme_meadow: "Prado", theme_lagoon: "Lagoa",
+        theme_midnight: "Meia-noite", theme_sky: "Céu", theme_terracotta: "Terracota",
+        theme_cherry: "Cereja", theme_cobalt: "Cobalto", theme_violet: "Violeta", theme_indigo: "Índigo",
         val_system: "Idioma do sistema ({lang})", val_last_input: "Última entrada",
         val_show: "Visível", val_hide: "Oculta"
     },
@@ -274,6 +302,10 @@ var table = {
         err_slow: "Het openen duurt te lang. Je kunt het opnieuw proberen.",
         err_helper: "De launcher-helper reageert niet.",
         set_language: "Taal", set_exit: "Na lang TERUG indrukken", set_clock: "Balk met klok",
+        set_theme: "Thema",
+        theme_default: "Standaard", theme_lime: "Limoen", theme_meadow: "Weide", theme_lagoon: "Lagune",
+        theme_midnight: "Middernacht", theme_sky: "Hemel", theme_terracotta: "Terracotta",
+        theme_cherry: "Kers", theme_cobalt: "Kobalt", theme_violet: "Violet", theme_indigo: "Indigo",
         val_system: "Systeemtaal ({lang})", val_last_input: "Laatste ingang",
         val_show: "Zichtbaar", val_hide: "Verborgen"
     },
@@ -308,6 +340,10 @@ var table = {
         err_slow: "Otevírání trvá příliš dlouho. Můžete to zkusit znovu.",
         err_helper: "Pomocník launcheru neodpovídá.",
         set_language: "Jazyk", set_exit: "Po podržení ZPĚT", set_clock: "Lišta s hodinami",
+        set_theme: "Motiv",
+        theme_default: "Výchozí", theme_lime: "Limetka", theme_meadow: "Louka", theme_lagoon: "Laguna",
+        theme_midnight: "Půlnoc", theme_sky: "Obloha", theme_terracotta: "Terakota",
+        theme_cherry: "Třešeň", theme_cobalt: "Kobalt", theme_violet: "Fialová", theme_indigo: "Indigo",
         val_system: "Jazyk systému ({lang})", val_last_input: "Poslední vstup",
         val_show: "Zobrazená", val_hide: "Skrytá"
     }

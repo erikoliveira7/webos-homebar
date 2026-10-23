@@ -39,7 +39,7 @@ done
 rm -rf "$BASE/current" "$BASE/restore.sh"
 mkdir -p "$BASE/current/fonts"
 cp "$TMP/main.original.qml" "$TMP/UIController.original.qml" "$TMP/main.qml" "$TMP/UIController.qml" "$BASE/"
-cp "$UI/Launcher.qml" "$UI/FavouriteStore.qml" "$UI/Strings.js" "$HERE/Config.js" "$BASE/current/"
+cp "$UI/Launcher.qml" "$UI/FavouriteStore.qml" "$UI/Strings.js" "$UI/Themes.js" "$HERE/Config.js" "$BASE/current/"
 cp "$UI"/fonts/* "$BASE/current/fonts/"
 cp "$HERE/apply.sh" "$HERE/uninstall.sh" "$HERE/../update.sh" "$HERE/../diagnose.sh" "$HERE/../VERSION" "$BASE/"
 chmod 755 "$BASE/apply.sh" "$BASE/uninstall.sh" "$BASE/update.sh"

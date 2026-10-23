@@ -4,6 +4,7 @@ import WebOSServices 1.0
 import WebOS.Global 1.0
 import "Config.js" as Config
 import "Strings.js" as Strings
+import "Themes.js" as Themes
 
 FocusScope {
     id: shell
@@ -38,7 +39,8 @@ FocusScope {
     // sent to the helper): "last" or an HDMI input app id; clock: the top bar;
     // title: the big name of the focused app on Home and Apps.
     // beta: updates also offer test builds (GitHub pre-releases).
-    property var settings: ({lang: "system", exitTo: "last", clock: true, title: true, beta: false})
+    // theme: an id from Themes.ids.
+    property var settings: ({lang: "system", theme: "default", exitTo: "last", clock: true, title: true, beta: false})
     property string systemLang: ""
     // The updater (Launcher settings → Updates): idle, checking, current,
     // available, downloading, ready, installing, done or failed; latest is the
@@ -58,14 +60,16 @@ FocusScope {
 
     // Spotlight B2: the focused item is named above a rail of rounded tiles,
     // its colour lights the bottom-left edge, the picture stays visible.
-    readonly property string ink: "#f2f3f5"
-    readonly property string ink2: "#d6d9de"
-    readonly property string ink3: "#a3a8b2"
-    readonly property string surface: "#b8141519"   // chips over the picture (status)
-    readonly property string chip: "#26282e"        // tiles and pills: solid, so nothing shows through
-    readonly property string chipEdge: "#3b3e46"
-    readonly property string neutral: "#6b7a8f"
-    readonly property string warning: "#f0b070"
+    // Colours come from the theme (Launcher settings → Theme, see Themes.js).
+    readonly property var theme: Themes.palette(settings.theme)
+    readonly property string ink: theme.ink
+    readonly property string ink2: theme.ink2
+    readonly property string ink3: theme.ink3
+    readonly property string surface: theme.surface   // chips over the picture (status)
+    readonly property string chip: theme.chip         // tiles and pills: solid, so nothing shows through
+    readonly property string chipEdge: theme.chipEdge
+    readonly property string neutral: theme.neutral
+    readonly property string warning: theme.warning
     readonly property string fontName: inter.status === FontLoader.Ready ? inter.name : medium.name
     readonly property int margin: 96
     readonly property int tile: 120
@@ -114,6 +118,7 @@ FocusScope {
             ? Strings.format(t("val_system"), {lang: Strings.names[Strings.supported(sysLang) || "en"]})
             : Strings.names[s.lang];
         var list = [{key: "lang", title: t("set_language"), value: langValue, symbol: "language", action: "setting"}];
+        list.push({key: "theme", title: t("set_theme"), value: t("theme_" + s.theme), symbol: "theme", action: "setting"});
         if (Config.exitTarget)
             list.push({key: "exitTo", title: t("set_exit"), symbol: "exit", action: "setting",
                        value: s.exitTo === "last" ? t("val_last_input") : "HDMI " + s.exitTo.slice(-1)});
@@ -173,10 +178,12 @@ FocusScope {
     }
     Timer { id: installPoll; interval: 2000; repeat: true; onTriggered: updateRun("status", "stable") }
     function cycleSetting(key) {
-        var next = {lang: settings.lang, exitTo: settings.exitTo, clock: settings.clock, title: settings.title, beta: settings.beta};
+        var next = {lang: settings.lang, theme: settings.theme, exitTo: settings.exitTo, clock: settings.clock, title: settings.title, beta: settings.beta};
         if (key === "lang") {
             var langs = ["system"].concat(Strings.languages);
             next.lang = langs[(langs.indexOf(settings.lang) + 1) % langs.length];
+        } else if (key === "theme") {
+            next.theme = Themes.ids[(Themes.ids.indexOf(settings.theme) + 1) % Themes.ids.length];
         } else if (key === "exitTo") {
             var targets = ["last", "com.webos.app.hdmi1", "com.webos.app.hdmi2", "com.webos.app.hdmi3", "com.webos.app.hdmi4"];
             next.exitTo = targets[(targets.indexOf(settings.exitTo) + 1) % targets.length];
@@ -196,6 +203,7 @@ FocusScope {
             var s = store.item.load("settings");
             if (s && typeof s === "object") settings = {
                 lang: s.lang === "system" || Strings.languages.indexOf(s.lang) >= 0 ? s.lang : "system",
+                theme: Themes.ids.indexOf(s.theme) >= 0 ? s.theme : "default",
                 exitTo: /^(last|com\.webos\.app\.hdmi[1-4])$/.test(s.exitTo) ? s.exitTo : "last",
                 clock: s.clock !== false,
                 title: s.title !== false,
@@ -589,6 +597,10 @@ FocusScope {
         } else if (symbol === "flask") {
             c.moveTo(15,7); c.lineTo(25,7); c.moveTo(17,7); c.lineTo(17,17); c.lineTo(8,32); c.lineTo(32,32); c.lineTo(23,17); c.lineTo(23,7);
             c.moveTo(12,25); c.lineTo(28,25);
+        } else if (symbol === "theme") {
+            c.arc(20,20,13,0,Math.PI*2); c.stroke();
+            c.beginPath(); c.arc(20,20,13,-Math.PI/2,Math.PI/2,false); c.closePath();
+            c.fillStyle = c.strokeStyle; c.fill();
         } else if (symbol === "apps") {
             c.roundedRect(7,7,11,11,3,3); c.roundedRect(22,7,11,11,3,3); c.roundedRect(7,22,11,11,3,3); c.roundedRect(22,22,11,11,3,3);
         }
@@ -611,7 +623,8 @@ FocusScope {
             id: scrim
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             height: shell.page === "apps" ? 660 : 540
-            function a(v) { return Qt.rgba(0.024, 0.027, 0.035, v); }
+            property color tint: shell.theme.scrim
+            function a(v) { return Qt.rgba(tint.r, tint.g, tint.b, v); }
             gradient: Gradient {
                 GradientStop { position: 0.00; color: scrim.a(0) }
                 GradientStop { position: 0.22; color: scrim.a(0.30) }
@@ -637,17 +650,17 @@ FocusScope {
             visible: shell.settings.clock !== false
             anchors.right: parent.right; anchors.rightMargin: shell.margin; y: 32
             width: statusRow.width + 48; height: 56; radius: 18
-            color: shell.surface; border.width: 1; border.color: "#14ffffff"
+            color: shell.surface; border.width: 1; border.color: shell.theme.surfaceEdge
             Row {
                 id: statusRow
                 anchors.centerIn: parent; spacing: 18
                 Row {
                     visible: nowTitle !== ""; spacing: 10; anchors.verticalCenter: parent.verticalCenter
-                    Rectangle { width: 7; height: 7; radius: 3.5; color: shell.ink; anchors.verticalCenter: parent.verticalCenter }
-                    Text { text: nowTitle; font.family: shell.fontName; font.pixelSize: 19; color: shell.ink2; anchors.verticalCenter: parent.verticalCenter }
+                    Rectangle { width: 7; height: 7; radius: 3.5; color: shell.theme.focus; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: nowTitle; font.family: shell.fontName; font.pixelSize: 19; color: shell.theme.text; anchors.verticalCenter: parent.verticalCenter }
                 }
-                Rectangle { visible: nowTitle !== ""; width: 1; height: 20; color: "#33ffffff"; anchors.verticalCenter: parent.verticalCenter }
-                Text { text: clock; font.family: shell.fontName; font.bold: true; font.pixelSize: 26; font.letterSpacing: -0.4; color: "#ffffff"; anchors.verticalCenter: parent.verticalCenter }
+                Rectangle { visible: nowTitle !== ""; width: 1; height: 20; color: shell.theme.divider; anchors.verticalCenter: parent.verticalCenter }
+                Text { text: clock; font.family: shell.fontName; font.bold: true; font.pixelSize: 26; font.letterSpacing: -0.4; color: shell.theme.heading; anchors.verticalCenter: parent.verticalCenter }
             }
         }
 
@@ -661,12 +674,12 @@ FocusScope {
                 width: 1700; anchors.baseline: heroBase.top
                 visible: shell.showTitle
                 text: shell.hero.title; elide: Text.ElideRight
-                font.family: shell.fontName; font.bold: true; font.pixelSize: 60; font.letterSpacing: -1.8; color: "#ffffff"; style: Text.Raised; styleColor: "#59000000"
+                font.family: shell.fontName; font.bold: true; font.pixelSize: 60; font.letterSpacing: -1.8; color: shell.theme.heading; style: Text.Raised; styleColor: shell.theme.headingShadow
             }
             Text {
                 y: 160 + 14
                 text: shell.hero.sub; font.family: shell.fontName; font.pixelSize: 22
-                color: message ? shell.warning : notice ? "#ffffff" : shell.ink2
+                color: message ? shell.warning : notice ? shell.theme.heading : shell.theme.text
             }
         }
 
@@ -678,10 +691,10 @@ FocusScope {
                 Row {
                     spacing: 9
                     Rectangle {
-                        width: keyLabel.implicitWidth+14; height: 24; radius: 7; color: "transparent"; border.width: 1.5; border.color: "#57ffffff"
-                        Text { id: keyLabel; anchors.centerIn: parent; text: modelData[0]; font.family: shell.fontName; font.bold: true; font.pixelSize: 12; color: "#e3e5e9" }
+                        width: keyLabel.implicitWidth+14; height: 24; radius: 7; color: "transparent"; border.width: 1.5; border.color: shell.theme.keyEdge
+                        Text { id: keyLabel; anchors.centerIn: parent; text: modelData[0]; font.family: shell.fontName; font.bold: true; font.pixelSize: 12; color: shell.theme.keyLabel }
                     }
-                    Text { text: modelData[1]; font.family: shell.fontName; font.pixelSize: 15; color: shell.ink3; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: modelData[1]; font.family: shell.fontName; font.pixelSize: 15; color: shell.theme.hint; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
         }
@@ -705,9 +718,9 @@ FocusScope {
                 Behavior on lift { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 transform: Translate { y: cell.lift }
                 Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                Rectangle { visible: cell.chosen; anchors.centerIn: parent; width: cell.size+14; height: width; radius: cell.corner+7; color: cell.editing ? shell.warning : "#ffffff" }
-                Rectangle { visible: cell.chosen; anchors.centerIn: parent; width: cell.size+8; height: width; radius: cell.corner+4; color: "#0a0b0d" }
-                Rectangle { anchors.fill: parent; radius: cell.corner; color: "#15161a" }
+                Rectangle { visible: cell.chosen; anchors.centerIn: parent; width: cell.size+14; height: width; radius: cell.corner+7; color: cell.editing ? shell.warning : shell.theme.ring }
+                Rectangle { visible: cell.chosen; anchors.centerIn: parent; width: cell.size+8; height: width; radius: cell.corner+4; color: shell.theme.gap }
+                Rectangle { anchors.fill: parent; radius: cell.corner; color: shell.theme.tile }
                 Text {
                     visible: icon.status !== Image.Ready
                     anchors.centerIn: parent; text: cell.entry && cell.entry.title ? cell.entry.title.charAt(0) : ""
@@ -726,14 +739,14 @@ FocusScope {
                     model: cell.editing ? ["‹", "›"] : []
                     Rectangle {
                         x: index === 0 ? -14 : cell.size-14; anchors.verticalCenter: parent.verticalCenter
-                        width: 28; height: 44; radius: 14; color: "#e60a0b0d"; border.width: 2; border.color: shell.warning
+                        width: 28; height: 44; radius: 14; color: shell.theme.handle; border.width: 2; border.color: shell.warning
                         Text { anchors.centerIn: parent; anchors.verticalCenterOffset: -2; text: modelData; font.family: shell.fontName; font.bold: true; font.pixelSize: 30; color: shell.warning }
                     }
                 }
                 // Favourite marker in All applications.
                 Rectangle {
                     visible: cell.starred; x: cell.size-20; y: -6; width: 26; height: 26; radius: 13
-                    color: shell.ink; border.width: 3; border.color: "#0a0b0d"
+                    color: shell.theme.focus; border.width: 3; border.color: shell.theme.gap
                 }
                 MouseArea {
                     anchors.fill: parent; hoverEnabled: true
@@ -760,11 +773,11 @@ FocusScope {
                 Behavior on lift { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 transform: Translate { y: glyphCell.lift }
                 Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                Rectangle { visible: glyphCell.chosen; anchors.centerIn: parent; width: glyphCell.size+14; height: width; radius: glyphCell.corner+7; color: "#ffffff" }
-                Rectangle { visible: glyphCell.chosen; anchors.centerIn: parent; width: glyphCell.size+8; height: width; radius: glyphCell.corner+4; color: "#0a0b0d" }
+                Rectangle { visible: glyphCell.chosen; anchors.centerIn: parent; width: glyphCell.size+14; height: width; radius: glyphCell.corner+7; color: shell.theme.ring }
+                Rectangle { visible: glyphCell.chosen; anchors.centerIn: parent; width: glyphCell.size+8; height: width; radius: glyphCell.corner+4; color: shell.theme.gap }
                 Rectangle {
                     anchors.fill: parent; radius: glyphCell.corner
-                    color: glyphCell.chosen ? shell.ink : shell.chip
+                    color: glyphCell.chosen ? shell.theme.focus : shell.chip
                     border.width: glyphCell.chosen ? 0 : 1; border.color: shell.chipEdge
                     Behavior on color { ColorAnimation { duration: 180 } }
                 }
@@ -772,12 +785,12 @@ FocusScope {
                     property int box: glyphCell.size > 100 ? 44 : glyphCell.size > 70 ? 32 : 28
                     anchors.centerIn: parent; width: box; height: box
                     property string symbol: glyphCell.entry && glyphCell.entry.symbol ? glyphCell.entry.symbol : ""
-                    property bool dark: glyphCell.chosen
+                    property string stroke: glyphCell.chosen ? shell.theme.onFocus : shell.ink
                     onSymbolChanged: requestPaint()
-                    onDarkChanged: requestPaint()
+                    onStrokeChanged: requestPaint()
                     onPaint: {
                         var c=getContext("2d"); c.reset(); c.scale(box/40, box/40);
-                        c.strokeStyle = dark ? "#0b0c0e" : "#f2f3f5"; c.lineWidth = 2.2*40/box; c.lineCap="round"; c.lineJoin="round";
+                        c.strokeStyle = stroke; c.lineWidth = 2.2*40/box; c.lineCap="round"; c.lineJoin="round";
                         shell.drawGlyph(c, symbol);
                     }
                 }
@@ -819,7 +832,7 @@ FocusScope {
                         property bool chosen: shell.selected === shell.favSlots+index
                         property real lift: chosen ? -4 : 0
                         width: Math.max(pillLabel.implicitWidth, pillDevice.visible ? pillDevice.width : 0)+44; height: 64; radius: 18
-                        color: chosen ? shell.ink : shell.chip
+                        color: chosen ? shell.theme.focus : shell.chip
                         border.width: chosen ? 0 : 1; border.color: shell.chipEdge
                         // Nothing plugged in: the pill stays solid, its text dimmed.
                         readonly property bool dim: !chosen && !modelData.present
@@ -834,13 +847,13 @@ FocusScope {
                             Text {
                                 id: pillLabel; anchors.horizontalCenter: parent.horizontalCenter; text: modelData.title
                                 font.family: shell.fontName; font.bold: true; font.pixelSize: pillDevice.visible ? 19 : 21; font.letterSpacing: -0.2
-                                color: pill.chosen ? "#0b0c0e" : pill.dim ? "#80858f" : "#e3e5e9"
+                                color: pill.chosen ? shell.theme.onFocus : pill.dim ? shell.theme.dim : shell.theme.label
                             }
                             Text {
                                 id: pillDevice; visible: !!modelData.detail; anchors.horizontalCenter: parent.horizontalCenter
                                 text: modelData.detail || ""; width: Math.min(implicitWidth, 140); elide: Text.ElideRight
                                 font.family: shell.fontName; font.pixelSize: 13
-                                color: pill.chosen ? "#4a4f58" : pill.dim ? "#5f646d" : shell.ink3
+                                color: pill.chosen ? shell.theme.onFocus2 : pill.dim ? shell.theme.dim2 : shell.ink3
                             }
                         }
                         MouseArea {
@@ -898,9 +911,9 @@ FocusScope {
         }
         Rectangle {
             visible: page === "apps" && appGrid.contentHeight > appGrid.height
-            x: 1920-shell.margin+20; y: 744; width: 4; height: 2*shell.tile+shell.gap; radius: 2; color: "#1affffff"
+            x: 1920-shell.margin+20; y: 744; width: 4; height: 2*shell.tile+shell.gap; radius: 2; color: shell.theme.track
             Rectangle {
-                width: 4; radius: 2; color: shell.ink
+                width: 4; radius: 2; color: shell.theme.focus
                 height: parent.height*appGrid.height/appGrid.contentHeight
                 y: (parent.height-height)*appGrid.contentY/Math.max(1, appGrid.contentHeight-appGrid.height)
             }
@@ -923,7 +936,7 @@ FocusScope {
         Text {
             visible: page === "system" || page === "settings"
             anchors.right: parent.right; anchors.rightMargin: shell.margin; y: 1037
-            text: "rawin-launcher " + Config.version + (Config.platform ? " · " + Config.platform : ""); font.family: shell.fontName; font.pixelSize: 14; color: "#5a5f69"
+            text: "rawin-launcher " + Config.version + (Config.platform ? " · " + Config.platform : ""); font.family: shell.fontName; font.pixelSize: 14; color: shell.theme.version
         }
     } // panel
 }

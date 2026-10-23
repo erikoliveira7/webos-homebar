@@ -103,6 +103,7 @@ def webos10_ipk(spec, version):
         (app_dir + "Config.js", config),
         (app_dir + "FavouriteStore.qml", (ROOT / "ui/FavouriteStore.qml").read_bytes()),
         (app_dir + "Strings.js", (ROOT / "ui/Strings.js").read_bytes()),
+        (app_dir + "Themes.js", (ROOT / "ui/Themes.js").read_bytes()),
         (app_dir + "icon.png", (ROOT / "ui/icon.png").read_bytes()),
     ]
     files += [(app_dir + "fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
@@ -134,7 +135,7 @@ def release_files(spec, version):
         ("LICENSE", (ROOT / "LICENSE").read_bytes()),
         ("README.md", (ROOT / "README.md").read_bytes()),
     ]
-    for name in ("Launcher.qml", "FavouriteStore.qml", "Strings.js", "icon.png"):
+    for name in ("Launcher.qml", "FavouriteStore.qml", "Strings.js", "Themes.js", "icon.png"):
         files.append(("ui/" + name, (ROOT / "ui" / name).read_bytes()))
     files += [("ui/fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
     for name in ("install.sh", "uninstall.sh", "apply.sh"):
