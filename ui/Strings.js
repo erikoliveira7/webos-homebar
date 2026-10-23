@@ -1,5 +1,5 @@
 .pragma library
-// rawin-launcher texts. English is the fallback for a missing language or key.
+// Homebar texts. English is the fallback for a missing language or key.
 // "{n}", "{lang}" and "{version}" are filled in by format().
 var languages = ["en", "es", "de", "pl", "fr", "it", "pt", "nl", "cs"];
 var names = {en: "English", es: "Español", de: "Deutsch", pl: "Polski", fr: "Français", it: "Italiano",

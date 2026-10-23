@@ -1,11 +1,13 @@
-# rawin-launcher
+# Homebar
 
-![rawin-launcher over a YouTube video: favourites, HDMI inputs, Apps and System](docs/screenshots/home.jpg)
+![Homebar over a YouTube video: favourites, HDMI inputs, Apps and System](docs/screenshots/home.jpg)
 
-A minimal home screen for rooted LG webOS TVs. HOME opens a bottom panel over
-whatever is on screen: up to seven favourite apps, the HDMI inputs with the
-device the TV sees on each (HDMI-CEC name), all installed apps, and a System
-page. The picture stays visible above it.
+A minimal home screen for rooted LG webOS TVs, brought back as a bar at the
+bottom of the screen instead of a full-screen menu that takes you out of what
+you were watching. HOME opens it over whatever is on screen: up to seven
+favourite apps, the HDMI inputs with the device the TV sees on each (HDMI-CEC
+name), all installed apps, and a System page. The picture stays visible above
+it.
 
 - **Favourites are chosen on the TV**: hold OK on an app in *Apps* to add it,
   hold OK on a favourite to move or remove it.
@@ -34,13 +36,17 @@ Homebrew Channel. Log in to the TV as root, then:
 
 ```sh
 cd /tmp
-curl -fL -o rawin-launcher.tar.gz https://github.com/rawinek/rawin-launcher/releases/latest/download/rawin-launcher.tar.gz
+curl -fL -o rawin-launcher.tar.gz https://github.com/rawinek/webos-homebar/releases/latest/download/rawin-launcher.tar.gz
 rm -rf rawin-launcher && tar xzf rawin-launcher.tar.gz
 sh rawin-launcher/install.sh
 ```
 
 Press HOME on the remote when it is done. Options, installing without internet
 on the TV, updating and uninstalling: [Install, update, uninstall](docs/install.md).
+
+Homebar was called **rawin-launcher** until 0.12.0. The release file and the
+folders on the TV keep that name, so earlier installs update in place, and the
+old GitHub address leads here.
 
 **Update:** *System → Launcher settings → Updates* (from 0.10.0 on).
 **Uninstall:** `sh /var/lib/webosbrew/rawin-launcher/uninstall.sh` (webOS 4) or
@@ -57,7 +63,7 @@ on the TV, updating and uninstalling: [Install, update, uninstall](docs/install.
 - [Development](docs/development.md): build from source, adding a language or a theme
 
 Problems: run `diagnose.sh` (see [Troubleshooting](docs/troubleshooting.md#diagnose))
-and attach its file to an [issue](https://github.com/rawinek/rawin-launcher/issues).
+and attach its file to an [issue](https://github.com/rawinek/webos-homebar/issues).
 
 ## Credits
 

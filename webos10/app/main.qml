@@ -1,4 +1,4 @@
-// rawin-launcher for webOS 10: the shared panel (Panel.qml, generated from
+// Homebar for webOS 10: the shared panel (Panel.qml, generated from
 // ui/Launcher.qml by tools/build.py) in a developer QML overlay window run by
 // qml-runner. HOME relaunches the app; qml-runner resets the "params" context
 // property, which shows the panel again. BACK hides the window but keeps the
@@ -13,7 +13,7 @@ WebOSWindow {
     visible: true
     color: "transparent"
     appId: "org.rawin.launcher"
-    title: "rawin-launcher"
+    title: "Homebar"
 
     property var launchParams: typeof params !== "undefined" ? params : null
     onLaunchParamsChanged: show()

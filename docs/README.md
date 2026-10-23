@@ -1,4 +1,4 @@
-# rawin-launcher documentation
+# Homebar documentation
 
 - [Install, update, uninstall](install.md): requirements, installer options,
   updating from the TV or by hand

@@ -6,6 +6,7 @@ gets on screen and talks to the TV.
 - [webOS 4](#webos-4)
 - [webOS 10](#webos-10)
 - [What it changes on the TV](#what-it-changes-on-the-tv)
+- [Names](#names)
 
 ## webOS 4
 
@@ -72,3 +73,13 @@ webOS 10:
 `773` is the HOME button of the tested Magic Remote as Input Hook reports it;
 for another remote see
 [Troubleshooting](troubleshooting.md#home-does-nothing-webos-10).
+
+## Names
+
+Homebar was called rawin-launcher until 0.12.0, and kept that name on the TV:
+the release file `rawin-launcher.tar.gz`, the folders under
+`/var/lib/webosbrew/`, the boot hooks, the app id `org.rawin.launcher` and the
+LocalStorage database. So an update from any earlier version replaces the
+files in place and keeps favourites and settings, and the updaters already on
+TVs (which look for `rawin-launcher.tar.gz` at `rawinek/rawin-launcher`, now a
+redirect to `rawinek/webos-homebar`) keep finding new releases.

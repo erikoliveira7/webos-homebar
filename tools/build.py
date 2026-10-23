@@ -110,14 +110,14 @@ def webos10_ipk(spec, version):
     files += [(svc_dir + p.name, p.read_bytes()) for p in sorted((ROOT / "webos10/helper").glob("*.js"))]
     files += [
         (svc_dir + "package.json", json.dumps({"name": SERVICE, "version": package_version, "main": "service.js"}, indent=1).encode()),
-        (svc_dir + "services.json", json.dumps({"id": SERVICE, "description": "rawin-launcher helper",
+        (svc_dir + "services.json", json.dumps({"id": SERVICE, "description": "Homebar helper",
                                                 "services": [{"name": SERVICE}]}, indent=1).encode()),
         ("usr/palm/packages/%s/packageinfo.json" % APP, json.dumps(
             {"id": APP, "version": package_version, "vendor": "rawin", "app": APP, "services": [SERVICE],
-             "loc_name": "rawin-launcher", "package_format_version": 2}, indent=1).encode()),
+             "loc_name": "Homebar", "package_format_version": 2}, indent=1).encode()),
     ]
     control = ("Package: %s\nVersion: %s\nSection: misc\nPriority: optional\nArchitecture: all\n"
-               "Maintainer: rawin-launcher\nDescription: rawin-launcher, a home screen panel for webOS 10\n"
+               "Maintainer: rawinek\nDescription: Homebar, a home screen bar for webOS 10\n"
                % (APP, package_version)).encode()
     return ar([("debian-binary", b"2.0\n"), ("control.tar.gz", tgz([("control", control)])),
                ("data.tar.gz", tgz(files))])

@@ -20,7 +20,7 @@ Log in to the TV as root (`ssh root@<tv-ip>`, or `telnet <tv-ip>`), then:
 
 ```sh
 cd /tmp
-curl -fL -o rawin-launcher.tar.gz https://github.com/rawinek/rawin-launcher/releases/latest/download/rawin-launcher.tar.gz
+curl -fL -o rawin-launcher.tar.gz https://github.com/rawinek/webos-homebar/releases/latest/download/rawin-launcher.tar.gz
 rm -rf rawin-launcher && tar xzf rawin-launcher.tar.gz
 sh rawin-launcher/install.sh
 ```
@@ -28,9 +28,11 @@ sh rawin-launcher/install.sh
 With wget instead of curl: `wget -O rawin-launcher.tar.gz <the same URL>`.
 This always takes the latest release; for another one, download
 `rawin-launcher.tar.gz` from its page under
-[Releases](https://github.com/rawinek/rawin-launcher/releases). The installer
+[Releases](https://github.com/rawinek/webos-homebar/releases). The installer
 picks the variant for the TV's webOS, prints each step and ends with "Press
-HOME on the remote".
+HOME on the remote". The file and the folder keep the project's first name,
+`rawin-launcher`, as do the installed files (see
+[How it works → Names](how-it-works.md#names)).
 
 Installer options:
 

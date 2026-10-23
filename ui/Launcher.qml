@@ -936,7 +936,7 @@ FocusScope {
         Text {
             visible: page === "system" || page === "settings"
             anchors.right: parent.right; anchors.rightMargin: shell.margin; y: 1037
-            text: "rawin-launcher " + Config.version + (Config.platform ? " · " + Config.platform : ""); font.family: shell.fontName; font.pixelSize: 14; color: shell.theme.version
+            text: "Homebar " + Config.version + (Config.platform ? " · " + Config.platform : ""); font.family: shell.fontName; font.pixelSize: 14; color: shell.theme.version
         }
     } // panel
 }

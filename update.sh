@@ -7,7 +7,7 @@
 #   update.sh download             fetch the checked release, verify its SHA-256, unpack it
 #   update.sh install              run its install.sh in the background
 #   update.sh status               how that install is going: running, done or failed
-REPO=rawinek/rawin-launcher
+REPO=rawinek/webos-homebar
 ASSET=rawin-launcher.tar.gz
 WORK=/tmp/rawin-launcher-update
 HERE=$(cd "$(dirname "$0")" && pwd)

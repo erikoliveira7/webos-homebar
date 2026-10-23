@@ -19,7 +19,7 @@ def main():
     parser.add_argument("--host", required=True, help="the TV's address")
     parser.add_argument("--config", help="launcher config (default: config/launcher.json)")
     parser.add_argument("--keep-lg-home", action="store_true", help="webOS 10: leave LG's Home in place")
-    parser.add_argument("--uninstall", action="store_true", help="remove rawin-launcher from the TV")
+    parser.add_argument("--uninstall", action="store_true", help="remove Homebar from the TV")
     parser.add_argument("--identity", help="SSH private key (default: ssh's own choice)")
     args = parser.parse_args()
 

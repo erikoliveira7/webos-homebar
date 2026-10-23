@@ -1,5 +1,5 @@
 .pragma library
-// rawin-launcher colour themes (Launcher settings → Theme). "default" is the
+// Homebar colour themes (Launcher settings → Theme). "default" is the
 // original look, spelled out; every other theme is two colours: an accent for
 // the focused tile, its ring and the glow, and a base for the tiles, pills and
 // the shade under the rail. A light base gives light tiles with dark text; the

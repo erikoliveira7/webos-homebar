@@ -21,7 +21,7 @@ their device names, the app on screen), the HOME button binding and the
 launcher's lines from the logs. No IP addresses, serial numbers or accounts.
 Copy it to a computer with
 `ssh root@<tv-ip> cat /tmp/rawin-launcher-diagnose.txt > diagnose.txt`
-and attach it to an [issue](https://github.com/rawinek/rawin-launcher/issues).
+and attach it to an [issue](https://github.com/rawinek/webos-homebar/issues).
 
 ## HOME does nothing (webOS 10)
 

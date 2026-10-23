@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw the rawin-launcher icon (ui/icon.png, 130 px) with no image libraries:
+"""Draw the Homebar icon (ui/icon.png, 130 px) with no image libraries:
 a dark rounded square with a rail of three tiles, the middle one focused."""
 import struct
 import zlib

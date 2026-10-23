@@ -4,7 +4,7 @@
   "vendor": "rawin",
   "type": "qml",
   "main": "main.qml",
-  "title": "rawin-launcher",
+  "title": "Homebar",
   "icon": "icon.png",
   "largeIcon": "icon.png",
   "noSplashOnLaunch": true,
