@@ -36,7 +36,10 @@ OK and the other keys do. The chip in the top-right corner shows what is on
 screen, the [weather](#weather) and the time; each of the three can be hidden. BACK closes the panel; from *Apps* or *System* it goes
 back to Home. The panel fits the TV's screen, HD or FHD/UHD, at the same
 proportions. With the Magic Remote's pointer, a click on anything focuses
-and opens it; pointing alone changes nothing, and neither does the wheel.
+and opens it, and a click held does what holding OK does; pointing alone
+changes nothing, and neither does the wheel. Holding OK also works with a
+remote that sends it by infrared (a plain remote, or a Magic Remote without
+its radio), which repeats a held key as quick presses.
 
 LG's promotional apps (LG Channels, Sports, Alexa, …) are left out of the
 launcher's lists. Nothing is uninstalled.

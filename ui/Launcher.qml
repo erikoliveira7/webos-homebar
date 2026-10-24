@@ -786,12 +786,29 @@ FocusScope {
     // Activate on release: switching focus on press would deliver the same
     // OK release to LG's ribbon and accidentally launch a second application.
     // Holding OK past holdTimer runs secondaryAction instead of activating.
+    // A remote that works by infrared (a Magic Remote without its radio, a
+    // plain IR remote) sends a held key as quick presses and releases, not one
+    // long press: so where holding OK does something, a release waits a moment
+    // (okRelease) for the next press of the same hold before it counts.
+    property real okSince: 0
+    property int okKey: 0
+    function holdable() {
+        if (page === "apps") return true;
+        if (page !== "home" || editIndex >= 0) return false;
+        if (selected < favCount) return true;
+        return Config.exitTarget && selected >= favSlots && selected < favSlots + sourceCount && sources[selected - favSlots].kind === "input";
+    }
     Keys.onPressed: {
         if (isYellow(event.key) || isRed(event.key)) { event.accepted=true; return; }
         if (actionKey(event.key)) {
             event.accepted=true;
-            if (isOk(event.key) && !event.isAutoRepeat && !okHeld) {
-                okHeld=true; longFired=false; pressing=true; holdTimer.restart();
+            if (!isOk(event.key) || event.isAutoRepeat) return;
+            if (okRelease.running) {
+                // The same hold, from an infrared remote: on with the time it has.
+                okRelease.stop();
+                if (!longFired) { holdTimer.interval = Math.max(1, 700 - (Date.now() - okSince)); holdTimer.restart(); }
+            } else if (!okHeld) {
+                okHeld=true; longFired=false; pressing=true; okSince=Date.now(); holdTimer.interval=700; holdTimer.restart();
             }
         }
         else if (navigate(event.key)) event.accepted=true;
@@ -803,15 +820,25 @@ FocusScope {
         event.accepted=true;
         if (event.isAutoRepeat) return;
         if (isOk(event.key)) {
-            okHeld=false; holdTimer.stop(); pressing=false;
-            if (longFired) { longFired=false; return; }
+            holdTimer.stop();
+            if (longFired || holdable()) { okKey = event.key; okRelease.restart(); return; }
+            okHeld=false; pressing=false;
         }
         navigate(event.key);
     }
     Timer { id: holdTimer; interval: 700; onTriggered: { if (okHeld) { longFired=true; pressing=false; secondaryAction(); } } }
+    // The release of OK, once no press of the same hold followed it.
+    Timer {
+        id: okRelease; interval: 200
+        onTriggered: {
+            okHeld=false; pressing=false;
+            if (longFired) { longFired=false; return; }
+            navigate(okKey);
+        }
+    }
     Loader { id: store; source: "FavouriteStore.qml"; onLoaded: { shell.loadFavourites(); shell.loadSettings(); shell.loadExtras(); } }
     onForegroundChanged: {
-        pressing = false; okHeld = false; longFired = false; holdTimer.stop();
+        pressing = false; okHeld = false; longFired = false; holdTimer.stop(); okRelease.stop();
         editIndex = -1; notice = "";
         if (foreground) {
             launching = false; message = ""; page="home"; selected=0; pane=0; forceActiveFocus();
@@ -1369,10 +1396,15 @@ FocusScope {
                     visible: cell.starred; x: cell.size-shell.px(20); y: -shell.px(6); width: shell.px(26); height: width; radius: width/2
                     color: shell.theme.focus; border.width: shell.px(3); border.color: shell.theme.gap
                 }
-                // The pointer: a click focuses and opens; pointing alone does nothing.
+                // The pointer: a click focuses and opens; held, it does what
+                // holding OK does (a Magic Remote's OK is a click while its
+                // pointer shows); pointing alone does nothing.
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: { shell.selected=cell.navIndex; shell.activate(shell.itemAt(cell.navIndex)); }
+                    property bool held: false
+                    onPressed: held = false
+                    onPressAndHold: { held = true; shell.selected=cell.navIndex; shell.secondaryAction(); }
+                    onClicked: { if (held) return; shell.selected=cell.navIndex; shell.activate(shell.itemAt(cell.navIndex)); }
                 }
             }
         }
@@ -1472,7 +1504,10 @@ FocusScope {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: { shell.selected=pill.navIndex; shell.activate(shell.itemAt(pill.navIndex)); }
+                    property bool held: false
+                    onPressed: held = false
+                    onPressAndHold: { held = true; shell.selected=pill.navIndex; shell.secondaryAction(); }
+                    onClicked: { if (held) return; shell.selected=pill.navIndex; shell.activate(shell.itemAt(pill.navIndex)); }
                 }
             }
         }
