@@ -3,7 +3,7 @@
 # patched LG Home QML (main.qml, Controllers/UIController.qml) from
 # /var/lib/webosbrew/rawin-launcher over the firmware files and restarts only
 # the Home process. The read-only rootfs is not changed; a reboot without this
-# hook gives LG's Home back.
+# hook gives LG's Home back. Then it starts the setup server for the weather.
 set -eu
 base=/var/lib/webosbrew/rawin-launcher
 # The system log and, with the seconds since boot, the launcher's boot log
@@ -43,3 +43,11 @@ done
 # Stop Home only; the next HOME starts it with the patched QML.
 for pid in $(pidof com.webos.app.home || true); do kill -KILL "$pid" || true; done
 log 'panel applied to LG Home'
+
+# The setup server: the weather in the status chip and the page to choose its
+# place (shared/setup.js) on port 8898. One at a time: an older one goes first.
+if [ -f "$base/setup/setup.js" ]; then
+    [ -f "$base/setup.pid" ] && kill "$(cat "$base/setup.pid")" 2>/dev/null || true
+    setsid node "$base/setup/setup.js" "$base" </dev/null >/dev/null 2>&1 &
+    log 'setup server started'
+fi

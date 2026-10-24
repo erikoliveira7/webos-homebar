@@ -5,6 +5,7 @@ import WebOS.Global 1.0
 import "Config.js" as Config
 import "Strings.js" as Strings
 import "Themes.js" as Themes
+import "About.js" as About
 
 FocusScope {
     id: shell
@@ -65,11 +66,24 @@ FocusScope {
     // Themes.ids; size: the text size; motion: animations; sort: the Apps
     // order; tv: a Live TV source on the rail; showHidden: hidden apps and
     // inputs shown dimmed; exitTo (overlay only, sent to the helper): "last"
-    // or an input app id; clock: the top bar; hours: its format, "24" or
-    // "12"; title: the big name of the focused app on Home and Apps; beta:
-    // updates also offer test builds (GitHub pre-releases).
+    // or an input app id; clock, nowApp and weather: what the chip at the top
+    // shows (the time, what is on screen, the weather); hours: the clock's
+    // format, "24" or "12"; units: the temperature's, "auto" (by the TV's
+    // region), "c" or "f"; title: the big name of the focused app on Home and
+    // Apps; beta: updates also offer test builds (GitHub pre-releases).
     property var settings: validSettings({})
     property string systemLang: ""
+    readonly property string units: settings.units === "auto" ? (/[-_]US$/i.test(systemLang) ? "f" : "c") : settings.units
+    // The weather in the chip, from the setup server (shared/setup.js on port
+    // 8898, the same in both variants): {ok, temp, code, day}. Asked each time
+    // Home opens and every quarter of an hour while it is open; the server
+    // keeps an answer for a quarter of an hour too.
+    property var weather: ({ok: false})
+    readonly property bool weatherShown: settings.weather && weather.ok === true
+    // The page to choose the weather's place on a phone: its address, the
+    // same as a QR code (rows of "1" and "0"), the place now, and rev, which
+    // the server counts up at each change of the place.
+    property var setupInfo: ({url: "", qr: null, place: null, rev: -1})
     // The updater (Launcher settings → Updates): idle, checking, current,
     // available, downloading, ready, installing, done or failed; latest is the
     // version found, failed the text key of the failed step.
@@ -186,14 +200,16 @@ FocusScope {
             return !(x.optional && !installed(x.id, apps)) && !(x.stock && !stockHome);
         });
     }
-    // The settings menu's groups: a name and the settings in it. The BACK-hold
-    // target is the overlay's alone.
+    // The settings menu's groups: a name and the settings in it. About comes
+    // first, so it is what the menu opens on. The BACK-hold target is the
+    // overlay's alone.
     function groupsFor(exitTarget) {
         return [
+            {title: "grp_about", keys: ["about"]},
             {title: "grp_look", keys: ["lang", "theme", "size", "motion"]},
             {title: "grp_home", keys: exitTarget ? ["tv", "showHidden", "exitTo"] : ["tv", "showHidden"]},
             {title: "grp_apps", keys: ["sort"]},
-            {title: "grp_screen", keys: ["clock", "hours", "title"]},
+            {title: "grp_screen", keys: ["clock", "hours", "nowApp", "weather", "place", "units", "title"]},
             {title: "grp_backup", keys: ["backup", "restore"]},
             {title: "grp_updates", keys: ["update", "beta"]}
         ];
@@ -218,7 +234,8 @@ FocusScope {
     function settingFor(key) {
         var names = {lang: "set_language", theme: "set_theme", size: "set_size", motion: "set_motion", sort: "set_sort", tv: "set_tv",
                      showHidden: "set_hidden", exitTo: "set_exit", clock: "set_clock", hours: "set_hours", title: "set_title", backup: "set_backup",
-                     restore: "set_restore", update: "set_update", beta: "set_beta"};
+                     restore: "set_restore", update: "set_update", beta: "set_beta", nowApp: "set_now_app", weather: "set_weather",
+                     place: "set_place", units: "set_units", about: "set_about"};
         var item = {key: key, title: t(names[key]), action: "setting", value: ""};
         if (key === "backup" || key === "restore") {
             item.action = key;
@@ -227,6 +244,12 @@ FocusScope {
         } else if (key === "update") {
             item.action = "update";
             item.value = updateText(updateInfo);
+        } else if (key === "about") {
+            item.action = "about";
+            item.value = Strings.format(t("upd_idle"), {version: Config.version});
+        } else if (key === "place") {
+            item.action = "place";
+            item.value = placeText(setupInfo);
         } else item.value = valueTitle(key);
         return item;
     }
@@ -251,8 +274,13 @@ FocusScope {
         } else if (key === "exitTo") {
             list.push({id: "last", title: t("val_last_input")});
             for (i=0; i<inputList.length; i++) list.push({id: inputList[i].id, title: inputList[i].title});
-        } else if (key === "clock" || key === "tv") {
+        } else if (key === "tv") {
             list = [{id: true, title: t("val_show")}, {id: false, title: t("val_hide")}];
+        } else if (key === "clock" || key === "nowApp" || key === "weather") {
+            list = [{id: true, title: t("val_chip_on")}, {id: false, title: t("val_chip_off")}];
+        } else if (key === "units") {
+            list = [{id: "auto", title: Strings.format(t("val_units_auto"), {unit: /[-_]US$/i.test(systemLang) ? "°F" : "°C"})},
+                    {id: "c", title: t("val_units_c")}, {id: "f", title: t("val_units_f")}];
         } else if (key === "hours") {
             list = [{id: "24", title: t("val_hours_24")}, {id: "12", title: t("val_hours_12")}];
         } else if (key === "title") {
@@ -278,6 +306,21 @@ FocusScope {
         if (u.state === "done") return t("upd_done");
         if (u.state === "failed") return t(u.failed);
         return Strings.format(t("upd_idle"), {version: Config.version});
+    }
+    // The weather's place for its row: the one chosen on a phone, or the one
+    // the TV's internet address points to.
+    function placeText(info) {
+        var p = info.place;
+        if (!p || !p.name) return t("place_unknown");
+        return p.auto ? Strings.format(t("place_auto"), {name: p.name}) : p.name;
+    }
+    // The release notes as the menu shows them: update.sh leaves plain text
+    // with "### " before a heading, which is set in bold here.
+    function notesText(notes) {
+        return String(notes || "").split("\n").map(function(line) {
+            var x = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            return /^### /.test(x) ? "<b>" + x.slice(4) + "</b>" : x;
+        }).join("<br>");
     }
     // What OK does on an action row: the verb for the hint, or nothing yet.
     function actionVerb(key) {
@@ -314,7 +357,7 @@ FocusScope {
     // The answer of one update.sh step (null: no answer).
     function updateResult(step, r) {
         var ok = !!(r && r.ok);
-        if (step === "check") setUpdate(ok ? {state: r.newer ? "available" : "current", latest: r.latest} : {state: "failed", failed: "upd_err_check"});
+        if (step === "check") setUpdate(ok ? {state: r.newer ? "available" : "current", latest: r.latest, notes: r.notes || ""} : {state: "failed", failed: "upd_err_check"});
         else if (step === "download") setUpdate(ok ? {state: "ready"} : {state: "failed", failed: "upd_err_download"});
         else if (step === "install") {
             if (ok) installPoll.restart();
@@ -344,6 +387,7 @@ FocusScope {
         saveSettings();
         if (key === "exitTo") exitTargetChosen(value);
         if (key === "beta" && isUpdateIdle()) updateStep("check");
+        if (key === "weather" && value) loadWeather();
     }
     // The settings as saved, each checked, with the defaults for the rest.
     function validSettings(s) {
@@ -358,6 +402,11 @@ FocusScope {
             showHidden: s.showHidden === true,
             exitTo: /^(last|com\.webos\.app\.(hdmi|dp|usbc)\d)$/.test(s.exitTo) ? s.exitTo : "last",
             clock: s.clock !== false,
+            // Up to 0.14 "clock" showed or hid the whole chip: what is on
+            // screen and the weather follow it until they are set themselves.
+            nowApp: s.nowApp === undefined ? s.clock !== false : s.nowApp !== false,
+            weather: s.weather === undefined ? s.clock !== false : s.weather !== false,
+            units: s.units === "c" || s.units === "f" ? s.units : "auto",
             hours: s.hours === "12" ? "12" : "24",
             title: s.title !== false,
             beta: s.beta === true
@@ -472,7 +521,7 @@ FocusScope {
         if (currentPage === "settings") {
             if (currentPane === 1) return [["▲ ▼", t("hint_choose")], ["OK", t("hint_done")]];
             var key = settingKeys[index], verb = actionVerb(key);
-            if (key === "backup" || key === "restore" || key === "update")
+            if (key === "backup" || key === "restore" || key === "update" || key === "place" || key === "about")
                 return verb ? [["OK", verb], [t("hint_back"), t("hint_system")]] : [[t("hint_back"), t("hint_system")]];
             return [["OK", t("hint_change")], [t("hint_back"), t("hint_system")]];
         }
@@ -621,6 +670,8 @@ FocusScope {
         if (item.action === "close") { closeHome(); return; }
         if (item.action === "setting") { if (pane === 1) pane = 0; else enterValues(); return; }
         if (item.action === "update") { updateAction(); return; }
+        if (item.action === "place") { loadSetupInfo(); return; }
+        if (item.action === "about") return;
         if (item.action === "backup") { backupRun("save", backupData()); return; }
         if (item.action === "restore") { if (backupInfo.saved) backupRun("load", null); return; }
         if (item.action === "launcherSettings") {
@@ -630,6 +681,7 @@ FocusScope {
             var s = updateInfo.state;
             if (s === "idle" || s === "current" || s === "failed") updateStep("check");
             backupRun("info", null);
+            loadSetupInfo();
             return;
         }
         if (item.action === "apps" || item.action === "system") {
@@ -765,10 +817,12 @@ FocusScope {
             launching = false; message = ""; page="home"; selected=0; pane=0; forceActiveFocus();
             tick();
             if (ready) { catalog.callService({}); foregroundInfo.callService({extraInfo: true}); loadInputs(); dailyUpdateCheck(); }
+            loadWeather();
         }
     }
     onReadyChanged: {
         if (!ready) return;
+        loadWeather();
         localeService.callService({keys: ["localeInfo"]});
         catalog.callService({});
         loadInputs();
@@ -784,6 +838,122 @@ FocusScope {
         clockTimer.interval = 60000 - (now.getSeconds()*1000 + now.getMilliseconds()) + 50;
     }
     Timer { id: clockTimer; interval: 60000; repeat: true; running: shell.foreground; onTriggered: tick() }
+
+    // The setup server, on 127.0.0.1 in both variants: GET, the JSON answer
+    // to done (null: no answer).
+    function setupGet(pathname, done) {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== XMLHttpRequest.DONE) return;
+            var r = null;
+            if (xhr.status === 200) { try { r = JSON.parse(xhr.responseText); } catch (e) {} }
+            done(r);
+        };
+        xhr.open("GET", "http://127.0.0.1:8898" + pathname);
+        xhr.send();
+    }
+    // A failed answer keeps the last weather: the chip shows it until a new one comes.
+    function loadWeather() {
+        if (!settings.weather) return;
+        setupGet("/weather?units=" + units, function(r) { if (r && r.ok) weather = r; });
+    }
+    onUnitsChanged: loadWeather()
+    Timer { interval: 900000; repeat: true; running: shell.foreground && shell.settings.weather; onTriggered: loadWeather() }
+    // The place page's address and the place now; the weather again when
+    // the place was changed on a phone.
+    function loadSetupInfo() {
+        setupGet("/info", function(r) {
+            if (!r || !r.ok) return;
+            var moved = setupInfo.rev >= 0 && r.rev !== setupInfo.rev;
+            setupInfo = r;
+            if (moved) loadWeather();
+        });
+    }
+    // While the Weather place row is focused, a place chosen on the phone
+    // shows within a few seconds.
+    Timer { interval: 3000; repeat: true; running: shell.foreground && shell.valueKey === "place"; onTriggered: loadSetupInfo() }
+    onValueKeyChanged: if (valueKey === "place") loadSetupInfo()
+
+    // A QR code (rows of "1" and "0") on a Canvas, cell pixels a module.
+    function drawQr(c, m, cell) {
+        c.reset(); c.fillStyle = "#000000";
+        if (!m) return;
+        for (var y=0; y<m.length; y++) for (var x=0; x<m[y].length; x++) if (m[y].charAt(x) === "1") c.fillRect(x*cell, y*cell, cell, cell);
+    }
+
+    // The weather's symbol from its WMO code (Open-Meteo's weather_code).
+    function weatherKind(w) {
+        var c = w.code;
+        if (c === 0 || c === 1) return w.day ? "sun" : "moon";
+        if (c === 2) return w.day ? "partly" : "partlyNight";
+        if (c === 45 || c === 48) return "fog";
+        if (c >= 95) return "storm";
+        if ((c >= 71 && c <= 77) || c === 85 || c === 86) return "snow";
+        if (c >= 51) return "rain";
+        return "cloud";
+    }
+    // A cloud on the 40-unit grid of the glyphs: three bumps on a flat base,
+    // drawn as one outline (where two bumps meet is worked out here).
+    function cloudPath(c, base) {
+        var b = [[12, base - 6, 6], [21, base - 12, 9], [30, base - 6, 6]];
+        function meet(p, q) {
+            var dx = q[0]-p[0], dy = q[1]-p[1], d = Math.sqrt(dx*dx + dy*dy);
+            var a = (p[2]*p[2] - q[2]*q[2] + d*d) / (2*d), h = Math.sqrt(Math.max(0, p[2]*p[2] - a*a));
+            var mx = p[0] + a*dx/d, my = p[1] + a*dy/d;
+            var x1 = mx + h*dy/d, y1 = my - h*dx/d, x2 = mx - h*dy/d, y2 = my + h*dx/d;
+            return y1 < y2 ? [x1, y1] : [x2, y2];
+        }
+        function angle(circle, point) { return Math.atan2(point[1]-circle[1], point[0]-circle[0]); }
+        var right = meet(b[1], b[2]), left = meet(b[0], b[1]);
+        c.moveTo(12, base); c.lineTo(30, base);
+        c.arc(30, base - 6, 6, Math.PI/2, angle(b[2], right), true);
+        c.arc(21, base - 12, 9, angle(b[1], right), angle(b[1], left), true);
+        c.arc(12, base - 6, 6, angle(b[0], left), Math.PI/2 - 2*Math.PI, true);
+        c.closePath();
+    }
+    function sunPath(c, x, y, r, rays) {
+        c.moveTo(x + r, y); c.arc(x, y, r, 0, Math.PI*2);
+        for (var i=0; i<8; i++) {
+            var a = i*Math.PI/4;
+            c.moveTo(x + Math.cos(a)*(r + 4), y + Math.sin(a)*(r + 4));
+            c.lineTo(x + Math.cos(a)*(r + 4 + rays), y + Math.sin(a)*(r + 4 + rays));
+        }
+    }
+    // A crescent: the part of one circle outside a smaller one at its upper right.
+    function moonPath(c, x, y, r) {
+        var k = r/12;
+        c.moveTo(x + 11.87*k, y + 1.73*k);
+        c.arc(x, y, r, 0.145, 4.567, false);
+        c.arc(x + 7*k, y - 7*k, 10*k, 3.650, 1.062, true);
+        c.closePath();
+    }
+    function drawWeather(c, kind) {
+        c.beginPath();
+        if (kind === "sun") sunPath(c, 20, 20, 7, 4);
+        else if (kind === "moon") moonPath(c, 20, 21, 12);
+        else if (kind === "partly" || kind === "partlyNight") {
+            if (kind === "partly") sunPath(c, 14, 14, 5, 3); else moonPath(c, 14, 14, 8);
+            c.stroke();
+            // The cloud in front: what of the sun is behind it is wiped first.
+            c.beginPath(); c.save(); c.translate(4, 4); c.scale(0.85, 0.85); cloudPath(c, 34); c.restore();
+            c.globalCompositeOperation = "destination-out"; c.fill();
+            c.globalCompositeOperation = "source-over";
+        } else if (kind === "fog") {
+            c.moveTo(10,13); c.lineTo(30,13); c.moveTo(6,20); c.lineTo(34,20); c.moveTo(10,27); c.lineTo(30,27); c.moveTo(15,34); c.lineTo(25,34);
+        } else if (kind === "cloud") cloudPath(c, 30);
+        else {
+            cloudPath(c, 26);
+            if (kind === "rain") { c.moveTo(14,31); c.lineTo(12,37); c.moveTo(21,31); c.lineTo(19,37); c.moveTo(28,31); c.lineTo(26,37); }
+            else if (kind === "storm") { c.moveTo(23,29); c.lineTo(18,34); c.lineTo(23,34); c.lineTo(19,39); }
+            else if (kind === "snow") {
+                c.stroke(); c.beginPath();
+                c.arc(13,33,1.8,0,Math.PI*2); c.moveTo(22.8,36); c.arc(21,36,1.8,0,Math.PI*2); c.moveTo(30.8,33); c.arc(29,33,1.8,0,Math.PI*2);
+                c.fillStyle = c.strokeStyle; c.fill();
+                return;
+            }
+        }
+        c.stroke();
+    }
 
     // The glow colour of an app from its icon, for the apps the build has
     // no colour for: the icon is drawn small and its vivid pixels averaged
@@ -1060,11 +1230,13 @@ FocusScope {
             }
         }
 
-        // Status: what is underneath, then the clock, on a chip like the input
-        // pills, so it reads over any picture without shading the screen.
+        // Status: what is underneath, the weather, then the clock (each can be
+        // hidden), on a chip like the input pills, so it reads over any
+        // picture without shading the screen.
         Rectangle {
             id: status
-            visible: shell.settings.clock !== false
+            readonly property bool showApp: shell.settings.nowApp && nowTitle !== ""
+            visible: showApp || shell.weatherShown || shell.settings.clock
             anchors.right: parent.right; anchors.rightMargin: shell.margin; y: shell.px(32)
             width: statusRow.width + shell.px(48); height: Math.max(shell.px(56), statusRow.height + shell.px(22)); radius: shell.px(18)
             color: shell.surface; border.width: 1; border.color: shell.theme.surfaceEdge
@@ -1072,7 +1244,7 @@ FocusScope {
                 id: statusRow
                 anchors.centerIn: parent; spacing: shell.px(18)
                 Row {
-                    visible: nowTitle !== ""; spacing: shell.px(10); anchors.verticalCenter: parent.verticalCenter
+                    visible: status.showApp; spacing: shell.px(10); anchors.verticalCenter: parent.verticalCenter
                     Rectangle { width: shell.px(7); height: width; radius: width/2; color: shell.theme.focus; anchors.verticalCenter: parent.verticalCenter }
                     // A long app name is cut, not the chip pushed off the screen. Its
                     // width is measured by a hidden twin: an elided Text whose width
@@ -1084,8 +1256,28 @@ FocusScope {
                         width: Math.min(Math.ceil(nowTwin.implicitWidth) + 1, shell.px(480)); elide: Text.ElideRight
                     }
                 }
-                Rectangle { visible: nowTitle !== ""; width: 1; height: shell.pt(20); color: shell.theme.divider; anchors.verticalCenter: parent.verticalCenter }
-                Text { text: clock; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(26); font.letterSpacing: -0.4*shell.u; color: shell.theme.heading; anchors.verticalCenter: parent.verticalCenter }
+                Rectangle { visible: status.showApp && (shell.weatherShown || shell.settings.clock); width: 1; height: shell.pt(20); color: shell.theme.divider; anchors.verticalCenter: parent.verticalCenter }
+                Row {
+                    visible: shell.weatherShown; spacing: shell.px(8); anchors.verticalCenter: parent.verticalCenter
+                    Canvas {
+                        property int box: shell.pt(30)
+                        property string kind: shell.weatherKind(shell.weather)
+                        property string stroke: shell.theme.text
+                        width: box; height: box; anchors.verticalCenter: parent.verticalCenter
+                        onKindChanged: requestPaint()
+                        onStrokeChanged: requestPaint()
+                        onBoxChanged: requestPaint()
+                        onVisibleChanged: if (visible) requestPaint()
+                        onPaint: {
+                            var c=getContext("2d"); c.reset(); c.scale(box/40, box/40);
+                            c.strokeStyle = stroke; c.lineWidth = Math.max(1.5, 2.2*shell.u)*40/box; c.lineCap="round"; c.lineJoin="round";
+                            shell.drawWeather(c, kind);
+                        }
+                    }
+                    Text { text: shell.weather.temp + "°"; font.family: shell.fontName; font.pixelSize: shell.pt(21); color: shell.theme.text; anchors.verticalCenter: parent.verticalCenter }
+                }
+                Rectangle { visible: shell.weatherShown && shell.settings.clock; width: 1; height: shell.pt(20); color: shell.theme.divider; anchors.verticalCenter: parent.verticalCenter }
+                Text { visible: shell.settings.clock; text: clock; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(26); font.letterSpacing: -0.4*shell.u; color: shell.theme.heading; anchors.verticalCenter: parent.verticalCenter }
             }
         }
 
@@ -1550,6 +1742,7 @@ FocusScope {
                 clip: true
                 readonly property var setting: shell.page === "settings" && shell.selected < shell.settingsItems.length ? shell.settingsItems[shell.selected] : null
                 readonly property bool actionRow: setting !== null && setting.action !== "setting"
+                readonly property string key: setting ? setting.key : ""
                 Text {
                     id: valuesTitle
                     x: shell.px(20); y: shell.px(6); width: parent.width - shell.px(40); elide: Text.ElideRight
@@ -1573,6 +1766,86 @@ FocusScope {
                             Text { id: okLabel; anchors.centerIn: parent; text: "OK"; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(12); color: shell.ink2 }
                         }
                         Text { text: valuesPane.setting ? shell.actionVerb(valuesPane.setting.key) : ""; font.family: shell.fontName; font.pixelSize: shell.pt(17); color: shell.ink2; anchors.verticalCenter: parent.verticalCenter }
+                    }
+                    // Updates: what the version found changes, from its release notes.
+                    Column {
+                        width: parent.width; spacing: shell.px(8)
+                        visible: valuesPane.key === "update" && !!shell.updateInfo.notes
+                                 && ["available", "downloading", "ready", "installing"].indexOf(shell.updateInfo.state) >= 0
+                        Text { text: shell.t("upd_notes"); font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(19); color: shell.ink }
+                        Text {
+                            width: parent.width; wrapMode: Text.WordWrap; textFormat: Text.StyledText
+                            text: shell.notesText(shell.updateInfo.notes); lineHeight: 1.1
+                            font.family: shell.fontName; font.pixelSize: shell.pt(17); color: shell.ink2
+                        }
+                    }
+                    // About: a few words, the code to support the project, and
+                    // where its source is.
+                    Column {
+                        width: parent.width; spacing: shell.px(22)
+                        visible: valuesPane.key === "about"
+                        Text {
+                            width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.1
+                            text: shell.t("about_text")
+                            font.family: shell.fontName; font.pixelSize: shell.pt(19); color: shell.ink2
+                        }
+                        Row {
+                            spacing: shell.px(28)
+                            Rectangle {
+                                id: supportCode
+                                // Whole pixels per module and a quiet zone of four.
+                                readonly property int modules: About.supportQr.length
+                                readonly property int cell: Math.max(2, Math.floor(shell.px(260) / (modules + 8)))
+                                width: cell*(modules + 8); height: width; radius: shell.px(12); color: "#ffffff"
+                                Canvas {
+                                    x: 4*parent.cell; y: x; width: parent.cell*parent.modules; height: width
+                                    onWidthChanged: requestPaint()
+                                    onVisibleChanged: if (visible) requestPaint()
+                                    onPaint: shell.drawQr(getContext("2d"), About.supportQr, parent.cell)
+                                }
+                            }
+                            Column {
+                                anchors.verticalCenter: supportCode.verticalCenter; spacing: shell.px(8)
+                                Text { text: shell.t("about_scan"); font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(21); color: shell.ink }
+                                Text { text: About.support.replace(/^https:\/\//, ""); font.family: shell.fontName; font.pixelSize: shell.pt(18); color: shell.ink2 }
+                            }
+                        }
+                        Text {
+                            width: parent.width; elide: Text.ElideRight
+                            text: "GitHub · " + About.repo.replace(/^https:\/\//, "")
+                            font.family: shell.fontName; font.pixelSize: shell.pt(18); color: shell.ink2
+                        }
+                    }
+                    // Weather place: the code that opens the place page on a
+                    // phone, what to do with it, and its address.
+                    Column {
+                        width: parent.width; spacing: shell.px(16)
+                        visible: valuesPane.key === "place" && shell.setupInfo.rev >= 0
+                        Rectangle {
+                            visible: !!shell.setupInfo.qr
+                            // Whole pixels per module and a quiet zone of four.
+                            readonly property int modules: shell.setupInfo.qr ? shell.setupInfo.qr.length : 21
+                            readonly property int cell: Math.max(2, Math.floor(shell.px(300) / (modules + 8)))
+                            width: cell*(modules + 8); height: width; radius: shell.px(12); color: "#ffffff"
+                            Canvas {
+                                x: 4*parent.cell; y: x; width: parent.cell*parent.modules; height: width
+                                property var matrix: shell.setupInfo.qr
+                                onMatrixChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onVisibleChanged: if (visible) requestPaint()
+                                onPaint: shell.drawQr(getContext("2d"), matrix, parent.cell)
+                            }
+                        }
+                        Text {
+                            width: parent.width; wrapMode: Text.WordWrap
+                            text: shell.setupInfo.url ? shell.t("place_scan") : shell.t("place_noip")
+                            font.family: shell.fontName; font.pixelSize: shell.pt(18); color: shell.ink2
+                        }
+                        Text {
+                            visible: !!shell.setupInfo.url; width: parent.width; elide: Text.ElideRight
+                            text: shell.setupInfo.url.replace(/^http:\/\//, "")
+                            font.family: shell.fontName; font.pixelSize: shell.pt(16); color: shell.ink3
+                        }
                     }
                 }
                 // The values: a dot on the chosen one; the focused one lit

@@ -6,7 +6,9 @@ TVs, 1280x720 on HD ones. This renders a set of scenes at a size, so a
 change can be checked at every size without a TV: Home with seven
 favourites and long HDMI-CEC names, a favourite focused, recent apps and
 Live TV on the rail, hidden inputs and apps, Apps in each order, System with
-an update waiting, the settings and a setting's values, the larger text
+an update waiting with its notes, About, the settings and a setting's values,
+the weather's place with its code (from the setup server, shared/setup.js,
+when one runs on this computer), the weather in each of its symbols, the larger text
 size, no favourites, and a set with two inputs.
 
 Usage: tools/render-panel.py [--size 1920x1080] [--out dist/render] [--theme default]
@@ -40,6 +42,8 @@ APPS = [("netflix", "Netflix", "#e50914"), ("youtube.leanback.v4", "YouTube", "#
         ("podcasts", "Podcasts", "#9b59b6"), ("games", "Games", "#2c3e50"), ("files", "File Manager", "#7f8c8d"),
         ("screensaver", "Screensaver", "#34495e")]
 INPUTS = [("PlayStation 5", True), ("Apple TV 4K", True), ("Nintendo Switch", True), ("Chromecast with Google TV", False)]
+NOTES = ("### New\n\u2022 The weather in the chip at the top, for a place chosen on a phone.\n"
+         "\u2022 The clock, what is on screen and the weather can each be hidden.\n\n### Fixed\n\u2022 Something small.")
 INPUTS_SMALL = [("Blu-ray Player", True), ("", False)]
 
 MAIN = '''import QtQuick
@@ -59,7 +63,8 @@ Item {
         shell.favouriteIds = s.favs; shell.allInputs = s.inputs;
         shell.hiddenIds = s.hidden || []; shell.hiddenInputs = s.hiddenInputs || [];
         shell.usage = s.usage || {};
-        shell.updateInfo = {state: s.updateState || "idle", latest: "9.9.9", failed: ""};
+        shell.updateInfo = {state: s.updateState || "idle", latest: "9.9.9", failed: "", notes: s.notes || ""};
+        if (s.weather) shell.weather = s.weather;
         shell.page = "home"; shell.selected = 0; shell.pane = 0;
         shell.page = s.page; shell.selected = s.selected;
         if (s.pane) { shell.enterValues(); if (s.valueIndex !== undefined) shell.valueIndex = s.valueIndex; }
@@ -87,7 +92,7 @@ def panel(app_dir):
                     ("launchService", "catalog", "foregroundInfo", "localeService", "inputService", "updateService", "backupService"))
     stubs += "    function loadInputs() {}\n    function updateRun(step, channel) {}\n    function backupRun(step, data) {}\n"
     (app_dir / "Launcher.qml").write_text(q[:start] + stubs + q[end:])
-    for name in ("FavouriteStore.qml", "Strings.js", "Themes.js"):
+    for name in ("FavouriteStore.qml", "Strings.js", "Themes.js", "About.js"):
         (app_dir / name).write_bytes((ROOT / "ui" / name).read_bytes())
     apps = []
     for app_id, title, color in APPS:
@@ -153,13 +158,18 @@ def main():
             scene("apps", page="apps", selected=14),
             scene("apps-az-hidden", page="apps", selected=13, settings=dict(theme, sort="az", showHidden=True), hidden=["kids", "kodi"]),
             scene("system-update", page="system", selected=1, updateState="available"),
-            scene("settings", page="settings", selected=1),
-            scene("settings-end", page="settings", selected=13, updateState="available"),
-            scene("settings-values", page="settings", selected=1, pane=1, valueIndex=3),
+            scene("settings-about", page="settings", selected=0),
+            scene("settings", page="settings", selected=2),
+            scene("settings-end", page="settings", selected=19, updateState="available"),
+            scene("settings-update", page="settings", selected=18, updateState="available", notes=NOTES),
+            scene("settings-place", page="settings", selected=13),
+            scene("settings-values", page="settings", selected=2, pane=1, valueIndex=3),
             scene("home-larger", page="home", selected=8, settings=dict(theme, size="larger")),
             scene("home-nofavs", page="home", selected=0, favs=[]),
             scene("home-2inputs", page="home", selected=3, favs=favs[:3], inputs=inputs(INPUTS_SMALL)),
         ]
+        scenes += [scene("weather-%d-%s" % (code, "day" if day else "night"), page="home", selected=0, weather={"ok": True, "temp": -3 + code % 30, "code": code, "day": day})
+                   for code, day in ((0, True), (0, False), (2, True), (2, False), (3, True), (45, True), (61, True), (73, True), (95, True))]
         for name, spec in scenes:
             root.scene(json.dumps(spec))
             wait(700)

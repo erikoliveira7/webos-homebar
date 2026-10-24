@@ -57,7 +57,8 @@ app:
   `127.0.0.1:8899` (loopback only). It also watches the foreground: when an app
   exits or LG Home comes up uninvited it opens the last input (or the HDMI
   chosen in the settings). It keeps the backup file (`backup.json`) for the
-  panel. It is written for node 8 and later. When it does not answer (a
+  panel, and runs the [setup server](#the-weather-and-its-page) for the
+  weather. It is written for node 8 and later. When it does not answer (a
   HOME in the second before it is up after a boot, an update replacing it),
   the panel asks for the app list again every 1.5 s, up to ten times.
 - LG Home stand-in: a black web page with the id `com.webos.app.home`,
@@ -93,6 +94,28 @@ averaged (grey, white and black count for little; a dark result is
 brightened), once per icon, and kept with the icon's path so a changed icon
 is read again.
 
+## The weather and its page
+
+Both variants run the same small server, `shared/setup.js` (plain ES5, for
+webOS 4's node 0.12), on port 8898: the overlay's helper starts it in its own
+process, and on webOS 4 the boot hook starts it as its own `node` process.
+It serves:
+
+- `/weather` and `/info`, to the panel on `127.0.0.1` only: the weather now
+  (Open-Meteo, over plain HTTP: node 0.12's TLS is too old for most of the
+  web) and the address of the place page, with that address as a QR code
+  (`shared/qr.js`), which the panel draws on a `Canvas`.
+- `/` and `/place`, to the home network: the page a phone opens from the
+  code, and the place it saves. The page looks the place up with
+  Open-Meteo's geocoding from the phone itself. Saving needs the token in
+  the code, which is new each time the server starts.
+
+What goes out: the place's coordinates to Open-Meteo, at most once a quarter
+of an hour, and, while no place is chosen, one request to ip-api.com every
+six hours, which sees the TV's internet address. Only the chosen place is
+kept, in `weather.json` next to the installed launcher. With *Weather* off
+the panel asks for nothing.
+
 ## What the launcher keeps
 
 Everything the launcher remembers is in its LocalStorage database
@@ -119,8 +142,8 @@ Home panel:
 
 | What | Where |
 | :--- | :--- |
-| Launcher files, patched and original Home QML, the scripts (`update.sh`, `diagnose.sh`, `probe.sh` with `patch-home.js`), `backup.json` once made | `/var/lib/webosbrew/rawin-launcher/` |
-| Boot hook (bind mounts, CRIU snapshot hidden, Home restarted) | `/var/lib/webosbrew/init.d/76-rawin-launcher` |
+| Launcher files, patched and original Home QML, the scripts (`update.sh`, `diagnose.sh`, `probe.sh` with `patch-home.js`), the setup server (`setup/`, `setup.pid`), `backup.json` and `weather.json` once made | `/var/lib/webosbrew/rawin-launcher/` |
+| Boot hook (bind mounts, CRIU snapshot hidden, Home restarted, setup server started) | `/var/lib/webosbrew/init.d/76-rawin-launcher` |
 | Favourites and settings | LG Home's LocalStorage (database `rawinLauncher`) |
 
 Overlay:
@@ -129,7 +152,7 @@ Overlay:
 | :--- | :--- |
 | App and helper (developer app) | `org.rawin.launcher`, `org.rawin.launcher.service` |
 | Helper runs as root | Homebrew `elevate-service` role files for the service |
-| LG Home stand-in, its script, the uninstaller, the scripts (`update.sh`, `diagnose.sh`, `probe.sh` with `patch-home.js`), `backup.json` once made | `/var/lib/webosbrew/rawin-launcher-home/` |
+| LG Home stand-in, its script, the uninstaller, the scripts (`update.sh`, `diagnose.sh`, `probe.sh` with `patch-home.js`), `backup.json` and `weather.json` once made | `/var/lib/webosbrew/rawin-launcher-home/` |
 | Boot hook (Input Hook started, stand-in mounted, helper started, panel preloaded) | `/var/lib/webosbrew/init.d/10-rawin-launcher` (`77-rawin-launcher` up to 0.14.0) |
 | HOME button → launcher | Input Hook `keybinds.json`: the key pressed when the installer asked, else `773` (first copy kept as `keybinds.json.before-rawin-launcher`) |
 | Last input, BACK-hold target | `/var/lib/webosbrew/rawin-launcher-last-input`, `rawin-launcher-settings.json` |

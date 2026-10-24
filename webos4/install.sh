@@ -42,7 +42,7 @@ done
 rm -rf "$BASE/current" "$BASE/restore.sh"
 mkdir -p "$BASE/current/fonts"
 cp "$TMP/main.original.qml" "$TMP/UIController.original.qml" "$TMP/main.qml" "$TMP/UIController.qml" "$BASE/"
-cp "$UI/Launcher.qml" "$UI/FavouriteStore.qml" "$UI/Strings.js" "$UI/Themes.js" "$HERE/Config.js" "$BASE/current/"
+cp "$UI/Launcher.qml" "$UI/FavouriteStore.qml" "$UI/Strings.js" "$UI/Themes.js" "$UI/About.js" "$HERE/Config.js" "$BASE/current/"
 cp "$UI"/fonts/* "$BASE/current/fonts/"
 # The TV's webOS version, shown in the panel's corner with the variant.
 webos=$(sed -n 's/.*release \([0-9][0-9.]*\).*/\1/p' /etc/starfish-release 2>/dev/null | head -n 1)
@@ -50,6 +50,9 @@ sed -i "s/^var webos = .*/var webos = \"$webos\";/" "$BASE/current/Config.js"
 cp "$HERE/apply.sh" "$HERE/uninstall.sh" "$HERE/../update.sh" "$HERE/../diagnose.sh" "$HERE/../VERSION" "$BASE/"
 # The probe (which variant fits) next to diagnose.sh, with the patch it checks with.
 cp "$HERE/../probe.sh" "$HERE/patch-home.js" "$BASE/"
+# The setup server (the weather and the page to choose its place), started by apply.sh.
+mkdir -p "$BASE/setup"
+cp "$HERE/../shared/setup.js" "$HERE/../shared/qr.js" "$HERE/../shared/setup.html" "$BASE/setup/"
 chmod 755 "$BASE/apply.sh" "$BASE/uninstall.sh" "$BASE/update.sh" "$BASE/probe.sh"
 mkdir -p /var/lib/webosbrew/init.d
 ln -sf "$BASE/apply.sh" "$HOOK"

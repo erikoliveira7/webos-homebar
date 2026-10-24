@@ -12,6 +12,8 @@ if ! ls /var/lib/webosbrew/init.d/ 2>/dev/null | grep -q home-tuning; then
     done
 fi
 rm -f /var/lib/webosbrew/init.d/76-rawin-launcher
+# The setup server (weather), started by apply.sh.
+[ -f "$BASE/setup.pid" ] && kill "$(cat "$BASE/setup.pid")" 2>/dev/null
 rm -rf "$BASE"
 # Favourites and settings: the "rawinLauncher" LocalStorage database in LG Home's
 # data (Qt names the files after the MD5 of the database name).

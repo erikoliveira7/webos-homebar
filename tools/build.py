@@ -8,7 +8,8 @@ the TV has the makings for:
             hook), files from ui/
   webos10/  the overlay: org.rawin.launcher_<version>_all.ipk (overlay app +
             root helper), LG Home stand-in, boot hook, Input Hook binding
-Both use the same panel, ui/Launcher.qml. For the overlay it becomes Panel.qml:
+Both use the same panel, ui/Launcher.qml, and the same setup server for the
+weather, shared/. For the overlay it becomes Panel.qml:
 the Luna Service elements are swapped for webos10/panel-bridge.qml (HTTP to the
 helper) and fonts come from the package.
 
@@ -90,6 +91,12 @@ def panel_qml():
     return q[:start] + bridge + q[end:]
 
 
+def shared_files():
+    """The setup server (weather, the place page, its QR code), run by the
+    overlay's helper and by the Home panel's boot hook alike."""
+    return [ROOT / "shared" / name for name in ("setup.js", "qr.js", "setup.html")]
+
+
 def webos10_ipk(spec, version):
     # webOS takes only x.y.z as a package version; a test build's suffix
     # ("0.11.0-test1") shows in the panel, from Config.js.
@@ -107,10 +114,12 @@ def webos10_ipk(spec, version):
         (app_dir + "FavouriteStore.qml", (ROOT / "ui/FavouriteStore.qml").read_bytes()),
         (app_dir + "Strings.js", (ROOT / "ui/Strings.js").read_bytes()),
         (app_dir + "Themes.js", (ROOT / "ui/Themes.js").read_bytes()),
+        (app_dir + "About.js", (ROOT / "ui/About.js").read_bytes()),
         (app_dir + "icon.png", (ROOT / "ui/icon.png").read_bytes()),
     ]
     files += [(app_dir + "fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
     files += [(svc_dir + p.name, p.read_bytes()) for p in sorted((ROOT / "webos10/helper").glob("*.js"))]
+    files += [(svc_dir + p.name, p.read_bytes()) for p in shared_files()]
     files += [
         (svc_dir + "package.json", json.dumps({"name": SERVICE, "version": package_version, "main": "service.js"}, indent=1).encode()),
         (svc_dir + "services.json", json.dumps({"id": SERVICE, "description": "Homebar helper",
@@ -139,12 +148,13 @@ def release_files(spec, version):
         ("LICENSE", (ROOT / "LICENSE").read_bytes()),
         ("README.md", (ROOT / "README.md").read_bytes()),
     ]
-    for name in ("Launcher.qml", "FavouriteStore.qml", "Strings.js", "Themes.js", "icon.png"):
+    for name in ("Launcher.qml", "FavouriteStore.qml", "Strings.js", "Themes.js", "About.js", "icon.png"):
         files.append(("ui/" + name, (ROOT / "ui" / name).read_bytes()))
     files += [("ui/fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
     for name in ("install.sh", "uninstall.sh", "apply.sh"):
         files.append(("webos4/" + name, (ROOT / "webos4" / name).read_bytes(), exe))
     files.append(("webos4/patch-home.js", (ROOT / "webos4/patch-home.js").read_bytes()))
+    files += [("shared/" + p.name, p.read_bytes()) for p in shared_files()]
     files.append(("webos4/Config.js", config_js(spec, version, "Home panel")))
     for name in ("install.sh", "uninstall.sh", "home-takeover.sh", "boot-hook.sh"):
         files.append(("webos10/" + name, (ROOT / "webos10" / name).read_bytes(), exe))

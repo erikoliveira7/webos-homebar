@@ -55,6 +55,19 @@ moment later, and the TV goes back to the input. A TV woken from standby
 does not boot, so this is only seen after a power cut, a `reboot` or a
 firmware update. The boot log in `diagnose.sh` shows when each step ran.
 
+## No weather in the chip
+
+- *Launcher settings → Weather* has to be *Shown*. Without an internet
+  connection the chip leaves the weather out until one is there.
+- `diagnose.sh` shows whether the setup server on port 8898 answers
+  (*Weather (setup server)*). With the Home panel it starts at boot, or
+  again with `sh /var/lib/webosbrew/rawin-launcher/apply.sh`; with the
+  overlay the helper runs it.
+- The phone page does not open: the phone has to be on the same network as
+  the TV, and some routers (guest networks, "AP isolation") keep devices
+  apart. A page that says it has expired is from before the TV's last
+  restart: scan the code again.
+
 ## An update fails
 
 The panel says which step failed (check, download or install) and OK tries

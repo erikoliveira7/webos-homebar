@@ -11,6 +11,10 @@
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/rawinek/webos-homebar"></a>
 </p>
 
+<p align="center">
+  <a href="https://buymeacoffee.com/rawin"><img alt="Buy me a coffee" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="44"></a>
+</p>
+
 ![Homebar over a playing video: seven favourite apps, the HDMI inputs with their devices, Apps and System](docs/screenshots/home.jpg)
 
 Homebar is a home screen for rooted LG webOS TVs. Press HOME and a bar comes
@@ -34,7 +38,7 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
     <td><img src="docs/screenshots/edit-favourite.jpg" alt="A favourite in edit mode, with handles to move it"></td>
   </tr>
   <tr>
-    <td><b>Settings with a live preview.</b> One menu: language, theme, text size, the clock, what the row shows, backup and updates. Every value applies as you move to it.</td>
+    <td><b>Settings with a live preview.</b> One menu: language, theme, text size, the clock and the weather, what the row shows, backup and updates. Every value applies as you move to it.</td>
     <td><b>Favourites chosen on the TV.</b> Hold OK on an app to add it, up to seven; hold OK on a favourite to move it or take it off the row.</td>
   </tr>
   <tr>
@@ -51,8 +55,11 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
 
 - **Nine languages**, the TV's own by default: English, Spanish, German,
   Polish, French, Italian, Portuguese, Dutch and Czech.
+- **The weather** in the corner, next to the clock, from Open-Meteo with no
+  account or key. The place is chosen on a phone, from a code on the TV.
 - **Updates itself** from this repository's releases, in *Launcher settings
-  → Updates*; a dot on *System* says when one is there.
+  → Updates*, with what is new in each; a dot on *System* says when one is
+  there.
 - **Backup and restore** of favourites and settings in one file.
 - **webOS 10:** LG's own Home stays out of the way. A black stand-in takes
   its place, and the TV goes back to the last input (or a chosen one) when
@@ -110,6 +117,13 @@ old GitHub address leads here.
 
 Problems: run `diagnose.sh` (see [Troubleshooting](docs/troubleshooting.md#diagnose))
 and attach its file to an [issue](https://github.com/rawinek/webos-homebar/issues).
+
+## Support
+
+I build free apps and tools and share them on GitHub. If you enjoy my
+projects, you can support my work by
+[buying me a coffee](https://buymeacoffee.com/rawin) ☕ (the code is also in
+*Launcher settings → About Homebar* on the TV).
 
 ## Credits
 

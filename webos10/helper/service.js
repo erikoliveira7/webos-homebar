@@ -14,6 +14,7 @@ const http = require('http');
 const path = require('path');
 const urlModule = require('url');
 const { AfterExit, cardOf } = require('./after-exit');
+const setup = require('./setup');
 
 const APP = 'org.rawin.launcher';
 const APP_DIR = '/media/developer/apps/usr/palm/applications/' + APP;
@@ -191,6 +192,9 @@ const server = http.createServer(async (req, res) => {
 });
 server.on('error', (e) => console.error('rawin-launcher http: ' + e.message));
 server.listen(HTTP_PORT, '127.0.0.1');
+
+// The weather and the page to choose its place on a phone (shared/setup.js).
+setup.start(BASE);
 
 // --- After an app exits, or LG Home shows up: back to the last input --------
 

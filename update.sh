@@ -49,7 +49,12 @@ var version = r.tag_name.replace(/^v/, "");
 fs.writeFileSync(work + "/version", version);
 fs.writeFileSync(work + "/url", file.browser_download_url);
 fs.writeFileSync(work + "/sha256", String(file.digest || "").replace(/^sha256:/, ""));
-out({ok: true, current: current, latest: version, newer: newer(version, current), prerelease: !!r.prerelease});
+// What changed, for the panel: the release notes up to how to update, in
+// plain text but for the "### " of a heading, cut to what the panel shows.
+var notes = String(r.body || "").replace(/\r/g, "").split(/\n(?=#+ *Updating|Tested on)/)[0]
+  .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\*\*|`/g, "").replace(/(^|\W)[*_]([^*_\n]+)[*_](?=\W|$)/g, "$1$2")
+  .replace(/^#+ */gm, "### ").replace(/^[-*] +/gm, "\u2022 ").replace(/\n{3,}/g, "\n\n").trim().slice(0, 1500);
+out({ok: true, current: current, latest: version, newer: newer(version, current), prerelease: !!r.prerelease, notes: notes});
 }
 main();
 ' "$WORK" "$current" "$ASSET" || fail "node failed"

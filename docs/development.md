@@ -49,9 +49,10 @@ tested and whether the overlay replaces LG's Home by default.
 
 | Path | What |
 | :--- | :--- |
-| `ui/` | The panel shared by both variants: `Launcher.qml`, texts in `Strings.js`, colours in `Themes.js`, LocalStorage in `FavouriteStore.qml`, fonts |
+| `ui/` | The panel shared by both variants: `Launcher.qml`, texts in `Strings.js`, colours in `Themes.js`, the About page's links and QR code in `About.js`, LocalStorage in `FavouriteStore.qml`, fonts |
 | `webos4/` | The Home panel: the LG Home patch, boot hook and scripts |
 | `webos10/` | The overlay: the overlay app, helper, HTTP bridge, Home stand-in and scripts |
+| `shared/` | The setup server of both variants: the weather, the page to choose its place on a phone, and that page's QR code |
 | `tools/` | Build, deploy, the app icon (`make-icon.py`), the theme pictures (`render-themes.py`) and the panel at any size (`render-panel.py`) |
 | `config/` | Build defaults, see [Configuration](#configuration) |
 

@@ -32,8 +32,8 @@ stays visible above it. One row, from the left:
 <img src="screenshots/home-input.jpg" width="100%" alt="An HDMI input focused: its name above the row, the device under each input, the hints for OK, hold OK and RED at the bottom">
 
 The focused item's name shows above the row, and the hints under it say what
-OK and the other keys do. The clock bar in the top-right corner shows what is
-on screen and the time. BACK closes the panel; from *Apps* or *System* it goes
+OK and the other keys do. The chip in the top-right corner shows what is on
+screen, the [weather](#weather) and the time; each of the three can be hidden. BACK closes the panel; from *Apps* or *System* it goes
 back to Home. The panel fits the TV's screen, HD or FHD/UHD, at the same
 proportions. With the Magic Remote's pointer, a click on anything focuses
 and opens it; pointing alone changes nothing, and neither does the wheel.
@@ -100,8 +100,11 @@ left are the settings in groups, each with its value; on the right the
 values of the focused one, with a dot on the chosen value. ▲ ▼ move between
 the settings; OK or ▶ goes into the values, where ▲ ▼ choose (each value
 applies at once, so the menu itself is the preview) and OK or ◀ come back;
-BACK closes the menu. *Back up*, *Restore* and *Updates* show their status
-on the right and act on OK.
+BACK closes the menu. *About Homebar*, first, shows the version and a code
+to support the project. *Back up*, *Restore* and *Updates* show their status
+on the right and act on OK; when a new version is found, *Updates* also
+shows what changes in it, from its release notes. *Weather place* shows a
+code to scan with a phone, see [Weather](#weather).
 
 The values of *After holding BACK* (overlay), and Home with the text size
 at *Larger* and the 12-hour clock:
@@ -112,6 +115,7 @@ at *Larger* and the 12-hour clock:
 
 | Group | Setting | Values |
 | :--- | :--- | :--- |
+| About | About Homebar | The version, a code to [buy me a coffee](https://buymeacoffee.com/rawin) and where the source is. The menu opens here |
 | Look | Language | *System language* (the TV's menu language, when it is one of the [languages](#languages)), or one of them by hand |
 | | Theme | Default or one of seven two-colour themes, see [Themes](themes.md) |
 | | Text size | Normal, Large or Larger: the names, hints, labels and the menu grow; the tiles and pills keep their size, so the row still fits |
@@ -120,13 +124,40 @@ at *Larger* and the 12-hour clock:
 | | Hidden apps and inputs | Hidden, or shown dimmed (to bring one back with RED) |
 | | After holding BACK | Overlay only: the last input, or one of the TV's inputs. Also where the TV goes when an app exits |
 | Apps | Apps order | The TV's order, A to Z, or the most used first |
-| On screen | Clock bar | Shown or hidden |
+| On screen | Clock | Shown or hidden |
 | | Clock format | 24-hour (16:05) or 12-hour (4:05 PM); the backup's time follows it |
+| | Current app | The app or input on screen, shown or hidden |
+| | Weather | Shown or hidden, see [Weather](#weather) |
+| | Weather place | The place of the weather; a code on the right opens a page on a phone to choose it |
+| | Temperature | *Automatic* (°F when the TV's language is set for the United States, else °C), Celsius or Fahrenheit |
 | | App name | Whether the big name of the focused item shows on Home and in *Apps* (System always shows it) |
 | Backup | Back up favourites and settings | OK writes everything the launcher keeps to a file next to it; the status says when the last backup was made, see [Backup](#backup) |
 | | Restore from the backup | OK brings that file back |
 | Updates | Updates | The installed version; OK checks, downloads and installs a new release, see [Update](install.md#update). The launcher also looks once a day, the first time Home opens, and shows a dot on *System* and *Launcher settings* when a new version is there |
 | | Test builds | Also offer pre-releases as updates |
+
+Up to 0.14 one setting, *Clock bar*, showed or hid the whole chip. When it
+was hidden, the clock, the app and the weather start hidden too.
+
+## Weather
+
+The chip at the top shows the weather now: a symbol and the temperature,
+from [Open-Meteo](https://open-meteo.com), without an account or a key. It
+is read each time Home opens and every quarter of an hour while it is up.
+
+By default the place is the one the TV's internet address points to (from
+[ip-api.com](https://ip-api.com)), which is often the nearest city of the
+internet provider rather than your own. To choose it:
+
+1. Open *System → Launcher settings → Weather place*. A code shows on the right.
+2. Scan it with the phone's camera. The phone has to be on the same network
+   as the TV.
+3. On the page that opens, search for a town or city and tap it. The TV
+   shows its weather within a few seconds.
+
+*Use the TV's internet address instead* on the same page goes back to the
+automatic place. The page's link works until the TV restarts (or the
+launcher is updated); after that, scan the code again.
 
 ## Backup
 

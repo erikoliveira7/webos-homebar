@@ -1,6 +1,6 @@
 .pragma library
 // Homebar texts. English is the fallback for a missing language or key.
-// "{n}", "{lang}", "{version}", "{date}" and "{name}" are filled in by format().
+// "{n}", "{lang}", "{version}", "{date}", "{name}" and "{unit}" are filled in by format().
 var languages = ["en", "es", "de", "pl", "fr", "it", "pt", "nl", "cs"];
 var names = {en: "English", es: "Español", de: "Deutsch", pl: "Polski", fr: "Français", it: "Italiano",
              pt: "Português", nl: "Nederlands", cs: "Čeština"};
@@ -35,7 +35,7 @@ var table = {
         err_unavailable: "The app is unavailable right now.",
         err_slow: "Opening is taking too long. You can try again.",
         err_helper: "The launcher helper is not answering.",
-        set_language: "Language", set_exit: "After holding BACK", set_clock: "Clock bar",
+        set_language: "Language", set_exit: "After holding BACK", set_clock: "Clock",
         set_theme: "Theme",
         theme_default: "Default", theme_lime: "Lime", theme_lagoon: "Lagoon",
         theme_midnight: "Midnight", theme_terracotta: "Terracotta",
@@ -51,7 +51,13 @@ var table = {
         set_backup: "Back up favourites and settings", set_restore: "Restore from the backup", bak_none: "No backup yet", bak_saved: "Backup from {date}", bak_done: "Backed up", bak_restored: "Restored from the backup",
         bak_err: "Could not write the backup.", bak_err_read: "Could not read the backup.", hint_backup: "back up", hint_restore: "restore",
         grp_look: "Look", grp_home: "Home row", grp_apps: "Apps", grp_screen: "On screen", grp_backup: "Backup", grp_updates: "Updates",
-        set_hours: "Clock format", val_hours_24: "24-hour", val_hours_12: "12-hour"
+        set_hours: "Clock format", val_hours_24: "24-hour", val_hours_12: "12-hour",
+        set_now_app: "Current app", set_weather: "Weather", set_place: "Weather place", set_units: "Temperature",
+        val_chip_on: "Shown", val_chip_off: "Hidden", val_units_auto: "Automatic ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automatic)", place_unknown: "Not known yet", place_noip: "The TV is not connected to a network.", upd_notes: "What's new",
+        place_scan: "Scan the code with your phone's camera and choose a town or city on the page it opens. The phone has to be on the same network as the TV.",
+        grp_about: "About", set_about: "About Homebar", about_scan: "Scan to buy me a coffee",
+        about_text: "I build free apps and tools and share them on GitHub. If you enjoy my projects, you can support my work by buying me a coffee!"
     },
     es: {
         set_update: "Actualizaciones", set_beta: "Versiones de prueba", val_on: "Sí", val_off: "No",
@@ -83,7 +89,7 @@ var table = {
         err_unavailable: "La aplicación no está disponible ahora.",
         err_slow: "La apertura está tardando demasiado. Puedes intentarlo de nuevo.",
         err_helper: "El asistente del launcher no responde.",
-        set_language: "Idioma", set_exit: "Al mantener ATRÁS", set_clock: "Barra con reloj",
+        set_language: "Idioma", set_exit: "Al mantener ATRÁS", set_clock: "Reloj",
         set_theme: "Tema",
         theme_default: "Predeterminado", theme_lime: "Lima", theme_lagoon: "Laguna",
         theme_midnight: "Medianoche", theme_terracotta: "Terracota",
@@ -99,7 +105,13 @@ var table = {
         set_backup: "Copia de favoritos y ajustes", set_restore: "Restaurar la copia", bak_none: "Sin copia todavía", bak_saved: "Copia del {date}", bak_done: "Copia guardada", bak_restored: "Restaurado de la copia",
         bak_err: "No se pudo guardar la copia.", bak_err_read: "No se pudo leer la copia.", hint_backup: "guardar copia", hint_restore: "restaurar",
         grp_look: "Aspecto", grp_home: "Fila de inicio", grp_apps: "Aplicaciones", grp_screen: "En pantalla", grp_backup: "Copia de seguridad", grp_updates: "Actualizaciones",
-        set_hours: "Formato de hora", val_hours_24: "24 horas", val_hours_12: "12 horas"
+        set_hours: "Formato de hora", val_hours_24: "24 horas", val_hours_12: "12 horas",
+        set_now_app: "App actual", set_weather: "Tiempo", set_place: "Lugar del tiempo", set_units: "Temperatura",
+        val_chip_on: "Mostrar", val_chip_off: "Ocultar", val_units_auto: "Automática ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automático)", place_unknown: "Aún no se sabe", place_noip: "La TV no está conectada a una red.", upd_notes: "Novedades",
+        place_scan: "Escanea el código con la cámara del móvil y elige un pueblo o ciudad en la página que se abre. El móvil tiene que estar en la misma red que la TV.",
+        grp_about: "Acerca de", set_about: "Acerca de Homebar", about_scan: "Escanea para invitarme a un café",
+        about_text: "Creo apps y herramientas gratuitas y las comparto en GitHub. Si te gustan mis proyectos, puedes apoyar mi trabajo invitándome a un café."
     },
     de: {
         set_update: "Updates", set_beta: "Testversionen", val_on: "An", val_off: "Aus",
@@ -131,7 +143,7 @@ var table = {
         err_unavailable: "Die App ist gerade nicht verfügbar.",
         err_slow: "Das Öffnen dauert zu lange. Du kannst es erneut versuchen.",
         err_helper: "Der Launcher-Helfer antwortet nicht.",
-        set_language: "Sprache", set_exit: "Nach langem ZURÜCK", set_clock: "Leiste mit Uhr",
+        set_language: "Sprache", set_exit: "Nach langem ZURÜCK", set_clock: "Uhr",
         set_theme: "Farbschema",
         theme_default: "Standard", theme_lime: "Limette", theme_lagoon: "Lagune",
         theme_midnight: "Mitternacht", theme_terracotta: "Terrakotta",
@@ -147,7 +159,13 @@ var table = {
         set_backup: "Favoriten und Einstellungen sichern", set_restore: "Aus der Sicherung wiederherstellen", bak_none: "Noch keine Sicherung", bak_saved: "Sicherung vom {date}", bak_done: "Gesichert", bak_restored: "Aus der Sicherung wiederhergestellt",
         bak_err: "Die Sicherung konnte nicht geschrieben werden.", bak_err_read: "Die Sicherung konnte nicht gelesen werden.", hint_backup: "sichern", hint_restore: "wiederherstellen",
         grp_look: "Aussehen", grp_home: "Home-Reihe", grp_apps: "Apps", grp_screen: "Auf dem Bildschirm", grp_backup: "Sicherung", grp_updates: "Updates",
-        set_hours: "Uhrzeitformat", val_hours_24: "24 Stunden", val_hours_12: "12 Stunden"
+        set_hours: "Uhrzeitformat", val_hours_24: "24 Stunden", val_hours_12: "12 Stunden",
+        set_now_app: "Aktuelle App", set_weather: "Wetter", set_place: "Wetter-Ort", set_units: "Temperatur",
+        val_chip_on: "Sichtbar", val_chip_off: "Ausgeblendet", val_units_auto: "Automatisch ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automatisch)", place_unknown: "Noch nicht bekannt", place_noip: "Der Fernseher ist mit keinem Netzwerk verbunden.", upd_notes: "Was ist neu",
+        place_scan: "Scanne den Code mit der Kamera des Handys und wähle auf der Seite, die sich öffnet, einen Ort. Das Handy muss im selben Netzwerk sein wie der Fernseher.",
+        grp_about: "Über", set_about: "Über Homebar", about_scan: "Scannen und mir einen Kaffee spendieren",
+        about_text: "Ich baue kostenlose Apps und Tools und teile sie auf GitHub. Wenn dir meine Projekte gefallen, kannst du meine Arbeit unterstützen und mir einen Kaffee spendieren!"
     },
     pl: {
         set_update: "Aktualizacje", set_beta: "Wersje testowe", val_on: "Włączone", val_off: "Wyłączone",
@@ -179,7 +197,7 @@ var table = {
         err_unavailable: "Aplikacja jest chwilowo niedostępna.",
         err_slow: "Uruchamianie trwa zbyt długo. Możesz spróbować ponownie.",
         err_helper: "Pomocnik launchera nie odpowiada.",
-        set_language: "Język", set_exit: "Po przytrzymaniu WSTECZ", set_clock: "Pasek z zegarem",
+        set_language: "Język", set_exit: "Po przytrzymaniu WSTECZ", set_clock: "Zegar",
         set_theme: "Motyw",
         theme_default: "Domyślny", theme_lime: "Limonka", theme_lagoon: "Laguna",
         theme_midnight: "Północ", theme_terracotta: "Terakota",
@@ -195,7 +213,13 @@ var table = {
         set_backup: "Kopia ulubionych i ustawień", set_restore: "Przywróć z kopii", bak_none: "Brak kopii", bak_saved: "Kopia z {date}", bak_done: "Kopia zapisana", bak_restored: "Przywrócono z kopii",
         bak_err: "Nie udało się zapisać kopii.", bak_err_read: "Nie udało się odczytać kopii.", hint_backup: "zapisz kopię", hint_restore: "przywróć",
         grp_look: "Wygląd", grp_home: "Pasek główny", grp_apps: "Aplikacje", grp_screen: "Na ekranie", grp_backup: "Kopia zapasowa", grp_updates: "Aktualizacje",
-        set_hours: "Format godziny", val_hours_24: "24-godzinny", val_hours_12: "12-godzinny"
+        set_hours: "Format godziny", val_hours_24: "24-godzinny", val_hours_12: "12-godzinny",
+        set_now_app: "Bieżąca aplikacja", set_weather: "Pogoda", set_place: "Miejsce pogody", set_units: "Temperatura",
+        val_chip_on: "Pokazuj", val_chip_off: "Nie pokazuj", val_units_auto: "Automatycznie ({unit})", val_units_c: "Celsjusz (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automatycznie)", place_unknown: "Jeszcze nieznane", place_noip: "Telewizor nie jest połączony z siecią.", upd_notes: "Co nowego",
+        place_scan: "Zeskanuj kod aparatem telefonu i wybierz miejscowość na stronie, która się otworzy. Telefon musi być w tej samej sieci co telewizor.",
+        grp_about: "Informacje", set_about: "O aplikacji Homebar", about_scan: "Zeskanuj, aby postawić mi kawę",
+        about_text: "Tworzę darmowe aplikacje i narzędzia i udostępniam je na GitHubie. Jeśli podobają Ci się moje projekty, możesz wesprzeć moją pracę, stawiając mi kawę!"
     },
     fr: {
         set_update: "Mises à jour", set_beta: "Versions de test", val_on: "Activé", val_off: "Désactivé",
@@ -227,7 +251,7 @@ var table = {
         err_unavailable: "L'application n'est pas disponible pour le moment.",
         err_slow: "L'ouverture prend trop de temps. Vous pouvez réessayer.",
         err_helper: "L'assistant du launcher ne répond pas.",
-        set_language: "Langue", set_exit: "Après un appui long sur RETOUR", set_clock: "Barre avec l'heure",
+        set_language: "Langue", set_exit: "Après un appui long sur RETOUR", set_clock: "Horloge",
         set_theme: "Thème",
         theme_default: "Par défaut", theme_lime: "Citron vert", theme_lagoon: "Lagon",
         theme_midnight: "Minuit", theme_terracotta: "Terre cuite",
@@ -243,7 +267,13 @@ var table = {
         set_backup: "Sauvegarder les favoris et les réglages", set_restore: "Restaurer la sauvegarde", bak_none: "Pas encore de sauvegarde", bak_saved: "Sauvegarde du {date}", bak_done: "Sauvegardé", bak_restored: "Restauré depuis la sauvegarde",
         bak_err: "Impossible d'écrire la sauvegarde.", bak_err_read: "Impossible de lire la sauvegarde.", hint_backup: "sauvegarder", hint_restore: "restaurer",
         grp_look: "Apparence", grp_home: "Rangée d'accueil", grp_apps: "Applications", grp_screen: "À l'écran", grp_backup: "Sauvegarde", grp_updates: "Mises à jour",
-        set_hours: "Format de l'heure", val_hours_24: "24 heures", val_hours_12: "12 heures"
+        set_hours: "Format de l'heure", val_hours_24: "24 heures", val_hours_12: "12 heures",
+        set_now_app: "App en cours", set_weather: "Météo", set_place: "Lieu de la météo", set_units: "Température",
+        val_chip_on: "Afficher", val_chip_off: "Masquer", val_units_auto: "Automatique ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automatique)", place_unknown: "Pas encore connu", place_noip: "La TV n'est connectée à aucun réseau.", upd_notes: "Nouveautés",
+        place_scan: "Scannez le code avec l'appareil photo du téléphone et choisissez une ville sur la page qui s'ouvre. Le téléphone doit être sur le même réseau que la TV.",
+        grp_about: "À propos", set_about: "À propos de Homebar", about_scan: "Scannez pour m'offrir un café",
+        about_text: "Je crée des apps et des outils gratuits et je les partage sur GitHub. Si mes projets vous plaisent, vous pouvez soutenir mon travail en m'offrant un café !"
     },
     it: {
         set_update: "Aggiornamenti", set_beta: "Versioni di prova", val_on: "Attive", val_off: "Disattivate",
@@ -275,7 +305,7 @@ var table = {
         err_unavailable: "L'app non è disponibile al momento.",
         err_slow: "L'apertura sta richiedendo troppo tempo. Puoi riprovare.",
         err_helper: "L'assistente del launcher non risponde.",
-        set_language: "Lingua", set_exit: "Tenendo premuto INDIETRO", set_clock: "Barra con l'orologio",
+        set_language: "Lingua", set_exit: "Tenendo premuto INDIETRO", set_clock: "Orologio",
         set_theme: "Tema",
         theme_default: "Predefinito", theme_lime: "Lime", theme_lagoon: "Laguna",
         theme_midnight: "Mezzanotte", theme_terracotta: "Terracotta",
@@ -291,7 +321,13 @@ var table = {
         set_backup: "Backup di preferiti e impostazioni", set_restore: "Ripristina dal backup", bak_none: "Nessun backup", bak_saved: "Backup del {date}", bak_done: "Backup salvato", bak_restored: "Ripristinato dal backup",
         bak_err: "Impossibile scrivere il backup.", bak_err_read: "Impossibile leggere il backup.", hint_backup: "salva backup", hint_restore: "ripristina",
         grp_look: "Aspetto", grp_home: "Riga della home", grp_apps: "App", grp_screen: "Sullo schermo", grp_backup: "Backup", grp_updates: "Aggiornamenti",
-        set_hours: "Formato dell'ora", val_hours_24: "24 ore", val_hours_12: "12 ore"
+        set_hours: "Formato dell'ora", val_hours_24: "24 ore", val_hours_12: "12 ore",
+        set_now_app: "App in uso", set_weather: "Meteo", set_place: "Luogo del meteo", set_units: "Temperatura",
+        val_chip_on: "Mostra", val_chip_off: "Nascondi", val_units_auto: "Automatica ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automatico)", place_unknown: "Non ancora noto", place_noip: "La TV non è collegata a una rete.", upd_notes: "Novità",
+        place_scan: "Inquadra il codice con la fotocamera del telefono e scegli un paese o una città nella pagina che si apre. Il telefono deve essere sulla stessa rete della TV.",
+        grp_about: "Informazioni", set_about: "Informazioni su Homebar", about_scan: "Inquadra per offrirmi un caffè",
+        about_text: "Creo app e strumenti gratuiti e li condivido su GitHub. Se ti piacciono i miei progetti, puoi sostenere il mio lavoro offrendomi un caffè!"
     },
     pt: {
         set_update: "Atualizações", set_beta: "Versões de teste", val_on: "Ativadas", val_off: "Desativadas",
@@ -323,7 +359,7 @@ var table = {
         err_unavailable: "A aplicação não está disponível de momento.",
         err_slow: "A abertura está a demorar demasiado. Pode tentar novamente.",
         err_helper: "O assistente do launcher não responde.",
-        set_language: "Idioma", set_exit: "Ao manter VOLTAR premido", set_clock: "Barra com relógio",
+        set_language: "Idioma", set_exit: "Ao manter VOLTAR premido", set_clock: "Relógio",
         set_theme: "Tema",
         theme_default: "Padrão", theme_lime: "Lima", theme_lagoon: "Lagoa",
         theme_midnight: "Meia-noite", theme_terracotta: "Terracota",
@@ -339,7 +375,13 @@ var table = {
         set_backup: "Cópia de favoritos e definições", set_restore: "Restaurar da cópia", bak_none: "Ainda sem cópia", bak_saved: "Cópia de {date}", bak_done: "Cópia guardada", bak_restored: "Restaurado da cópia",
         bak_err: "Não foi possível guardar a cópia.", bak_err_read: "Não foi possível ler a cópia.", hint_backup: "guardar cópia", hint_restore: "restaurar",
         grp_look: "Aspeto", grp_home: "Fila inicial", grp_apps: "Aplicações", grp_screen: "No ecrã", grp_backup: "Cópia de segurança", grp_updates: "Atualizações",
-        set_hours: "Formato da hora", val_hours_24: "24 horas", val_hours_12: "12 horas"
+        set_hours: "Formato da hora", val_hours_24: "24 horas", val_hours_12: "12 horas",
+        set_now_app: "App atual", set_weather: "Tempo", set_place: "Local do tempo", set_units: "Temperatura",
+        val_chip_on: "Mostrar", val_chip_off: "Ocultar", val_units_auto: "Automática ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automático)", place_unknown: "Ainda não se sabe", place_noip: "A TV não está ligada a nenhuma rede.", upd_notes: "Novidades",
+        place_scan: "Leia o código com a câmara do telemóvel e escolha uma vila ou cidade na página que abre. O telemóvel tem de estar na mesma rede que a TV.",
+        grp_about: "Sobre", set_about: "Sobre o Homebar", about_scan: "Leia o código para me pagar um café",
+        about_text: "Crio apps e ferramentas gratuitas e partilho-as no GitHub. Se gosta dos meus projetos, pode apoiar o meu trabalho pagando-me um café!"
     },
     nl: {
         set_update: "Updates", set_beta: "Testversies", val_on: "Aan", val_off: "Uit",
@@ -371,7 +413,7 @@ var table = {
         err_unavailable: "De app is nu niet beschikbaar.",
         err_slow: "Het openen duurt te lang. Je kunt het opnieuw proberen.",
         err_helper: "De launcher-helper reageert niet.",
-        set_language: "Taal", set_exit: "Na lang TERUG indrukken", set_clock: "Balk met klok",
+        set_language: "Taal", set_exit: "Na lang TERUG indrukken", set_clock: "Klok",
         set_theme: "Thema",
         theme_default: "Standaard", theme_lime: "Limoen", theme_lagoon: "Lagune",
         theme_midnight: "Middernacht", theme_terracotta: "Terracotta",
@@ -387,7 +429,13 @@ var table = {
         set_backup: "Back-up van favorieten en instellingen", set_restore: "Terugzetten uit de back-up", bak_none: "Nog geen back-up", bak_saved: "Back-up van {date}", bak_done: "Back-up gemaakt", bak_restored: "Teruggezet uit de back-up",
         bak_err: "De back-up kon niet worden geschreven.", bak_err_read: "De back-up kon niet worden gelezen.", hint_backup: "back-up maken", hint_restore: "terugzetten",
         grp_look: "Uiterlijk", grp_home: "Home-rij", grp_apps: "Apps", grp_screen: "Op het scherm", grp_backup: "Back-up", grp_updates: "Updates",
-        set_hours: "Tijdnotatie", val_hours_24: "24 uur", val_hours_12: "12 uur"
+        set_hours: "Tijdnotatie", val_hours_24: "24 uur", val_hours_12: "12 uur",
+        set_now_app: "Huidige app", set_weather: "Weer", set_place: "Plaats voor het weer", set_units: "Temperatuur",
+        val_chip_on: "Zichtbaar", val_chip_off: "Verborgen", val_units_auto: "Automatisch ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automatisch)", place_unknown: "Nog niet bekend", place_noip: "De tv is niet met een netwerk verbonden.", upd_notes: "Wat is er nieuw",
+        place_scan: "Scan de code met de camera van je telefoon en kies een plaats op de pagina die opent. De telefoon moet op hetzelfde netwerk zitten als de tv.",
+        grp_about: "Over", set_about: "Over Homebar", about_scan: "Scan om een koffie voor me te kopen",
+        about_text: "Ik maak gratis apps en tools en deel ze op GitHub. Vind je mijn projecten leuk, dan kun je mijn werk steunen door een koffie voor me te kopen!"
     },
     cs: {
         set_update: "Aktualizace", set_beta: "Testovací verze", val_on: "Zapnuto", val_off: "Vypnuto",
@@ -419,7 +467,7 @@ var table = {
         err_unavailable: "Aplikace teď není dostupná.",
         err_slow: "Otevírání trvá příliš dlouho. Můžete to zkusit znovu.",
         err_helper: "Pomocník launcheru neodpovídá.",
-        set_language: "Jazyk", set_exit: "Po podržení ZPĚT", set_clock: "Lišta s hodinami",
+        set_language: "Jazyk", set_exit: "Po podržení ZPĚT", set_clock: "Hodiny",
         set_theme: "Motiv",
         theme_default: "Výchozí", theme_lime: "Limetka", theme_lagoon: "Laguna",
         theme_midnight: "Půlnoc", theme_terracotta: "Terakota",
@@ -435,7 +483,13 @@ var table = {
         set_backup: "Záloha oblíbených a nastavení", set_restore: "Obnovit ze zálohy", bak_none: "Zatím žádná záloha", bak_saved: "Záloha z {date}", bak_done: "Zálohováno", bak_restored: "Obnoveno ze zálohy",
         bak_err: "Zálohu se nepodařilo zapsat.", bak_err_read: "Zálohu se nepodařilo přečíst.", hint_backup: "zálohovat", hint_restore: "obnovit",
         grp_look: "Vzhled", grp_home: "Domovská lišta", grp_apps: "Aplikace", grp_screen: "Na obrazovce", grp_backup: "Záloha", grp_updates: "Aktualizace",
-        set_hours: "Formát času", val_hours_24: "24 hodin", val_hours_12: "12 hodin"
+        set_hours: "Formát času", val_hours_24: "24 hodin", val_hours_12: "12 hodin",
+        set_now_app: "Aktuální aplikace", set_weather: "Počasí", set_place: "Místo počasí", set_units: "Teplota",
+        val_chip_on: "Zobrazit", val_chip_off: "Skrýt", val_units_auto: "Automaticky ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automaticky)", place_unknown: "Zatím neznámé", place_noip: "Televize není připojená k žádné síti.", upd_notes: "Novinky",
+        place_scan: "Naskenujte kód fotoaparátem telefonu a na stránce, která se otevře, vyberte obec nebo město. Telefon musí být ve stejné síti jako televize.",
+        grp_about: "O aplikaci", set_about: "O aplikaci Homebar", about_scan: "Naskenujte a kupte mi kávu",
+        about_text: "Tvořím aplikace a nástroje zdarma a sdílím je na GitHubu. Pokud se vám moje projekty líbí, můžete mou práci podpořit tím, že mi koupíte kávu!"
     }
 };
 // "pl-PL", "pl_PL" or "pl" → "pl" when supported, else "".

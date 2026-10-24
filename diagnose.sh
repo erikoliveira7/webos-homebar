@@ -75,6 +75,14 @@ or_note() { out=$("$@" 2>/dev/null); if [ -n "$out" ]; then echo "$out"; else ec
         echo "(Home panel: no helper; the panel talks to the TV from inside LG Home)"
     fi
 
+    # The weather's server on port 8898, in both variants; the place's name
+    # is left out of this file.
+    section "Weather (setup server)"
+    { wget -q -T 15 -O - "http://127.0.0.1:8898/weather?units=c" 2>&1 || echo "(no answer from the setup server)"; } |
+        sed 's/"place":"[^"]*"/"place":"(left out)"/'
+    echo
+    echo "place chosen on a phone: $( [ -f "$PANEL_BASE/weather.json" ] || [ -f "$OVERLAY_BASE/weather.json" ] && echo yes || echo no)"
+
     section "HOME button (Input Hook)"
     show /home/root/.config/lginputhook/keybinds.json
     echo
