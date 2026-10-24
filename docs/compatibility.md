@@ -82,6 +82,7 @@ pills, one with DisplayPort or USB-C shows those too.
 | :--- | :--- | :--- | :--- | :--- |
 | LG OLED55C9PLA (C9, 2019) | 4.10.2 | 05.50.00 | Home panel | 0.14.0 |
 | LG OLED77B46LA (B4, 2024) | 10.3.1 | 33.31.68 | Overlay | 0.14.0 |
+| LG 43UR78006LK (UR78, 2023, updated to webOS 25) | 10.3.2 | 33.31.75 | Overlay, LG's Home kept (`--keep-lg-home`) | 0.14.0, by a user |
 
 ## Trying an untested webOS
 
