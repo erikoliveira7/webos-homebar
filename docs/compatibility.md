@@ -47,7 +47,7 @@ name next to it.
 | 3.x | webOS 3.0, 3.5 | 2016–2017 | QML | Home panel, if the patch fits | Untested |
 | 4.x | webOS 4.0, 4.5 | 2018–2019 | QML | Home panel | **Tested on 4.10** (webOS 4.5) |
 | 5.x | webOS 5.0 | 2020 | QML, the same kind of ribbon as 4.x | Home panel if the patch fits, else overlay | Untested |
-| 6.x | webOS 6.0 | 2021 | QML, a new full-screen Home | Overlay, LG's Home kept unless `--replace-lg-home` | **Tested on 6.3** (LG C1, by a user) |
+| 6.x | webOS 6.0 | 2021 | QML, a new full-screen Home | Overlay, LG's Home kept unless `--replace-lg-home` | **Tested on 6.3 and 6.5** (LG C1 and UP78, by users) |
 | 7.x | webOS 22 | 2022 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
 | 8.x | webOS 23 | 2023 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
 | 9.x | webOS 24 | 2024 | Flutter, like 10.x | Overlay, LG's Home kept unless `--replace-lg-home` | Untested |
@@ -105,6 +105,7 @@ pills, one with DisplayPort or USB-C shows those too.
 | LG 43UR78006LK (UR78, 2023, updated to webOS 25) | 10.3.2 (webOS 25) | 33.31.75 | Overlay, LG's Home kept (`--keep-lg-home`) | 0.14.0, by a user |
 | LG 43UM7100PLB (UM71, 2019) | 4.10.2 (webOS 4.5) | 05.40.97 | Home panel, with the TV's Home screen on *Basic* | 0.14.1, by a user |
 | LG OLED55C16LA (C1, 2021) | 6.3.2 (webOS 6.0) | 03.34.80 | Overlay, LG's Home kept | 0.14.0, by a user |
+| LG 43UP78006LB (UP78, 2021) | 6.5.3 (webOS 6.0) | 03.53.45 | Overlay, LG's Home kept | 0.15.1, by a user |
 
 ## Trying an untested webOS
 
