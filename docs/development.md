@@ -1,8 +1,10 @@
 # Development
 
 - [Build from source](#build-from-source)
+- [Another webOS version, on purpose](#another-webos-version-on-purpose)
 - [Configuration](#configuration)
 - [Layout](#layout)
+- [Checking the layout](#checking-the-layout)
 - [Adding a language](#adding-a-language)
 - [Adding a theme](#adding-a-theme)
 - [Theme pictures](#theme-pictures)
@@ -18,8 +20,20 @@ python3 tools/deploy.py --host <tv-ip>   # build, copy over SSH and run install.
 ```
 
 `deploy.py` needs key-based root SSH to the TV; `--identity <key>` picks the
-key, `--keep-lg-home` and `--uninstall` do what they say. The archive holds
-both variants; on the TV `install.sh` picks the one for its webOS.
+key, `--keep-lg-home` and `--uninstall` do what they say, `--backup file`
+and `--restore file` copy the TV's `backup.json` either way, and anything
+after `--` goes to `install.sh` on the TV (`-- --probe` only says which
+variant fits; `-- --overlay --replace-lg-home` forces one). The archive
+holds both variants; on the TV `install.sh` picks the one the TV has the
+makings for.
+
+## Another webOS version, on purpose
+
+`HOMEBAR_WEBOS=<version>` makes `install.sh` and `probe.sh` take the TV for
+that webOS version (`HOMEBAR_WEBOS=9.1 sh install.sh --probe` shows what the
+installer would do on a webOS 9 TV with this TV's makings). The variant is
+still chosen by what the TV has; the version only decides what counts as
+tested and whether the overlay replaces LG's Home by default.
 
 ## Configuration
 
@@ -36,14 +50,40 @@ both variants; on the TV `install.sh` picks the one for its webOS.
 | Path | What |
 | :--- | :--- |
 | `ui/` | The panel shared by both variants: `Launcher.qml`, texts in `Strings.js`, colours in `Themes.js`, LocalStorage in `FavouriteStore.qml`, fonts |
-| `webos4/` | The LG Home patch, boot hook and scripts |
-| `webos10/` | The overlay app, helper, HTTP bridge, Home stand-in and scripts |
-| `tools/` | Build, deploy, the app icon (`make-icon.py`) and the theme pictures (`render-themes.py`) |
+| `webos4/` | The Home panel: the LG Home patch, boot hook and scripts |
+| `webos10/` | The overlay: the overlay app, helper, HTTP bridge, Home stand-in and scripts |
+| `tools/` | Build, deploy, the app icon (`make-icon.py`), the theme pictures (`render-themes.py`) and the panel at any size (`render-panel.py`) |
 | `config/` | Build defaults, see [Configuration](#configuration) |
 
-For webOS 10, `tools/build.py` turns `ui/Launcher.qml` into the app's
+For the overlay, `tools/build.py` turns `ui/Launcher.qml` into the app's
 `Panel.qml`, swapping its Luna Service elements for
-`webos10/panel-bridge.qml` (HTTP to the helper).
+`webos10/panel-bridge.qml` (HTTP to the helper). The top-level `install.sh`
+picks the variant by what the TV has (`probe.sh`, which the installers also
+put next to `diagnose.sh` on the TV), see
+[Compatibility](compatibility.md#which-variant-a-tv-gets).
+
+## Checking the layout
+
+The panel is drawn for 1920×1080 and scaled to the size it gets: `u` in
+`Launcher.qml` is that scale and every length goes through `px()`, so a new
+element is placed in 1080p numbers (`shell.px(24)`) and follows the screen.
+Positions hang from the bottom and the right edge (`shell.height - px(…)`,
+`anchors.right`), never from the top left, so a wider screen gets more rail
+and more columns. Text goes through `pt()`, which also takes the text size
+setting. `tools/render-panel.py` draws a set of scenes (Home with seven
+favourites and long HDMI-CEC names, Live TV, hidden inputs and apps, Apps
+in each order, System with an update waiting, the settings menu on a
+setting, on its values and on an action, the larger text size, no
+favourites, two inputs) at a size:
+
+```sh
+python3 -m pip install PySide6
+python3 tools/render-panel.py                     # dist/render/1920x1080-*.png
+python3 tools/render-panel.py --size 1280x720     # an HD TV
+python3 tools/render-panel.py --size 2560x1080    # a wider screen
+```
+
+Check at least 1920×1080 and 1280×720 after a change to the panel.
 
 ## Adding a language
 
