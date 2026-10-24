@@ -42,11 +42,18 @@ for a in "$@"; do
     esac
 done
 
+# LG's name for it: from version 7 on, the year (webOS 22 is 7.x, webOS 25
+# is 10.x); people often know only that one.
+name=
 case "$major" in
-    4|10) tested="tested on webOS $major" ;;
-    *) tested="untested; webOS 4 and 10 are the tested ones" ;;
+    ''|*[!0-9]*|[1-6]) ;;
+    *) name=", which LG calls webOS $((major + 15))" ;;
 esac
-say "webOS ${version:-unknown} ($tested)"
+case "$major" in
+    4|6|10) tested="tested on $major.x" ;;
+    *) tested="untested; 4.x, 6.x and 10.x are the tested ones" ;;
+esac
+say "webOS ${version:-unknown}$name ($tested)"
 
 if [ -n "$probe" ]; then
     sh "$PROBE"

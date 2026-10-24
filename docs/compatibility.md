@@ -32,17 +32,27 @@ reports webOS 4's as `native`, a program that loads that QML.
 
 ## webOS versions
 
-| webOS (as the TV reports it) | Model years | LG Home | Variant the installer picks | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| 1.x – 2.x | 2014–2015 | Web app | — (no variant fits: no QML Home, node 0.10) | Not supported |
-| 3.x | 2016–2017 | QML | Home panel, if the patch fits | Untested |
-| 4.x (webOS 4.0/4.5) | 2018–2019 | QML | Home panel | **Tested on 4.10** |
-| 5.x | 2020 | QML, the same kind of ribbon as 4.x | Home panel if the patch fits, else overlay | Untested |
-| 6.x | 2021 | QML, a new full-screen Home | Overlay, LG's Home kept unless `--replace-lg-home` | **Tested on 6.3** (LG C1, by a user) |
-| 7.x (webOS 22), 8.x (webOS 23) | 2022–2023 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
-| 9.x (webOS 24) | 2024 | Flutter, like webOS 10 | Overlay, LG's Home kept unless `--replace-lg-home` | Untested |
-| 10.x (webOS 25) | 2025 | Flutter | Overlay, LG's Home replaced by the black stand-in | **Tested on 10.3** |
-| 11.x (webOS 26) | 2026 | Flutter, like webOS 10 | Overlay, LG's Home kept unless `--replace-lg-home` | Untested |
+LG gives webOS two numbers, and they are easy to mix up. The TV itself, the
+installer and `diagnose.sh` report the system's own version (10.3.1); LG's
+site, the box and the TV's spec sheets use a name, which since 2022 is a
+year: webOS 22 is version 7, webOS 25 is version 10. The model year alone
+does not say which one a TV has either: with LG's *webOS Re:New* updates an
+older TV can get a newer webOS (an LG UR78 from 2023 updated to webOS 25
+reports 10.3.2). This page goes by the version the TV reports, with LG's
+name next to it.
+
+| The TV reports | LG calls it | First on (model year) | LG Home | Variant the installer picks | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1.x – 2.x | webOS 1.0 – 2.0 | 2014–2015 | Web app | — (no variant fits: no QML Home, node 0.10) | Not supported |
+| 3.x | webOS 3.0, 3.5 | 2016–2017 | QML | Home panel, if the patch fits | Untested |
+| 4.x | webOS 4.0, 4.5 | 2018–2019 | QML | Home panel | **Tested on 4.10** (webOS 4.5) |
+| 5.x | webOS 5.0 | 2020 | QML, the same kind of ribbon as 4.x | Home panel if the patch fits, else overlay | Untested |
+| 6.x | webOS 6.0 | 2021 | QML, a new full-screen Home | Overlay, LG's Home kept unless `--replace-lg-home` | **Tested on 6.3** (LG C1, by a user) |
+| 7.x | webOS 22 | 2022 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
+| 8.x | webOS 23 | 2023 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
+| 9.x | webOS 24 | 2024 | Flutter, like 10.x | Overlay, LG's Home kept unless `--replace-lg-home` | Untested |
+| 10.x | webOS 25 | 2025 | Flutter | Overlay, LG's Home replaced by the black stand-in | **Tested on 10.3** |
+| 11.x | webOS 26 | 2026 | Flutter, like 10.x | Overlay, LG's Home kept unless `--replace-lg-home` | Untested |
 
 What the untested rows rest on: LG's Home was a QML app
 (`/usr/palm/applications/com.webos.app.home/qml`) from webOS 3 to the last
@@ -88,13 +98,13 @@ pills, one with DisplayPort or USB-C shows those too.
 
 ## Tested TVs
 
-| TV | webOS | Firmware | Variant | Last tested with |
+| TV | webOS (LG's name) | Firmware | Variant | Last tested with |
 | :--- | :--- | :--- | :--- | :--- |
-| LG OLED55C9PLA (C9, 2019) | 4.10.2 | 05.50.00 | Home panel | 0.15.0 |
-| LG OLED77B46LA (B4, 2024) | 10.3.1 | 33.31.68 | Overlay | 0.15.0 |
-| LG 43UR78006LK (UR78, 2023, updated to webOS 25) | 10.3.2 | 33.31.75 | Overlay, LG's Home kept (`--keep-lg-home`) | 0.14.0, by a user |
-| LG 43UM7100PLB (UM71, 2019) | 4.10.2 | 05.40.97 | Home panel, with the TV's Home screen on *Basic* | 0.14.1, by a user |
-| LG OLED55C16LA (C1, 2021) | 6.3.2 | 03.34.80 | Overlay, LG's Home kept | 0.14.0, by a user |
+| LG OLED55C9PLA (C9, 2019) | 4.10.2 (webOS 4.5) | 05.50.00 | Home panel | 0.15.0 |
+| LG OLED77B46LA (B4, 2024) | 10.3.1 (webOS 25) | 33.31.68 | Overlay | 0.15.0 |
+| LG 43UR78006LK (UR78, 2023, updated to webOS 25) | 10.3.2 (webOS 25) | 33.31.75 | Overlay, LG's Home kept (`--keep-lg-home`) | 0.14.0, by a user |
+| LG 43UM7100PLB (UM71, 2019) | 4.10.2 (webOS 4.5) | 05.40.97 | Home panel, with the TV's Home screen on *Basic* | 0.14.1, by a user |
+| LG OLED55C16LA (C1, 2021) | 6.3.2 (webOS 6.0) | 03.34.80 | Overlay, LG's Home kept | 0.14.0, by a user |
 
 ## Trying an untested webOS
 
