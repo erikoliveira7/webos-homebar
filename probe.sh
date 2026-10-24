@@ -25,8 +25,11 @@ detail() { printf '%s\n' "$1" | sed 's/^rawin-launcher: //; s/^/rawin-launcher: 
 # SystemProperties.qml (where Home declares isAppForeground) is only read.
 panel_why=
 panel_fits() {
-    [ -f "$HOME_QML/main.qml" ] && [ -f "$HOME_QML/Controllers/UIController.qml" ] ||
-        { panel_why="LG Home is not a QML app (no $HOME_QML/main.qml)"; return 1; }
+    [ -f "$HOME_QML/main.qml" ] || { panel_why="LG Home is not a QML app (no $HOME_QML/main.qml)"; return 1; }
+    # webOS 6 and later: a QML Home, but the full-screen one, not the ribbon
+    # the patch was made for.
+    [ -f "$HOME_QML/Controllers/UIController.qml" ] ||
+        { panel_why="LG Home is a QML app, but not the ribbon Home the panel is made for (no Controllers/UIController.qml)"; return 1; }
     command -v node >/dev/null || { panel_why="node is missing on this TV"; return 1; }
     [ -f "$PATCH" ] || { panel_why="patch-home.js is missing next to this script"; return 1; }
     tmp=$(mktemp -d)

@@ -94,7 +94,7 @@ case "$1" in
   status)
     if mounted; then echo "stand-in mounted"; else echo "LG Home"; fi
     luna getAppInfo '{"id":"com.webos.app.home"}' | grep -o '"type": *"[a-z]*"'
-    echo "LG Flutter Home pids: $(lg_home_pids | tr '\n' ' ')"
+    echo "LG Home pids: $(lg_home_pids | tr '\n' ' ')"
     ;;
   *)
     echo "usage: $0 apply|restore|status" >&2
