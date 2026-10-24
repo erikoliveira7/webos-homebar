@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/rawinek/webos-homebar/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/rawinek/webos-homebar?label=release"></a>
-  <img alt="webOS 4, 6 and 10 tested" src="https://img.shields.io/badge/webOS-4%20%7C%206%20%7C%2010%20tested-a50034">
+  <img alt="webOS 4, 5, 6 and 10 tested" src="https://img.shields.io/badge/webOS-4%20%7C%205%20%7C%206%20%7C%2010%20tested-a50034">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/rawinek/webos-homebar"></a>
 </p>
 
@@ -73,9 +73,10 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
 | webOS (LG's name) | How Homebar runs | Status |
 | :--- | :--- | :--- |
 | 4.x (webOS 4.0 / 4.5, 2018–2019) | Inside LG's own Home, which keeps its HOME handling (the *Basic* Home screen, where a TV has two) | Tested on 4.10 (LG C9, and LG UM7100 by a user) |
+| 5.x (webOS 5.0, 2020) | Inside LG's own Home, as on 4.x | Tested on 5.6 (LG NANO80, by a user) |
 | 6.x (webOS 6.0, 2021) | The overlay, with LG's Home kept | Tested on 6.3 and 6.5 (LG C1 and LG UP78, by users) |
 | 10.x (webOS 25, 2025) | A separate overlay app with a root helper | Tested on 10.3 (LG B4, and LG UR78 by a user) |
-| 3.x, 5.x, 7.x–9.x, 11.x (webOS 3, 5.0, 22–24, 26) | Whichever of the two the TV has the makings for | Untested |
+| 3.x, 7.x–9.x, 11.x (webOS 3, 22–24, 26) | Whichever of the two the TV has the makings for | Untested |
 
 LG names webOS after the year since 2022 (webOS 25 is version 10.x, webOS 22
 is 7.x), and an older TV can be updated to a newer webOS, so go by the

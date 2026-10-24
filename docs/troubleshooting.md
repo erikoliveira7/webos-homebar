@@ -34,7 +34,7 @@ or `sh rawin-launcher/probe.sh` from the release).
 
 ## HOME opens LG's Home, not Homebar (Home panel)
 
-On a webOS 4 TV with two Homes (see
+On a webOS 4 or 5 TV with two Homes (see
 [Compatibility](compatibility.md#webos-versions)) the TV's *Home screen*
 setting has to be *Basic*. With *New*, HOME opens LG's full-screen Home
 (`com.webos.app.fullhome`) and the panel, which lives in the Basic Home,

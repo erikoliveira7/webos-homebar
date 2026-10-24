@@ -49,7 +49,7 @@ panel_fits() {
     rm -rf "$tmp"
     return $r
 }
-# Some webOS 4 TVs (the 2019 UM series) also have LG's "New" Home screen,
+# Some webOS 4 and 5 TVs (the 2019 UM series, a 2020 NANO80) also have LG's "New" Home screen,
 # com.webos.app.fullhome: with the TV's Home screen setting on New it is the
 # one HOME opens, so the panel, which lives in the Basic one, never shows.
 FULL_HOME=com.webos.app.fullhome

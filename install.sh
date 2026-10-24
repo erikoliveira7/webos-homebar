@@ -5,7 +5,7 @@
 # Two variants, and the TV gets the one it has the makings for, not the one
 # its version number says (probe.sh decides; see docs/compatibility.md):
 #   Home panel  the panel inside LG's own Home: where Home is a QML app and
-#               the patch fits it (webOS 4 tested; webOS 3 to 8 have that Home)
+#               the patch fits it (webOS 4 and 5 tested; webOS 3 to 8 have a QML Home)
 #   overlay     an overlay app with a root helper: where Home cannot be
 #               patched (webOS 10 tested; webOS 9 and 11 have that Home)
 # Options:
@@ -50,8 +50,8 @@ case "$major" in
     *) name=", which LG calls webOS $((major + 15))" ;;
 esac
 case "$major" in
-    4|6|10) tested="tested on $major.x" ;;
-    *) tested="untested; 4.x, 6.x and 10.x are the tested ones" ;;
+    4|5|6|10) tested="tested on $major.x" ;;
+    *) tested="untested; 4.x, 5.x, 6.x and 10.x are the tested ones" ;;
 esac
 say "webOS ${version:-unknown}$name ($tested)"
 

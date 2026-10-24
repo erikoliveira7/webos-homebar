@@ -46,7 +46,7 @@ name next to it.
 | 1.x – 2.x | webOS 1.0 – 2.0 | 2014–2015 | Web app | — (no variant fits: no QML Home, node 0.10) | Not supported |
 | 3.x | webOS 3.0, 3.5 | 2016–2017 | QML | Home panel, if the patch fits | Untested |
 | 4.x | webOS 4.0, 4.5 | 2018–2019 | QML | Home panel | **Tested on 4.10** (webOS 4.5) |
-| 5.x | webOS 5.0 | 2020 | QML, the same kind of ribbon as 4.x | Home panel if the patch fits, else overlay | Untested |
+| 5.x | webOS 5.0 | 2020 | QML, the same kind of ribbon as 4.x | Home panel (the patch fits; else the overlay) | **Tested on 5.6** (LG NANO80, by a user) |
 | 6.x | webOS 6.0 | 2021 | QML, a new full-screen Home | Overlay, LG's Home kept unless `--replace-lg-home` | **Tested on 6.3 and 6.5** (LG C1 and UP78, by users) |
 | 7.x | webOS 22 | 2022 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
 | 8.x | webOS 23 | 2023 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
@@ -73,7 +73,8 @@ Other models with the tested webOS versions may work. If the patch does not
 fit a webOS 4 TV's Home (another firmware), the installer says so and stops
 without changing anything.
 
-Some webOS 4 TVs (the 2019 UM series, for one) have two Homes and a *Home
+Some webOS 4 and 5 TVs (the 2019 UM series and a 2020 NANO80, for two)
+have two Homes and a *Home
 screen* setting to choose between them: *Basic*, LG's ribbon
 (`com.webos.app.home`), and *New*, a full-screen one
 (`com.webos.app.fullhome`). The panel lives in the Basic one, so on these
@@ -104,6 +105,7 @@ pills, one with DisplayPort or USB-C shows those too.
 | LG OLED77B46LA (B4, 2024) | 10.3.1 (webOS 25) | 33.31.68 | Overlay | 0.15.0 |
 | LG 43UR78006LK (UR78, 2023, updated to webOS 25) | 10.3.2 (webOS 25) | 33.31.75 | Overlay, LG's Home kept (`--keep-lg-home`) | 0.14.0, by a user |
 | LG 43UM7100PLB (UM71, 2019) | 4.10.2 (webOS 4.5) | 05.40.97 | Home panel, with the TV's Home screen on *Basic* | 0.14.1, by a user |
+| LG 55NANO803NA (NANO80, 2020) | 5.6.2 (webOS 5.0) | 04.64.00 | Home panel | 0.15.2, by a user |
 | LG OLED55C16LA (C1, 2021) | 6.3.2 (webOS 6.0) | 03.34.80 | Overlay, LG's Home kept | 0.14.0, by a user |
 | LG 43UP78006LB (UP78, 2021) | 6.5.3 (webOS 6.0) | 03.53.45 | Overlay, LG's Home kept | 0.15.1, by a user |
 
