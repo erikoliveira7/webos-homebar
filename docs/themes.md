@@ -100,6 +100,20 @@ dark themes, so the name and the hints stay white over any picture.
 
 <img src="themes/indigo.png" width="100%" alt="Indigo theme: parchment tiles, indigo focused HDMI 2 pill">
 
+## On the TV
+
+The menu is its own preview: moving along the themes repaints the card, the
+rows and the glow at once.
+
+<img src="screenshots/settings-theme.jpg" width="100%" alt="Launcher settings with Lime focused in the theme values: the card, the focused row and the glow in Lime">
+
+Terracotta on a light base, and Lime with an HDMI input focused, over a
+playing video:
+
+<img src="screenshots/home-terracotta.jpg" width="100%" alt="The Home row in Terracotta: cream tiles and pills over the dark shade">
+
+<img src="screenshots/home-lime.jpg" width="100%" alt="The Home row in Lime: graphite pills, the focused HDMI 4 filled in lime">
+
 ## Adding a theme
 
 See [Development → Adding a theme](development.md#adding-a-theme).

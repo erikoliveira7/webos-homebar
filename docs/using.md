@@ -11,6 +11,8 @@
 
 ## Home
 
+<img src="screenshots/home.jpg" width="100%" alt="Home over a playing video: seven favourites, HDMI 1 to 4 with the device on HDMI 3 and 4, Apps and System">
+
 HOME on the remote opens the panel over whatever is on screen; the picture
 stays visible above it. One row, from the left:
 
@@ -26,6 +28,8 @@ stays visible above it. One row, from the left:
   OK on an input to make it where the TV goes after holding BACK.
 - **Apps** and **System**. A dot on *System* means a new version of the
   launcher is there (see [Updates](#launcher-settings)).
+
+<img src="screenshots/home-input.jpg" width="100%" alt="An HDMI input focused: its name above the row, the device under each input, the hints for OK, hold OK and RED at the bottom">
 
 The focused item's name shows above the row, and the hints under it say what
 OK and the other keys do. The clock bar in the top-right corner shows what is
@@ -46,6 +50,8 @@ Favourites are chosen on the TV:
 - On Home, **hold OK** on a favourite to edit it: ← → move it, ▼ removes it,
   OK, BACK or ▲ finish.
 
+<img src="screenshots/edit-favourite.jpg" width="100%" alt="A favourite being edited: an amber ring, handles to move it left or right, and the hint to remove it with the down arrow">
+
 A fresh install starts with none. Favourites outlast updates; an app that is
 uninstalled simply drops out of them.
 
@@ -59,6 +65,8 @@ uninstalled; hidden apps are only out of the launcher's lists.
 
 ## Apps
 
+<img src="screenshots/apps.jpg" width="100%" alt="All apps, twelve to a row, two rows on screen, favourites marked with a dot">
+
 All installed apps, as many to a row as the screen is wide (twelve on a 16:9
 screen), two rows on screen; the row scrolls with the focus. *Launcher
 settings → Apps order* puts them in the TV's
@@ -67,6 +75,8 @@ launches. An app's glow colour lights the bottom-left corner while it is
 focused: the colour the build knows for it, else one read from its icon.
 
 ## System
+
+<img src="screenshots/system.jpg" width="100%" alt="The System page: TV settings, Launcher settings (focused), Homebrew Channel, LG Content Store, Back to the picture; the version in the corner">
 
 | Tile | Opens |
 | :--- | :--- |
@@ -83,6 +93,8 @@ overlay) are in the bottom-right corner.
 
 ## Launcher settings
 
+<img src="screenshots/settings.jpg" width="100%" alt="Launcher settings: the settings in groups on the left, the languages on the right with a dot on the chosen one">
+
 *System → Launcher settings* opens a menu over most of the screen. On the
 left are the settings in groups, each with its value; on the right the
 values of the focused one, with a dot on the chosen value. ▲ ▼ move between
@@ -90,6 +102,13 @@ the settings; OK or ▶ goes into the values, where ▲ ▼ choose (each value
 applies at once, so the menu itself is the preview) and OK or ◀ come back;
 BACK closes the menu. *Back up*, *Restore* and *Updates* show their status
 on the right and act on OK.
+
+The values of *After holding BACK* (overlay), and Home with the text size
+at *Larger* and the 12-hour clock:
+
+<img src="screenshots/settings-after-back.jpg" width="100%" alt="The values of After holding BACK on the overlay: Last input or HDMI 1 to 4">
+
+<img src="screenshots/home-larger.jpg" width="100%" alt="Home with the Larger text size and the 12-hour clock">
 
 | Group | Setting | Values |
 | :--- | :--- | :--- |
@@ -110,6 +129,8 @@ on the right and act on OK.
 | | Test builds | Also offer pre-releases as updates |
 
 ## Backup
+
+<img src="screenshots/settings-backup.jpg" width="100%" alt="The Back up row focused: its status on the right, and OK to back up">
 
 *Back up favourites and settings* writes the favourites, the settings, the
 hidden apps and inputs and the launch counts to `backup.json` next to the

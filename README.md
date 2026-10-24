@@ -1,41 +1,76 @@
-# Homebar
+<h1 align="center">Homebar</h1>
 
-![Homebar over a YouTube video: favourites, HDMI inputs, Apps and System](docs/screenshots/home.jpg)
+<p align="center">
+  <b>Your LG TV's home screen as a bar over the picture.</b><br>
+  Not a full-screen menu that takes you out of what you were watching.
+</p>
 
-A minimal home screen for rooted LG webOS TVs, brought back as a bar at the
-bottom of the screen instead of a full-screen menu that takes you out of what
-you were watching. HOME opens it over whatever is on screen: up to seven
-favourite apps, the HDMI inputs with the device the TV sees on each (HDMI-CEC
-name), all installed apps, and a System page. The picture stays visible above
-it.
+<p align="center">
+  <a href="https://github.com/rawinek/webos-homebar/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/rawinek/webos-homebar?label=release"></a>
+  <img alt="webOS 4 and 10 tested" src="https://img.shields.io/badge/webOS-4%20%7C%2010%20tested-a50034">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/rawinek/webos-homebar"></a>
+</p>
 
-- **Favourites are chosen on the TV**: hold OK on an app in *Apps* to add it,
-  hold OK on a favourite to move or remove it.
-- **RED hides** an app or an input you never use; nothing is uninstalled.
-- **Launcher settings**, a menu over the picture: nine
-  [languages](docs/using.md#languages), [eight colour themes](docs/themes.md),
-  the text size, the Apps order, Live TV on the row, the clock bar and its
-  format, the app name, a **backup** of it all, and **updates** straight
-  from this repository's releases, with a dot on *System* when one is there.
-- LG's promotional apps are hidden from the lists.
-- **Any screen**: the panel scales to the TV's UI, HD (1280×720) as well as
-  FHD and UHD, and shows the inputs the TV has, two or four, with the
-  device on each.
+![Homebar over a playing video: seven favourite apps, the HDMI inputs with their devices, Apps and System](docs/screenshots/home.jpg)
+
+Homebar is a home screen for rooted LG webOS TVs. Press HOME and a bar comes
+up at the bottom of the screen, over whatever is playing: your favourite apps,
+the TV's inputs with the device on each, all your apps and a System page.
+The picture stays where it is. Press HOME again, or BACK, and it is gone.
+
+## Highlights
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/home-input.jpg" alt="An HDMI input focused on the Home row, with the device names under each input"></td>
+    <td width="50%"><img src="docs/screenshots/apps.jpg" alt="All apps in a grid of twelve columns over the picture"></td>
+  </tr>
+  <tr>
+    <td><b>Inputs by name.</b> Each HDMI input shows the device the TV sees on it, from HDMI-CEC; an empty one is dimmed. RED hides one you never use.</td>
+    <td><b>Every app, one row away.</b> Twelve to a row on a 16:9 screen, in the TV's order, A to Z, or the most used first. LG's promotional apps are left out.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/settings-theme.jpg" alt="Launcher settings: the Theme setting with its values, Lime previewed live"></td>
+    <td><img src="docs/screenshots/edit-favourite.jpg" alt="A favourite in edit mode, with handles to move it"></td>
+  </tr>
+  <tr>
+    <td><b>Settings with a live preview.</b> One menu: language, theme, text size, the clock, what the row shows, backup and updates. Every value applies as you move to it.</td>
+    <td><b>Favourites chosen on the TV.</b> Hold OK on an app to add it, up to seven; hold OK on a favourite to move it or take it off the row.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/home-terracotta.jpg" alt="The Home row in the light Terracotta theme"></td>
+    <td><img src="docs/screenshots/home-larger.jpg" alt="The Home row with the larger text size and a 12-hour clock"></td>
+  </tr>
+  <tr>
+    <td><b>Eight colour themes.</b> The original grey and seven two-colour themes, dark and light. <a href="docs/themes.md">See them all</a>.</td>
+    <td><b>Readable from the sofa.</b> Three text sizes, a 24- or 12-hour clock, and a layout that fits HD as well as FHD and UHD screens.</td>
+  </tr>
+</table>
+
+## What else it does
+
+- **Nine languages**, the TV's own by default: English, Spanish, German,
+  Polish, French, Italian, Portuguese, Dutch and Czech.
+- **Updates itself** from this repository's releases, in *Launcher settings
+  → Updates*; a dot on *System* says when one is there.
+- **Backup and restore** of favourites and settings in one file.
 - **webOS 10:** LG's own Home stays out of the way. A black stand-in takes
-  its place, and the TV goes back to the last input (or a chosen HDMI) when
+  its place, and the TV goes back to the last input (or a chosen one) when
   an app exits or BACK is held. Only a HOME in the first 40 s after a cold
   boot, before the Homebrew Channel's hooks run, opens LG's Home once.
-
-<img src="docs/screenshots/demo.gif" width="100%" alt="Demo: HOME opens the launcher, System, Launcher settings: languages, clock bar, app name">
+- Nothing of LG's is uninstalled, and the TV's system partition is not
+  written to. The uninstaller gives LG's Home back at once.
 
 ## Compatibility
 
-Tested on webOS 4.10 (LG C9, 2019) and webOS 10.3 (LG B4, 2024). On any other
-webOS the installer picks the variant the TV has the makings for: the panel
-inside LG's Home where Home is a QML app the patch fits (webOS 3 to 8 have
-that kind of Home), the overlay app elsewhere (webOS 9 and 11 have webOS 10's
-kind). `sh install.sh --probe` says which, and changes nothing. Details in
-[Compatibility](docs/compatibility.md).
+| webOS | How Homebar runs | Status |
+| :--- | :--- | :--- |
+| 4.x (2018–2019) | Inside LG's own Home, which keeps its HOME handling | Tested on 4.10 (LG C9) |
+| 10.x (2025) | A separate overlay app with a root helper | Tested on 10.3 (LG B4) |
+| 3, 5–9, 11 | Whichever of the two the TV has the makings for | Untested |
+
+`sh install.sh --probe` says which variant fits a TV, and changes nothing.
+Details in [Compatibility](docs/compatibility.md).
 
 ## Install
 
@@ -55,18 +90,18 @@ sh rawin-launcher/install.sh
 Press HOME on the remote when it is done. Options, installing without internet
 on the TV, updating and uninstalling: [Install, update, uninstall](docs/install.md).
 
-Homebar was called **rawin-launcher** until 0.12.0. The release file and the
-folders on the TV keep that name, so earlier installs update in place, and the
-old GitHub address leads here.
-
 **Update:** *System → Launcher settings → Updates* (from 0.10.0 on).
 **Uninstall:** `sh /var/lib/webosbrew/rawin-launcher/uninstall.sh` (Home panel)
 or `sh /var/lib/webosbrew/rawin-launcher-home/uninstall.sh` (overlay).
 
+Homebar was called **rawin-launcher** until 0.12.0. The release file and the
+folders on the TV keep that name, so earlier installs update in place, and the
+old GitHub address leads here.
+
 ## Documentation
 
 - [Install, update, uninstall](docs/install.md)
-- [Using the launcher](docs/using.md): favourites, System, every setting, languages
+- [Using the launcher](docs/using.md): favourites, hiding, System, every setting, backup, languages
 - [Themes](docs/themes.md)
 - [Compatibility](docs/compatibility.md)
 - [How it works](docs/how-it-works.md): both variants, what is changed on the TV
