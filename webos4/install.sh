@@ -58,4 +58,8 @@ mkdir -p /var/lib/webosbrew/init.d
 ln -sf "$BASE/apply.sh" "$HOOK"
 sh "$BASE/apply.sh"
 say "done. Press HOME on the remote."
+# LG's New Home screen, where the TV has one: HOME opens it instead of the
+# Basic one the panel lives in.
+note=$(sh "$BASE/probe.sh" full-home 2>/dev/null)
+[ -n "$note" ] && say "note: $note"
 say "uninstall: sh $BASE/uninstall.sh"

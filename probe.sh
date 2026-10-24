@@ -4,6 +4,7 @@
 #   sh probe.sh            the report for both variants (what install.sh --probe shows)
 #   sh probe.sh panel      exit 0 when the Home panel fits; the reasons on stdout
 #   sh probe.sh overlay    the same for the overlay
+#   sh probe.sh full-home  a word on LG's New Home screen, where a TV has one
 # The release holds it next to install.sh, which uses it; the installers put
 # it next to diagnose.sh, with patch-home.js, so an installed TV can run it.
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -45,6 +46,18 @@ panel_fits() {
     rm -rf "$tmp"
     return $r
 }
+# Some webOS 4 TVs (the 2019 UM series) also have LG's "New" Home screen,
+# com.webos.app.fullhome: with the TV's Home screen setting on New it is the
+# one HOME opens, so the panel, which lives in the Basic one, never shows.
+FULL_HOME=com.webos.app.fullhome
+full_home_note() {
+    [ -d "/usr/palm/applications/$FULL_HOME" ] || return 0
+    if pidof "$FULL_HOME" >/dev/null 2>&1; then
+        echo "LG's New Home screen ($FULL_HOME) is running: the panel only shows with the TV's Home screen setting on Basic"
+    else
+        echo "this TV also has LG's New Home screen ($FULL_HOME): keep the TV's Home screen setting on Basic"
+    fi
+}
 # Whether the overlay and its helper have what they need.
 overlay_why=
 overlay_fits() {
@@ -59,13 +72,16 @@ overlay_fits() {
 }
 
 case "$1" in
-    panel) panel_fits; r=$?; printf '%s\n' "$panel_why"; exit $r ;;
+    panel) panel_fits; r=$?; printf '%s\n' "$panel_why"; full_home_note; exit $r ;;
+    full-home) full_home_note ;;
     overlay) overlay_fits; r=$?; printf '%s\n' "$overlay_why"; exit $r ;;
     "")
         if panel_fits; then say "Home panel: fits"; else say "Home panel: does not fit"; fi
         detail "$panel_why"
+        note=$(full_home_note)
+        [ -n "$note" ] && detail "$note"
         if overlay_fits; then say "overlay: fits"; else say "overlay: does not fit"; fi
         detail "$overlay_why"
         ;;
-    *) echo "usage: $0 [panel|overlay]" >&2; exit 2 ;;
+    *) echo "usage: $0 [panel|overlay|full-home]" >&2; exit 2 ;;
 esac

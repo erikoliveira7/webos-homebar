@@ -32,6 +32,15 @@ and attach it to an [issue](https://github.com/rawinek/webos-homebar/issues).
 `sh /var/lib/webosbrew/rawin-launcher/probe.sh` (or `…/rawin-launcher-home/probe.sh`,
 or `sh rawin-launcher/probe.sh` from the release).
 
+## HOME opens LG's Home, not Homebar (Home panel)
+
+On a webOS 4 TV with two Homes (see
+[Compatibility](compatibility.md#webos-versions)) the TV's *Home screen*
+setting has to be *Basic*. With *New*, HOME opens LG's full-screen Home
+(`com.webos.app.fullhome`) and the panel, which lives in the Basic Home,
+never shows. Set it to *Basic*; nothing needs to be installed again.
+`diagnose.sh` shows which Home is running (*Home running*).
+
 ## HOME does nothing (overlay)
 
 Run from a terminal, the installer asks for a press of HOME and binds the

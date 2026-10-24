@@ -62,6 +62,15 @@ Other models with the tested webOS versions may work. If the patch does not
 fit a webOS 4 TV's Home (another firmware), the installer says so and stops
 without changing anything.
 
+Some webOS 4 TVs (the 2019 UM series, for one) have two Homes and a *Home
+screen* setting to choose between them: *Basic*, LG's ribbon
+(`com.webos.app.home`), and *New*, a full-screen one
+(`com.webos.app.fullhome`). The panel lives in the Basic one, so on these
+TVs the Home screen has to be set to *Basic*; with *New*, HOME opens LG's
+New Home and the panel never shows. `--probe`, the installer and
+`diagnose.sh` say when a TV has the New Home, and whether it is the one
+running.
+
 ## Screen sizes
 
 The panel lays itself out for the screen it gets. LG's UI runs at 1920×1080
@@ -83,6 +92,7 @@ pills, one with DisplayPort or USB-C shows those too.
 | LG OLED55C9PLA (C9, 2019) | 4.10.2 | 05.50.00 | Home panel | 0.15.0 |
 | LG OLED77B46LA (B4, 2024) | 10.3.1 | 33.31.68 | Overlay | 0.15.0 |
 | LG 43UR78006LK (UR78, 2023, updated to webOS 25) | 10.3.2 | 33.31.75 | Overlay, LG's Home kept (`--keep-lg-home`) | 0.14.0, by a user |
+| LG 43UM7100PLB (UM71, 2019) | 4.10.2 | 05.40.97 | Home panel, with the TV's Home screen on *Basic* | 0.14.1, by a user |
 
 ## Trying an untested webOS
 

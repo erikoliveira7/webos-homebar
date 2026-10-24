@@ -51,6 +51,12 @@ or_note() { out=$("$@" 2>/dev/null); if [ -n "$out" ]; then echo "$out"; else ec
     section "LG Home"
     luna luna://com.webos.applicationManager/getAppInfo '{"id":"com.webos.app.home"}' | grep -o -E '"(type|version|main)": *"[^"]*"'
     echo "Home QML: $(ls $HOME_QML/main.qml 2>/dev/null || echo none)"
+    # Which Home runs: LG's Basic one (com.webos.app.home, where the panel
+    # lives) or, on TVs that have it, the New one (com.webos.app.fullhome).
+    running=
+    for id in com.webos.app.home com.webos.app.fullhome; do pidof "$id" >/dev/null 2>&1 && running="$running $id"; done
+    echo "Home running:${running:- none}"
+    [ -d /usr/palm/applications/com.webos.app.fullhome ] && echo "LG's New Home screen (com.webos.app.fullhome): installed"
     # The Home panel: LG reads our patched copies only while they are mounted
     # over the firmware files.
     if [ -f "$PANEL_BASE/main.qml" ]; then

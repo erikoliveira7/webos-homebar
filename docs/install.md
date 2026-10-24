@@ -13,6 +13,9 @@
   panel): the **Input Hook** app, installed from the Homebrew Channel, and
   node 8 or newer on the TV (webOS 5 and later have it).
 - The TV's own `node`, `tar` and `curl`/`wget` (present on the tested TVs).
+- For the Home panel on a TV with LG's two Home screens (some 2019 models):
+  the TV's *Home screen* setting on *Basic*, see
+  [Compatibility](compatibility.md#webos-versions).
 
 Which webOS versions work, and which variant a TV gets, is in
 [Compatibility](compatibility.md).
