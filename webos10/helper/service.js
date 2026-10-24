@@ -213,8 +213,14 @@ function note(text) {
 }
 let savedInput = '';
 try { savedInput = fs.readFileSync(LAST_INPUT_FILE, 'utf8').trim(); } catch (e) {}
+// Glasshouse's Home in LG Home's place (the same test as takeover.sh): then
+// Home is its, and the helper does not take the TV away from it.
+function glasshouseHome() {
+  try { return /"enabled"\s*:\s*true/.test(fs.readFileSync('/var/lib/tvweb/home.json', 'utf8')); } catch (e) { return false; }
+}
 const returner = new AfterExit({
   lastInput: savedInput,
+  homeTaken: glasshouseHome,
   target: readSettings().exitTo,
   save: (id) => { try { fs.writeFileSync(LAST_INPUT_FILE, id); } catch (e) {} },
   launch: (id) => luna('luna://com.webos.applicationManager/launch', { id }).then((r) => note('launch ' + id + ': ' + r.returnValue)),

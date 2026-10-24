@@ -6,6 +6,8 @@
 // up without being asked for in our panel. That also covers Netflix, which on a
 // BACK hold opens LG Home itself and stays in the background, and a BACK hold
 // on an input such as HDMI with no signal.
+// Not while another launcher owns Home: Glasshouse's Home runs under LG
+// Home's id, so its coming up is no reason to leave it (homeTaken).
 // Pure logic: the caller feeds foreground cards and provides launch/now/save.
 'use strict';
 
@@ -19,8 +21,9 @@ function isInput(id) { return INPUT.test(id || ''); }
 function isApp(id) { return !!id && id !== HOME && !isInput(id); }
 
 class AfterExit {
-  constructor({ launch, now = Date.now, save = () => {}, lastInput = '', target = '', log = () => {} }) {
+  constructor({ launch, now = Date.now, save = () => {}, lastInput = '', target = '', log = () => {}, homeTaken = () => false }) {
     this.launch = launch;
+    this.homeTaken = homeTaken;
     this.now = now;
     this.save = save;
     this.log = log;
@@ -49,6 +52,7 @@ class AfterExit {
 
     const exitToNothing = isApp(prev) && card === '';
     if (!exitToNothing && card !== HOME) return;
+    if (this.homeTaken()) { this.log('Home belongs to another launcher; not returning'); return; }
     if (t - this.homeRequestedAt < HOME_REQUEST_MS) { this.log('LG Home was requested; not returning'); return; }
     if (t - this.lastLaunchAt < RETRY_GAP_MS) return;
     this.lastLaunchAt = t;

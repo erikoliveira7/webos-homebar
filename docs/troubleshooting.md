@@ -41,6 +41,16 @@ setting has to be *Basic*. With *New*, HOME opens LG's full-screen Home
 never shows. Set it to *Basic*; nothing needs to be installed again.
 `diagnose.sh` shows which Home is running (*Home running*).
 
+## With Glasshouse (overlay)
+
+Homebar and [Glasshouse](https://github.com/rorygallagher2024/glasshouse)'s
+Home both want the HOME button. With Glasshouse's Home switched on, Homebar
+leaves Home to it: no black stand-in, and from 0.15.3 the helper no longer
+switches the TV to an input when Glasshouse's Home comes up (before, it
+flashed and went to HDMI 1). HOME opens Homebar only while Input Hook has
+it; if HOME opens Glasshouse instead, `diagnose.sh` shows what Input Hook
+does with the key (*HOME button (Input Hook)*).
+
 ## HOME does nothing (overlay)
 
 Run from a terminal, the installer asks for a press of HOME and binds the

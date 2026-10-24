@@ -70,7 +70,9 @@ app:
   input) gets the black page instead, and the helper switches to the input.
   Install with `--keep-lg-home` to skip this; *System → Original Home* then
   opens LG's Home. On an untested webOS the stand-in is skipped unless
-  `--replace-lg-home` asks for it.
+  `--replace-lg-home` asks for it. With Glasshouse's Home switched on
+  (`"enabled": true` in `/var/lib/tvweb/home.json`), Home is Glasshouse's:
+  the stand-in is not mounted and the helper does not switch away from it.
 
 ## The panel on any screen
 
