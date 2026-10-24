@@ -20,8 +20,10 @@ const APP_DIR = '/media/developer/apps/usr/palm/applications/' + APP;
 const CACHE = APP_DIR + '/cache';
 const ICON_ROOTS = ['/usr/palm/', '/media/cryptofs/apps/', '/media/developer/apps/', '/mnt/lg/'];
 const HTTP_PORT = 8899;
-// What the panel may open besides the apps it listed: the inputs and LG's Home.
-const SYSTEM_IDS = /^com\.webos\.app\.(hdmi\d|dp\d|usbc\d|home)$/;
+// What the panel may open besides the apps it listed: the inputs, LG's Home
+// and the System page's tiles (LG's settings app is not a launch point, so it
+// is never in the list).
+const SYSTEM_IDS = /^(com\.webos\.app\.(hdmi\d|dp\d|usbc\d|home|discovery)|com\.palm\.app\.settings|org\.webosbrew\.(hbchannel|piccap))$/;
 
 const service = new Service(APP + '.service');
 

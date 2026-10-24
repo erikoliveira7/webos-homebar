@@ -30,9 +30,11 @@
                 launching = false; launchTimeout.stop();
                 if (r.returnValue) closeHome();
                 else message = t("err_launch");
-            }, function() {
+            }, function(status) {
                 launching = false; launchTimeout.stop();
-                message = t("err_helper");
+                // A refusal (4xx) is the helper answering no; no answer at all
+                // (status 0) or an error of its own is the helper not working.
+                message = status >= 400 && status < 500 ? t("err_launch") : t("err_helper");
             });
         }
     }
