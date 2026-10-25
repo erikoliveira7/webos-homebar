@@ -76,7 +76,8 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
 | 5.x (webOS 5.0, 2020) | Inside LG's own Home, as on 4.x | Tested on 5.6 (LG NANO80 and LG UN73, by users) |
 | 6.x (webOS 6.0, 2021) | The overlay, with LG's Home kept | Tested on 6.3 and 6.5 (LG C1 and LG UP78, by users) |
 | 10.x (webOS 25, 2025) | A separate overlay app with a root helper | Tested on 10.3 (LG B4, and LG UR78 by a user) |
-| 3.x, 7.x–9.x, 11.x (webOS 3, 22–24, 26) | Whichever of the two the TV has the makings for | Untested |
+| 7.x (webOS 22, 2022) | The overlay, with LG's Home kept | Tested on 7.5 (a 2022 TV, by a user) |
+| 3.x, 8.x–9.x, 11.x (webOS 3, 23–24, 26) | Whichever of the two the TV has the makings for | Untested |
 
 LG names webOS after the year since 2022 (webOS 25 is version 10.x, webOS 22
 is 7.x), and an older TV can be updated to a newer webOS, so go by the

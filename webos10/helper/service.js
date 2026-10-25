@@ -23,8 +23,8 @@ const ICON_ROOTS = ['/usr/palm/', '/media/cryptofs/apps/', '/media/developer/app
 const HTTP_PORT = 8899;
 // What the panel may open besides the apps it listed: the inputs, LG's Home
 // and the System page's tiles (LG's settings app is not a launch point, so it
-// is never in the list).
-const SYSTEM_IDS = /^(com\.webos\.app\.(hdmi\d|dp\d|usbc\d|home|discovery)|com\.palm\.app\.settings|org\.webosbrew\.(hbchannel|piccap))$/;
+// is never in the list), and Live TV, which some TVs leave out of the list too.
+const SYSTEM_IDS = /^(com\.webos\.app\.(livetv|hdmi\d|dp\d|usbc\d|home|discovery)|com\.palm\.app\.settings|org\.webosbrew\.(hbchannel|piccap))$/;
 
 const service = new Service(APP + '.service');
 
