@@ -70,7 +70,8 @@ FocusScope {
     // shows (the time, what is on screen, the weather); hours: the clock's
     // format, "24" or "12"; units: the temperature's, "auto" (by the TV's
     // region), "c" or "f"; title: the big name of the focused app on Home and
-    // Apps; beta: updates also offer test builds (GitHub pre-releases).
+    // Apps; hints: the key hints on the bottom line; beta: updates also offer
+    // test builds (GitHub pre-releases).
     property var settings: validSettings({})
     property string systemLang: ""
     readonly property string units: settings.units === "auto" ? (/[-_]US$/i.test(systemLang) ? "f" : "c") : settings.units
@@ -115,6 +116,10 @@ FocusScope {
     property int valueIndex: 0
     readonly property string valueKey: page === "settings" && selected < settingKeys.length ? settingKeys[selected] : ""
     readonly property var valueOptions: valueKey ? optionsFor(valueKey, lang, inputs) : []
+    // Hidden inputs is a list of switches, not one value: moving along it
+    // only chooses, OK (or a click) hides or shows the input chosen.
+    readonly property bool valueToggles: valueKey === "hiddenInputs"
+    function valueOn(id) { return valueToggles ? hiddenInputs.indexOf(id) >= 0 : settings[valueKey] === id; }
     // In place of the favourites while there are none: OK opens Apps.
     readonly property var addFavouritesTile: ({title: t("add_favs_title"), action: "apps", symbol: "add"})
     signal stockRequested()
@@ -167,7 +172,10 @@ FocusScope {
     readonly property bool showTitle: settings.title !== false || page === "system"
     readonly property int heroBaseline: height - (page === "apps" ? px(380) : px(238)) - (showTitle ? (hero.sub ? pt(36) : 0) : px(20))
     readonly property var hero: heroFor(page, selected, apps, favourites, editIndex, launching, message, notice, tools, sources, iconColors)
-    readonly property var hints: hintsFor(page, selected, favouriteKeys, editIndex, lang, updateInfo, pane)
+    readonly property var hints: hintsFor(page, selected, favouriteKeys, editIndex, lang, updateInfo, pane, valueIndex, hiddenInputs)
+    // The remote's colour keys, as the hints show them (the same in every theme).
+    readonly property color keyRed: "#d83a3f"
+    readonly property color keyYellow: "#f2c230"
     property color glowColor: hero.color
     Behavior on glowColor { ColorAnimation { duration: shell.dur(300) } }
 
@@ -225,9 +233,10 @@ FocusScope {
         return [
             {title: "grp_about", keys: ["about"]},
             {title: "grp_look", keys: ["lang", "theme", "size", "motion"]},
-            {title: "grp_home", keys: exitTarget ? ["tv", "showHidden", "exitTo"] : ["tv", "showHidden"]},
+            {title: "grp_home", keys: exitTarget ? ["tv", "showHidden", "hiddenInputs", "exitTo"] : ["tv", "showHidden", "hiddenInputs"]},
             {title: "grp_apps", keys: ["sort"]},
-            {title: "grp_screen", keys: ["clock", "hours", "nowApp", "weather", "place", "units", "title"]},
+            {title: "grp_bar", keys: ["clock", "hours", "nowApp", "weather", "place", "units"]},
+            {title: "grp_screen", keys: ["title", "hints"]},
             {title: "grp_backup", keys: ["backup", "restore"]},
             {title: "grp_updates", keys: ["update", "beta"]}
         ];
@@ -253,7 +262,8 @@ FocusScope {
         var names = {lang: "set_language", theme: "set_theme", size: "set_size", motion: "set_motion", sort: "set_sort", tv: "set_tv",
                      showHidden: "set_hidden", exitTo: "set_exit", clock: "set_clock", hours: "set_hours", title: "set_title", backup: "set_backup",
                      restore: "set_restore", update: "set_update", beta: "set_beta", nowApp: "set_now_app", weather: "set_weather",
-                     place: "set_place", units: "set_units", about: "set_about"};
+                     place: "set_place", units: "set_units", about: "set_about", hints: "set_hints",
+                     hiddenInputs: "set_hidden_inputs"};
         var item = {key: key, title: t(names[key]), action: "setting", value: ""};
         if (key === "backup" || key === "restore") {
             item.action = key;
@@ -294,7 +304,11 @@ FocusScope {
             for (i=0; i<inputList.length; i++) list.push({id: inputList[i].id, title: inputList[i].title});
         } else if (key === "tv") {
             list = [{id: true, title: t("val_show")}, {id: false, title: t("val_hide")}];
-        } else if (key === "clock" || key === "nowApp" || key === "weather") {
+        } else if (key === "hiddenInputs") {
+            // Every input the TV has, hidden or not, with the device on it.
+            for (i=0; i<allInputs.length; i++)
+                list.push({id: allInputs[i].id, title: allInputs[i].title + (allInputs[i].detail ? " · " + allInputs[i].detail : "")});
+        } else if (key === "clock" || key === "nowApp" || key === "weather" || key === "hints") {
             list = [{id: true, title: t("val_chip_on")}, {id: false, title: t("val_chip_off")}];
         } else if (key === "units") {
             list = [{id: "auto", title: Strings.format(t("val_units_auto"), {unit: /[-_]US$/i.test(systemLang) ? "°F" : "°C"})},
@@ -309,6 +323,10 @@ FocusScope {
         return list;
     }
     function valueTitle(key) {
+        if (key === "hiddenInputs") {
+            var names = allInputs.filter(function(d) { return hiddenInputs.indexOf(d.id) >= 0; }).map(function(d) { return d.title; });
+            return names.length ? names.join(", ") : t("val_none_hidden");
+        }
         var o = optionsFor(key, lang, inputs);
         for (var i=0; i<o.length; i++) if (o[i].id === settings[key]) return o[i].title;
         return "";
@@ -427,6 +445,7 @@ FocusScope {
             units: s.units === "c" || s.units === "f" ? s.units : "auto",
             hours: s.hours === "12" ? "12" : "24",
             title: s.title !== false,
+            hints: s.hints !== false,
             beta: s.beta === true
         };
     }
@@ -527,32 +546,41 @@ FocusScope {
         else if (note) h.sub = note;
         return h;
     }
+    // The hints on the bottom line: each a text and the keys that do it, a
+    // colour key in its own colour ("hold OK" and YELLOW do the same thing).
+    function hintKey(label, colour) { return {label: label, colour: colour || ""}; }
+    function hint(keyList, text) { return {keys: keyList, text: text}; }
     function hintsFor(currentPage, index, keys, editing, language, upd, currentPane) {
-        var red = t("key_red");
+        var ok = hintKey("OK"), back = hintKey(t("hint_back")), hold = hintKey(t("hint_hold_ok"));
+        var red = hintKey(t("key_red"), "red"), yellow = hintKey(t("key_yellow"), "yellow");
         if (currentPage === "apps") {
             var app = apps[index];
             var fav = app && keys.indexOf(app.id) >= 0, hid = app && hiddenIds.indexOf(app.id) >= 0;
-            return [["OK", t("hint_open")], [t("hint_hold_ok"), fav ? t("hint_remove_fav") : t("hint_add_fav")],
-                    [red, hid ? t("hint_unhide") : t("hint_hide")], [t("hint_back"), t("hint_favourites")]];
+            return [hint([ok], t("hint_open")), hint([hold, yellow], fav ? t("hint_remove_fav") : t("hint_add_fav")),
+                    hint([red], hid ? t("hint_unhide") : t("hint_hide")), hint([back], t("hint_favourites"))];
         }
-        if (currentPage === "system") return [["OK", t("hint_open")], [t("hint_back"), t("hint_favourites")]];
+        if (currentPage === "system") return [hint([ok], t("hint_open")), hint([back], t("hint_favourites"))];
         if (currentPage === "settings") {
-            if (currentPane === 1) return [["▲ ▼", t("hint_choose")], ["OK", t("hint_done")]];
+            if (currentPane === 1 && valueToggles) {
+                var o = valueOptions[valueIndex], on = o && hiddenInputs.indexOf(o.id) >= 0;
+                return [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], on ? t("hint_unhide") : t("hint_hide")), hint([back], t("hint_done"))];
+            }
+            if (currentPane === 1) return [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], t("hint_done"))];
             var key = settingKeys[index], verb = actionVerb(key);
             if (key === "backup" || key === "restore" || key === "update" || key === "place" || key === "about")
-                return verb ? [["OK", verb], [t("hint_back"), t("hint_system")]] : [[t("hint_back"), t("hint_system")]];
-            return [["OK", t("hint_change")], [t("hint_back"), t("hint_system")]];
+                return verb ? [hint([ok], verb), hint([back], t("hint_system"))] : [hint([back], t("hint_system"))];
+            return [hint([ok], t("hint_change")), hint([back], t("hint_system"))];
         }
-        if (editing >= 0) return [["OK", t("hint_done")]];
-        if (index < keys.length) return [["OK", t("hint_open")], [t("hint_hold_ok"), t("hint_edit_favs")]];
-        if (index < favSlots) return [["OK", t("hint_open")]];   // the "Add favourites" tile
+        if (editing >= 0) return [hint([ok], t("hint_done"))];
+        if (index < keys.length) return [hint([ok], t("hint_open")), hint([hold, yellow], t("hint_edit_favs"))];
+        if (index < favSlots) return [hint([ok], t("hint_open"))];   // the "Add favourites" tile
         if (index < favSlots + sourceCount) {
-            var s = sources[index - favSlots], list = [["OK", t("hint_open")]];
-            if (s.kind === "input" && Config.exitTarget) list.push([t("hint_hold_ok"), t("hint_back_target")]);
-            if (s.kind === "input") list.push([red, s.hidden ? t("hint_unhide") : t("hint_hide")]);
+            var s = sources[index - favSlots], list = [hint([ok], t("hint_open"))];
+            if (s.kind === "input" && Config.exitTarget) list.push(hint([hold, yellow], t("hint_back_target")));
+            if (s.kind === "input") list.push(hint([red], s.hidden ? t("hint_unhide") : t("hint_hide")));
             return list;
         }
-        return [["OK", t("hint_open")]];
+        return [hint([ok], t("hint_open"))];
     }
 
     function saveFavourites() {
@@ -612,7 +640,8 @@ FocusScope {
         else { ids.push(id); notice = t("hidden_input"); }
         hiddenInputs = ids;
         save(hiddenInputs, "hiddenInputs");
-        selected = Math.max(0, Math.min(selected, favSlots + sourceCount + 1));
+        // On Home the row got shorter; in the settings menu the row stays.
+        if (page === "home") selected = Math.max(0, Math.min(selected, favSlots + sourceCount + 1));
     }
     function hideAction() {
         if (!ready || launching) return;
@@ -678,7 +707,11 @@ FocusScope {
     // the preview, OK and left keep it.
     function applyValue() {
         var o = valueOptions[valueIndex];
-        if (page === "settings" && pane === 1 && o) setSetting(valueKey, o.id);
+        if (page === "settings" && pane === 1 && o && !valueToggles) setSetting(valueKey, o.id);
+    }
+    function toggleValue() {
+        var o = valueOptions[valueIndex];
+        if (page === "settings" && pane === 1 && o && valueToggles) toggleHiddenInput(o.id);
     }
     onValueIndexChanged: applyValue()
     function activate(item) {
@@ -757,6 +790,7 @@ FocusScope {
         if (pane === 1) {
             if (key === Qt.Key_Up) { if (valueIndex > 0) valueIndex--; }
             else if (key === Qt.Key_Down) { if (valueIndex < valueOptions.length-1) valueIndex++; }
+            else if (isOk(key) && valueToggles) toggleValue();
             else if (key === Qt.Key_Left || isOk(key) || isBack(key)) pane = 0;
             else return false;
             return true;
@@ -1353,18 +1387,35 @@ FocusScope {
             }
         }
 
-        // Controls for what is focused, on the bottom line with the version.
+        // Controls for what is focused, on the bottom line with the version:
+        // a key outlined, a colour key filled with the remote's colour. The
+        // setting "hints" hides them on Home, Apps and System; the settings
+        // menu and editing favourites keep theirs.
         Row {
+            visible: shell.settings.hints || shell.page === "settings" || shell.editIndex >= 0
             x: shell.margin; y: shell.height - shell.px(47); spacing: shell.px(24)
             Repeater {
                 model: shell.hints
                 Row {
                     spacing: shell.px(9)
-                    Rectangle {
-                        width: keyLabel.implicitWidth+shell.px(14); height: shell.pt(24); radius: shell.px(7); color: "transparent"; border.width: Math.max(1, 1.5*shell.u); border.color: shell.theme.keyEdge
-                        Text { id: keyLabel; anchors.centerIn: parent; text: modelData[0]; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(12); color: shell.theme.keyLabel }
+                    Row {
+                        spacing: shell.px(6); anchors.verticalCenter: parent.verticalCenter
+                        Repeater {
+                            model: modelData.keys
+                            Rectangle {
+                                readonly property string colour: modelData.colour
+                                width: keyLabel.implicitWidth+shell.px(14); height: shell.pt(24); radius: shell.px(7)
+                                color: colour === "red" ? shell.keyRed : colour === "yellow" ? shell.keyYellow : "transparent"
+                                border.width: colour ? 0 : Math.max(1, 1.5*shell.u); border.color: shell.theme.keyEdge
+                                Text {
+                                    id: keyLabel; anchors.centerIn: parent; text: modelData.label
+                                    font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(12)
+                                    color: parent.colour === "red" ? "#ffffff" : parent.colour === "yellow" ? "#1d1a12" : shell.theme.keyLabel
+                                }
+                            }
+                        }
                     }
-                    Text { text: modelData[1]; font.family: shell.fontName; font.pixelSize: shell.pt(15); color: shell.theme.hint; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: modelData.text; font.family: shell.fontName; font.pixelSize: shell.pt(15); color: shell.theme.hint; anchors.verticalCenter: parent.verticalCenter }
                 }
             }
         }
@@ -1996,7 +2047,7 @@ FocusScope {
                         Repeater {
                             model: shell.valueOptions
                             Rectangle {
-                                readonly property bool current: shell.settings[shell.valueKey] === modelData.id
+                                readonly property bool current: shell.valueOn(modelData.id)
                                 readonly property bool lit: shell.pane === 1 && shell.valueIndex === index
                                 readonly property bool hovered: shell.valueHover === index
                                 width: valueColumn.width; height: menu.rowHeight; radius: shell.px(14)
@@ -2004,11 +2055,16 @@ FocusScope {
                                 // Hover is an outline and tint, independent of the chosen value.
                                 color: lit ? shell.theme.focus : hovered ? shell.theme.track : "transparent"
                                 border.width: hovered && !lit ? 1 : 0; border.color: shell.theme.focus
+                                // A dot on the chosen value; a box, ticked when on, for switches.
                                 Rectangle {
                                     x: shell.px(20); anchors.verticalCenter: parent.verticalCenter
-                                    width: shell.px(22); height: width; radius: width/2; color: "transparent"
+                                    width: shell.px(22); height: width; radius: shell.valueToggles ? shell.px(5) : width/2; color: "transparent"
                                     border.width: Math.max(1, 2*shell.u); border.color: lit ? shell.theme.onFocus : current ? shell.theme.focus : shell.ink3
-                                    Rectangle { anchors.centerIn: parent; width: shell.px(10); height: width; radius: width/2; visible: current; color: lit ? shell.theme.onFocus : shell.theme.focus }
+                                    Rectangle {
+                                        anchors.centerIn: parent; width: shell.valueToggles ? shell.px(12) : shell.px(10); height: width
+                                        radius: shell.valueToggles ? shell.px(2) : width/2
+                                        visible: current; color: lit ? shell.theme.onFocus : shell.theme.focus
+                                    }
                                 }
                                 Text {
                                     x: shell.px(58); anchors.verticalCenter: parent.verticalCenter; width: parent.width - shell.px(78); elide: Text.ElideRight
@@ -2024,7 +2080,10 @@ FocusScope {
                                     onEntered: hoverValue({x: mouseX, y: mouseY})
                                     onPositionChanged: hoverValue(mouse)
                                     onExited: { if (shell.valueHover === index) shell.valueHover = -1; }
-                                    onClicked: { shell.valueHover = -1; shell.pane = 1; shell.valueIndex = index; shell.applyValue(); }
+                                    onClicked: {
+                                        shell.valueHover = -1; shell.pane = 1; shell.valueIndex = index;
+                                        if (shell.valueToggles) shell.toggleValue(); else shell.applyValue();
+                                    }
                                 }
                             }
                         }

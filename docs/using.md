@@ -32,7 +32,8 @@ stays visible above it. One row, from the left:
 <img src="screenshots/home-input.jpg" width="100%" alt="An HDMI input focused: its name above the row, the device under each input, the hints for OK, hold OK and RED at the bottom">
 
 The focused item's name shows above the row, and the hints under it say what
-OK and the other keys do. The chip in the top-right corner shows what is on
+OK and the other keys do, the remote's colour keys in their own colour
+(YELLOW does what holding OK does, RED hides). The chip in the top-right corner shows what is on
 screen, the [weather](#weather) and the time; each of the three can be hidden. BACK closes the panel; from *Apps* or *System* it goes
 back to Home. The panel fits the TV's screen, HD or FHD/UHD, at the same
 proportions.
@@ -71,7 +72,9 @@ uninstalled simply drops out of them.
 **RED** on an app in *Apps* hides it from the list (and drops it from the
 favourites); RED on an input on Home hides it from the row. *Launcher
 settings → Hidden apps and inputs → Shown dimmed* shows the hidden ones
-again, dimmed, so RED on one can bring it back for good. Nothing is
+again, dimmed, so RED on one can bring it back for good. A hidden input
+also comes back from *Launcher settings → Hidden inputs*, which lists all of
+the TV's inputs: OK there hides or shows the one chosen. Nothing is
 uninstalled; hidden apps are only out of the launcher's lists.
 
 ## Apps
@@ -133,15 +136,17 @@ at *Larger* and the 12-hour clock:
 | | Animations | On or off |
 | Home row | Live TV on Home | A *TV* pill before the inputs, shown or hidden |
 | | Hidden apps and inputs | Hidden, or shown dimmed (to bring one back with RED) |
+| | Hidden inputs | Every input of the TV with a box: OK hides or shows the one chosen, so a hidden input comes back without showing them dimmed first |
 | | After holding BACK | Overlay only: the last input, or one of the TV's inputs. Also where the TV goes when an app exits |
 | Apps | Apps order | The TV's order, A to Z, or the most used first |
-| On screen | Clock | Shown or hidden |
+| Top bar | Clock | Shown or hidden |
 | | Clock format | 24-hour (16:05) or 12-hour (4:05 PM); the backup's time follows it |
 | | Current app | The app or input on screen, shown or hidden |
 | | Weather | Shown or hidden, see [Weather](#weather) |
 | | Weather place | The place of the weather; a code on the right opens a page on a phone to choose it |
 | | Temperature | *Automatic* (°F when the TV's language is set for the United States, else °C), Celsius or Fahrenheit |
-| | App name | Whether the big name of the focused item shows on Home and in *Apps* (System always shows it) |
+| On screen | App name above favourites | Whether the big name of the focused item shows on Home and in *Apps* (System always shows it) |
+| | Key hints | The keys and what they do, on the bottom line: shown or hidden (the settings menu and editing favourites keep theirs) |
 | Backup | Back up favourites and settings | OK writes everything the launcher keeps to a file next to it; the status says when the last backup was made, see [Backup](#backup) |
 | | Restore from the backup | OK brings that file back |
 | Updates | Updates | The installed version; OK checks, downloads and installs a new release, see [Update](install.md#update). The launcher also looks once a day, the first time Home opens, and shows a dot on *System* and *Launcher settings* when a new version is there |

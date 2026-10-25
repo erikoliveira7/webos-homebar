@@ -13,7 +13,7 @@ var table = {
         upd_done: "Updated. Press HOME.", upd_err_check: "Could not reach GitHub. Check the internet connection.",
         upd_err_download: "The download failed.", upd_err_install: "The update failed; see /tmp/rawin-launcher-update/install.log",
         hint_check: "check for updates", hint_download: "download", hint_install: "install",
-        set_title: "App name", val_name_show: "Shown", val_name_hide: "Hidden",
+        set_title: "App name above favourites", val_name_show: "Shown", val_name_hide: "Hidden",
         add_favs_title: "Add favourites", add_favs_sub: "Open Apps and hold OK on an app",
         tv_settings: "TV settings",
         stock_home: "Original Home",
@@ -57,7 +57,9 @@ var table = {
         place_auto: "{name} (automatic)", place_unknown: "Not known yet", place_noip: "The TV is not connected to a network.", upd_notes: "What's new",
         place_scan: "Scan the code with your phone's camera and choose a town or city on the page it opens. The phone has to be on the same network as the TV.",
         grp_about: "About", set_about: "About Homebar", about_scan: "Scan to buy me a coffee",
-        about_text: "I build free apps and tools and share them on GitHub. If you enjoy my projects, you can support my work by buying me a coffee!"
+        about_text: "I build free apps and tools and share them on GitHub. If you enjoy my projects, you can support my work by buying me a coffee!",
+        set_hints: "Key hints", key_yellow: "YELLOW",
+        grp_bar: "Top bar", set_hidden_inputs: "Hidden inputs", val_none_hidden: "None"
     },
     es: {
         set_update: "Actualizaciones", set_beta: "Versiones de prueba", val_on: "Sí", val_off: "No",
@@ -67,7 +69,7 @@ var table = {
         upd_done: "Actualizado. Pulsa HOME.", upd_err_check: "No se pudo conectar con GitHub. Comprueba la conexión a internet.",
         upd_err_download: "La descarga ha fallado.", upd_err_install: "La actualización ha fallado; ver /tmp/rawin-launcher-update/install.log",
         hint_check: "buscar actualizaciones", hint_download: "descargar", hint_install: "instalar",
-        set_title: "Nombre de la app", val_name_show: "Visible", val_name_hide: "Oculto",
+        set_title: "Nombre de la app sobre los favoritos", val_name_show: "Visible", val_name_hide: "Oculto",
         add_favs_title: "Añadir favoritos", add_favs_sub: "Abre Aplicaciones y mantén OK sobre una app",
         tv_settings: "Ajustes del TV",
         stock_home: "Home original",
@@ -111,7 +113,9 @@ var table = {
         place_auto: "{name} (automático)", place_unknown: "Aún no se sabe", place_noip: "La TV no está conectada a una red.", upd_notes: "Novedades",
         place_scan: "Escanea el código con la cámara del móvil y elige un pueblo o ciudad en la página que se abre. El móvil tiene que estar en la misma red que la TV.",
         grp_about: "Acerca de", set_about: "Acerca de Homebar", about_scan: "Escanea para invitarme a un café",
-        about_text: "Creo apps y herramientas gratuitas y las comparto en GitHub. Si te gustan mis proyectos, puedes apoyar mi trabajo invitándome a un café."
+        about_text: "Creo apps y herramientas gratuitas y las comparto en GitHub. Si te gustan mis proyectos, puedes apoyar mi trabajo invitándome a un café.",
+        set_hints: "Ayuda de teclas", key_yellow: "AMARILLO",
+        grp_bar: "Barra superior", set_hidden_inputs: "Entradas ocultas", val_none_hidden: "Ninguna"
     },
     de: {
         set_update: "Updates", set_beta: "Testversionen", val_on: "An", val_off: "Aus",
@@ -121,7 +125,7 @@ var table = {
         upd_done: "Aktualisiert. Drücke HOME.", upd_err_check: "GitHub ist nicht erreichbar. Prüfe die Internetverbindung.",
         upd_err_download: "Der Download ist fehlgeschlagen.", upd_err_install: "Das Update ist fehlgeschlagen; siehe /tmp/rawin-launcher-update/install.log",
         hint_check: "nach Updates suchen", hint_download: "herunterladen", hint_install: "installieren",
-        set_title: "App-Name", val_name_show: "Sichtbar", val_name_hide: "Ausgeblendet",
+        set_title: "App-Name über den Favoriten", val_name_show: "Sichtbar", val_name_hide: "Ausgeblendet",
         add_favs_title: "Favoriten hinzufügen", add_favs_sub: "Öffne Apps und halte OK auf einer App",
         tv_settings: "TV-Einstellungen",
         stock_home: "Original-Home",
@@ -165,7 +169,9 @@ var table = {
         place_auto: "{name} (automatisch)", place_unknown: "Noch nicht bekannt", place_noip: "Der Fernseher ist mit keinem Netzwerk verbunden.", upd_notes: "Was ist neu",
         place_scan: "Scanne den Code mit der Kamera des Handys und wähle auf der Seite, die sich öffnet, einen Ort. Das Handy muss im selben Netzwerk sein wie der Fernseher.",
         grp_about: "Über", set_about: "Über Homebar", about_scan: "Scannen und mir einen Kaffee spendieren",
-        about_text: "Ich baue kostenlose Apps und Tools und teile sie auf GitHub. Wenn dir meine Projekte gefallen, kannst du meine Arbeit unterstützen und mir einen Kaffee spendieren!"
+        about_text: "Ich baue kostenlose Apps und Tools und teile sie auf GitHub. Wenn dir meine Projekte gefallen, kannst du meine Arbeit unterstützen und mir einen Kaffee spendieren!",
+        set_hints: "Tastenhinweise", key_yellow: "GELB",
+        grp_bar: "Obere Leiste", set_hidden_inputs: "Ausgeblendete Eingänge", val_none_hidden: "Keine"
     },
     pl: {
         set_update: "Aktualizacje", set_beta: "Wersje testowe", val_on: "Włączone", val_off: "Wyłączone",
@@ -175,7 +181,7 @@ var table = {
         upd_done: "Zaktualizowano. Naciśnij HOME.", upd_err_check: "Brak połączenia z GitHubem. Sprawdź internet.",
         upd_err_download: "Pobieranie nie powiodło się.", upd_err_install: "Aktualizacja nie powiodła się; zobacz /tmp/rawin-launcher-update/install.log",
         hint_check: "sprawdź aktualizacje", hint_download: "pobierz", hint_install: "zainstaluj",
-        set_title: "Nazwa aplikacji", val_name_show: "Widoczna", val_name_hide: "Ukryta",
+        set_title: "Nazwa aplikacji nad ulubionymi", val_name_show: "Widoczna", val_name_hide: "Ukryta",
         add_favs_title: "Dodaj ulubione", add_favs_sub: "Wejdź w Aplikacje i przytrzymaj OK na aplikacji",
         tv_settings: "Ustawienia TV",
         stock_home: "Oryginalny Home",
@@ -219,7 +225,9 @@ var table = {
         place_auto: "{name} (automatycznie)", place_unknown: "Jeszcze nieznane", place_noip: "Telewizor nie jest połączony z siecią.", upd_notes: "Co nowego",
         place_scan: "Zeskanuj kod aparatem telefonu i wybierz miejscowość na stronie, która się otworzy. Telefon musi być w tej samej sieci co telewizor.",
         grp_about: "Informacje", set_about: "O aplikacji Homebar", about_scan: "Zeskanuj, aby postawić mi kawę",
-        about_text: "Tworzę darmowe aplikacje i narzędzia i udostępniam je na GitHubie. Jeśli podobają Ci się moje projekty, możesz wesprzeć moją pracę, stawiając mi kawę!"
+        about_text: "Tworzę darmowe aplikacje i narzędzia i udostępniam je na GitHubie. Jeśli podobają Ci się moje projekty, możesz wesprzeć moją pracę, stawiając mi kawę!",
+        set_hints: "Podpowiedzi przycisków", key_yellow: "ŻÓŁTY",
+        grp_bar: "Pasek u góry", set_hidden_inputs: "Ukryte wejścia", val_none_hidden: "Brak"
     },
     fr: {
         set_update: "Mises à jour", set_beta: "Versions de test", val_on: "Activé", val_off: "Désactivé",
@@ -229,7 +237,7 @@ var table = {
         upd_done: "Mis à jour. Appuyez sur HOME.", upd_err_check: "Impossible de joindre GitHub. Vérifiez la connexion internet.",
         upd_err_download: "Le téléchargement a échoué.", upd_err_install: "La mise à jour a échoué ; voir /tmp/rawin-launcher-update/install.log",
         hint_check: "rechercher des mises à jour", hint_download: "télécharger", hint_install: "installer",
-        set_title: "Nom de l'app", val_name_show: "Affiché", val_name_hide: "Masqué",
+        set_title: "Nom de l'app au-dessus des favoris", val_name_show: "Affiché", val_name_hide: "Masqué",
         add_favs_title: "Ajouter des favoris", add_favs_sub: "Ouvrez Applications et maintenez OK sur une app",
         tv_settings: "Paramètres du téléviseur",
         stock_home: "Accueil d'origine",
@@ -273,7 +281,9 @@ var table = {
         place_auto: "{name} (automatique)", place_unknown: "Pas encore connu", place_noip: "La TV n'est connectée à aucun réseau.", upd_notes: "Nouveautés",
         place_scan: "Scannez le code avec l'appareil photo du téléphone et choisissez une ville sur la page qui s'ouvre. Le téléphone doit être sur le même réseau que la TV.",
         grp_about: "À propos", set_about: "À propos de Homebar", about_scan: "Scannez pour m'offrir un café",
-        about_text: "Je crée des apps et des outils gratuits et je les partage sur GitHub. Si mes projets vous plaisent, vous pouvez soutenir mon travail en m'offrant un café !"
+        about_text: "Je crée des apps et des outils gratuits et je les partage sur GitHub. Si mes projets vous plaisent, vous pouvez soutenir mon travail en m'offrant un café !",
+        set_hints: "Aide des touches", key_yellow: "JAUNE",
+        grp_bar: "Barre du haut", set_hidden_inputs: "Entrées masquées", val_none_hidden: "Aucune"
     },
     it: {
         set_update: "Aggiornamenti", set_beta: "Versioni di prova", val_on: "Attive", val_off: "Disattivate",
@@ -283,7 +293,7 @@ var table = {
         upd_done: "Aggiornato. Premi HOME.", upd_err_check: "Impossibile raggiungere GitHub. Controlla la connessione a internet.",
         upd_err_download: "Il download non è riuscito.", upd_err_install: "L'aggiornamento non è riuscito; vedi /tmp/rawin-launcher-update/install.log",
         hint_check: "cerca aggiornamenti", hint_download: "scarica", hint_install: "installa",
-        set_title: "Nome dell'app", val_name_show: "Visibile", val_name_hide: "Nascosto",
+        set_title: "Nome dell'app sopra i preferiti", val_name_show: "Visibile", val_name_hide: "Nascosto",
         add_favs_title: "Aggiungi preferiti", add_favs_sub: "Apri App e tieni premuto OK su un'app",
         tv_settings: "Impostazioni TV",
         stock_home: "Home originale",
@@ -327,7 +337,9 @@ var table = {
         place_auto: "{name} (automatico)", place_unknown: "Non ancora noto", place_noip: "La TV non è collegata a una rete.", upd_notes: "Novità",
         place_scan: "Inquadra il codice con la fotocamera del telefono e scegli un paese o una città nella pagina che si apre. Il telefono deve essere sulla stessa rete della TV.",
         grp_about: "Informazioni", set_about: "Informazioni su Homebar", about_scan: "Inquadra per offrirmi un caffè",
-        about_text: "Creo app e strumenti gratuiti e li condivido su GitHub. Se ti piacciono i miei progetti, puoi sostenere il mio lavoro offrendomi un caffè!"
+        about_text: "Creo app e strumenti gratuiti e li condivido su GitHub. Se ti piacciono i miei progetti, puoi sostenere il mio lavoro offrendomi un caffè!",
+        set_hints: "Suggerimenti dei tasti", key_yellow: "GIALLO",
+        grp_bar: "Barra in alto", set_hidden_inputs: "Ingressi nascosti", val_none_hidden: "Nessuno"
     },
     pt: {
         set_update: "Atualizações", set_beta: "Versões de teste", val_on: "Ativadas", val_off: "Desativadas",
@@ -337,7 +349,7 @@ var table = {
         upd_done: "Atualizado. Prima HOME.", upd_err_check: "Não foi possível contactar o GitHub. Verifique a ligação à internet.",
         upd_err_download: "A transferência falhou.", upd_err_install: "A atualização falhou; veja /tmp/rawin-launcher-update/install.log",
         hint_check: "procurar atualizações", hint_download: "transferir", hint_install: "instalar",
-        set_title: "Nome da app", val_name_show: "Visível", val_name_hide: "Oculto",
+        set_title: "Nome da app acima dos favoritos", val_name_show: "Visível", val_name_hide: "Oculto",
         add_favs_title: "Adicionar favoritos", add_favs_sub: "Abra Aplicações e mantenha OK premido numa app",
         tv_settings: "Definições da TV",
         stock_home: "Home original",
@@ -381,7 +393,9 @@ var table = {
         place_auto: "{name} (automático)", place_unknown: "Ainda não se sabe", place_noip: "A TV não está ligada a nenhuma rede.", upd_notes: "Novidades",
         place_scan: "Leia o código com a câmara do telemóvel e escolha uma vila ou cidade na página que abre. O telemóvel tem de estar na mesma rede que a TV.",
         grp_about: "Sobre", set_about: "Sobre o Homebar", about_scan: "Leia o código para me pagar um café",
-        about_text: "Crio apps e ferramentas gratuitas e partilho-as no GitHub. Se gosta dos meus projetos, pode apoiar o meu trabalho pagando-me um café!"
+        about_text: "Crio apps e ferramentas gratuitas e partilho-as no GitHub. Se gosta dos meus projetos, pode apoiar o meu trabalho pagando-me um café!",
+        set_hints: "Ajuda das teclas", key_yellow: "AMARELO",
+        grp_bar: "Barra superior", set_hidden_inputs: "Entradas ocultas", val_none_hidden: "Nenhuma"
     },
     nl: {
         set_update: "Updates", set_beta: "Testversies", val_on: "Aan", val_off: "Uit",
@@ -391,7 +405,7 @@ var table = {
         upd_done: "Bijgewerkt. Druk op HOME.", upd_err_check: "GitHub is niet bereikbaar. Controleer de internetverbinding.",
         upd_err_download: "Het downloaden is mislukt.", upd_err_install: "De update is mislukt; zie /tmp/rawin-launcher-update/install.log",
         hint_check: "zoeken naar updates", hint_download: "downloaden", hint_install: "installeren",
-        set_title: "App-naam", val_name_show: "Zichtbaar", val_name_hide: "Verborgen",
+        set_title: "App-naam boven de favorieten", val_name_show: "Zichtbaar", val_name_hide: "Verborgen",
         add_favs_title: "Favorieten toevoegen", add_favs_sub: "Open Apps en houd OK ingedrukt op een app",
         tv_settings: "Tv-instellingen",
         stock_home: "Originele Home",
@@ -435,7 +449,9 @@ var table = {
         place_auto: "{name} (automatisch)", place_unknown: "Nog niet bekend", place_noip: "De tv is niet met een netwerk verbonden.", upd_notes: "Wat is er nieuw",
         place_scan: "Scan de code met de camera van je telefoon en kies een plaats op de pagina die opent. De telefoon moet op hetzelfde netwerk zitten als de tv.",
         grp_about: "Over", set_about: "Over Homebar", about_scan: "Scan om een koffie voor me te kopen",
-        about_text: "Ik maak gratis apps en tools en deel ze op GitHub. Vind je mijn projecten leuk, dan kun je mijn werk steunen door een koffie voor me te kopen!"
+        about_text: "Ik maak gratis apps en tools en deel ze op GitHub. Vind je mijn projecten leuk, dan kun je mijn werk steunen door een koffie voor me te kopen!",
+        set_hints: "Uitleg van de toetsen", key_yellow: "GEEL",
+        grp_bar: "Bovenbalk", set_hidden_inputs: "Verborgen ingangen", val_none_hidden: "Geen"
     },
     cs: {
         set_update: "Aktualizace", set_beta: "Testovací verze", val_on: "Zapnuto", val_off: "Vypnuto",
@@ -445,7 +461,7 @@ var table = {
         upd_done: "Aktualizováno. Stiskněte HOME.", upd_err_check: "GitHub není dostupný. Zkontrolujte připojení k internetu.",
         upd_err_download: "Stahování se nezdařilo.", upd_err_install: "Aktualizace se nezdařila; viz /tmp/rawin-launcher-update/install.log",
         hint_check: "hledat aktualizace", hint_download: "stáhnout", hint_install: "nainstalovat",
-        set_title: "Název aplikace", val_name_show: "Zobrazený", val_name_hide: "Skrytý",
+        set_title: "Název aplikace nad oblíbenými", val_name_show: "Zobrazený", val_name_hide: "Skrytý",
         add_favs_title: "Přidat oblíbené", add_favs_sub: "Otevřete Aplikace a podržte OK na aplikaci",
         tv_settings: "Nastavení TV",
         stock_home: "Původní Home",
@@ -489,7 +505,9 @@ var table = {
         place_auto: "{name} (automaticky)", place_unknown: "Zatím neznámé", place_noip: "Televize není připojená k žádné síti.", upd_notes: "Novinky",
         place_scan: "Naskenujte kód fotoaparátem telefonu a na stránce, která se otevře, vyberte obec nebo město. Telefon musí být ve stejné síti jako televize.",
         grp_about: "O aplikaci", set_about: "O aplikaci Homebar", about_scan: "Naskenujte a kupte mi kávu",
-        about_text: "Tvořím aplikace a nástroje zdarma a sdílím je na GitHubu. Pokud se vám moje projekty líbí, můžete mou práci podpořit tím, že mi koupíte kávu!"
+        about_text: "Tvořím aplikace a nástroje zdarma a sdílím je na GitHubu. Pokud se vám moje projekty líbí, můžete mou práci podpořit tím, že mi koupíte kávu!",
+        set_hints: "Nápověda tlačítek", key_yellow: "ŽLUTÉ",
+        grp_bar: "Horní lišta", set_hidden_inputs: "Skryté vstupy", val_none_hidden: "Žádné"
     }
 };
 // "pl-PL", "pl_PL" or "pl" → "pl" when supported, else "".

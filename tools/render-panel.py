@@ -9,7 +9,7 @@ Live TV on the rail, hidden inputs and apps, Apps in each order, System with
 an update waiting with its notes, About, the settings and a setting's values,
 the weather's place with its code (from the setup server, shared/setup.js,
 when one runs on this computer), the weather in each of its symbols, the larger text
-size, no favourites, and a set with two inputs.
+size, the key hints hidden, the hidden inputs list, no favourites, and a set with two inputs.
 
 Usage: tools/render-panel.py [--size 1920x1080] [--out dist/render] [--theme default]
 Needs Python 3 with PySide6 (pip install PySide6) and a display (or Xvfb);
@@ -160,11 +160,14 @@ def main():
             scene("system-update", page="system", selected=1, updateState="available"),
             scene("settings-about", page="settings", selected=0),
             scene("settings", page="settings", selected=2),
-            scene("settings-end", page="settings", selected=19, updateState="available"),
-            scene("settings-update", page="settings", selected=18, updateState="available", notes=NOTES),
-            scene("settings-place", page="settings", selected=13),
+            scene("settings-end", page="settings", selected=21, updateState="available"),
+            scene("settings-update", page="settings", selected=20, updateState="available", notes=NOTES),
+            scene("settings-place", page="settings", selected=14),
+            scene("settings-hidden-inputs", page="settings", selected=7, pane=1, valueIndex=2, hiddenInputs=["com.webos.app.hdmi4"]),
+            scene("settings-hints", page="settings", selected=17, settings=dict(theme, hints=False)),
             scene("settings-values", page="settings", selected=2, pane=1, valueIndex=3),
             scene("home-larger", page="home", selected=8, settings=dict(theme, size="larger")),
+            scene("home-nohints", page="home", selected=0, settings=dict(theme, hints=False)),
             scene("home-nofavs", page="home", selected=0, favs=[]),
             scene("home-2inputs", page="home", selected=3, favs=favs[:3], inputs=inputs(INPUTS_SMALL)),
         ]
