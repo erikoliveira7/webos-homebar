@@ -106,6 +106,11 @@ FocusScope {
     readonly property var settingKeys: keysOf(settingGroups)
     readonly property var menuRows: rowsOf(settingGroups, lang)
     readonly property var settingsItems: settingKeys.map(function(k) { return settingFor(k); })
+    // Pointer preview is independent of the open section (selected). Crossing
+    // another row on the way to its values must not replace the right pane.
+    property int menuHover: -1
+    // Unlike valueIndex, this visual preview must never call applyValue().
+    property int valueHover: -1
     property int pane: 0
     property int valueIndex: 0
     readonly property string valueKey: page === "settings" && selected < settingKeys.length ? settingKeys[selected] : ""
@@ -167,6 +172,19 @@ FocusScope {
     Behavior on glowColor { ColorAnimation { duration: shell.dur(300) } }
 
     function closeHome() { closeRequested(); }
+    // Qt sends hover when an item appears or moves under a resting pointer.
+    // Compare window coordinates, so a tile's lift/scale cannot move focus.
+    // The first event after opening only records where the pointer is.
+    property point pointerAt: Qt.point(-1, -1)
+    property real pointerBlockedUntil: 0
+    function pointerMoved(item, mouse) {
+        var p = item.mapToItem(null, mouse.x, mouse.y), first = pointerAt.x < 0;
+        var moved = !first && (Math.abs(p.x - pointerAt.x) > 2 || Math.abs(p.y - pointerAt.y) > 2);
+        pointerAt = Qt.point(p.x, p.y);
+        // Keys can hide the Magic Remote cursor. Keep their focus even if Qt
+        // delivers hover during that transition; a held OK keeps its target.
+        return moved && foreground && visible && Date.now() >= pointerBlockedUntil && !okHeld && editIndex < 0;
+    }
 
     FontLoader { id: inter; source: "file:///var/lib/webosbrew/rawin-launcher/current/fonts/Inter-Regular.ttf" }
     FontLoader { id: interBold; source: "file:///var/lib/webosbrew/rawin-launcher/current/fonts/Inter-Bold.ttf" }
@@ -799,6 +817,11 @@ FocusScope {
         return Config.exitTarget && selected >= favSlots && selected < favSlots + sourceCount && sources[selected - favSlots].kind === "input";
     }
     Keys.onPressed: {
+        if (page === "settings" && menuHover >= 0 && isOk(event.key) && !event.isAutoRepeat) {
+            pane = 0; selected = menuHover;
+        }
+        menuHover = -1; valueHover = -1;
+        pointerBlockedUntil = Date.now() + 1000;
         if (isYellow(event.key) || isRed(event.key)) { event.accepted=true; return; }
         if (actionKey(event.key)) {
             event.accepted=true;
@@ -838,6 +861,8 @@ FocusScope {
     }
     Loader { id: store; source: "FavouriteStore.qml"; onLoaded: { shell.loadFavourites(); shell.loadSettings(); shell.loadExtras(); } }
     onForegroundChanged: {
+        menuHover = -1; valueHover = -1;
+        pointerAt = Qt.point(-1, -1);
         pressing = false; okHeld = false; longFired = false; holdTimer.stop(); okRelease.stop();
         editIndex = -1; notice = "";
         if (foreground) {
@@ -855,7 +880,7 @@ FocusScope {
         loadInputs();
         if (foreground) { foregroundInfo.callService({extraInfo: true}); dailyUpdateCheck(); }
     }
-    onVisibleChanged: { if (visible && foreground) forceActiveFocus(); }
+    onVisibleChanged: { pointerAt = Qt.point(-1, -1); if (visible && foreground) forceActiveFocus(); }
     Component.onCompleted: tick()
     // The clock changes on the minute: each tick sets the next one for when
     // the minute turns, so the bar is never half a minute behind.
@@ -1398,9 +1423,12 @@ FocusScope {
                 }
                 // The pointer: a click focuses and opens; held, it does what
                 // holding OK does (a Magic Remote's OK is a click while its
-                // pointer shows); pointing alone does nothing.
+                // pointer shows). Movement only changes the highlighted item.
                 MouseArea {
-                    anchors.fill: parent
+                    id: cellPointer
+                    anchors.fill: parent; hoverEnabled: true
+                    onEntered: { if (shell.pointerMoved(cellPointer, {x: mouseX, y: mouseY})) shell.selected=cell.navIndex; }
+                    onPositionChanged: { if (shell.pointerMoved(cellPointer, mouse)) shell.selected=cell.navIndex; }
                     property bool held: false
                     onPressed: held = false
                     onPressAndHold: { held = true; shell.selected=cell.navIndex; shell.secondaryAction(); }
@@ -1459,7 +1487,10 @@ FocusScope {
                     color: shell.warning; border.width: shell.px(3); border.color: shell.theme.gap
                 }
                 MouseArea {
-                    anchors.fill: parent
+                    id: glyphPointer
+                    anchors.fill: parent; hoverEnabled: true
+                    onEntered: { if (shell.pointerMoved(glyphPointer, {x: mouseX, y: mouseY})) shell.selected=glyphCell.navIndex; }
+                    onPositionChanged: { if (shell.pointerMoved(glyphPointer, mouse)) shell.selected=glyphCell.navIndex; }
                     onClicked: { shell.selected=glyphCell.navIndex; shell.activate(shell.itemAt(glyphCell.navIndex)); }
                 }
             }
@@ -1503,7 +1534,10 @@ FocusScope {
                     }
                 }
                 MouseArea {
-                    anchors.fill: parent
+                    id: pillPointer
+                    anchors.fill: parent; hoverEnabled: true
+                    onEntered: { if (shell.pointerMoved(pillPointer, {x: mouseX, y: mouseY})) shell.selected=pill.navIndex; }
+                    onPositionChanged: { if (shell.pointerMoved(pillPointer, mouse)) shell.selected=pill.navIndex; }
                     property bool held: false
                     onPressed: held = false
                     onPressAndHold: { held = true; shell.selected=pill.navIndex; shell.secondaryAction(); }
@@ -1575,7 +1609,25 @@ FocusScope {
             readonly property int step: shell.tile+shell.gap
             readonly property int firstRow: Math.round(contentY/step)
             contentWidth: width; contentHeight: Math.max(height, Math.ceil(apps.length/shell.appColumns)*step+shell.px(48)-shell.gap)
-            Behavior on contentY { NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
+            Behavior on contentY { enabled: !appWheelPause.running; NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
+            Timer { id: appWheelPause; interval: 200 }
+            function scrollWheel(wheel) {
+                var delta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y / 120 * step;
+                if (delta === 0) { wheel.accepted = false; return; }
+                appWheelPause.restart();
+                shell.pointerBlockedUntil = Date.now() + 200;
+                contentY = Math.max(0, Math.min(contentY - delta, contentHeight - height));
+                // Keep keyboard/OK focus on a visible tile without launching anything.
+                // Ignore focus-follow while scrolling so it cannot undo the wheel.
+                if (shell.apps.length > 0) {
+                    var first = Math.ceil(contentY / step);
+                    var last = Math.max(first, Math.floor((contentY + height - shell.px(24) - shell.tile) / step));
+                    var row = Math.floor(shell.selected / shell.appColumns);
+                    row = Math.max(first, Math.min(row, last));
+                    shell.selected = Math.min(shell.apps.length - 1, row * shell.appColumns + shell.selected % shell.appColumns);
+                }
+                wheel.accepted = true;
+            }
             Repeater {
                 model: apps
                 Loader {
@@ -1592,13 +1644,20 @@ FocusScope {
             Connections {
                 target: shell
                 onSelectedChanged: {
-                    if (shell.page !== "apps") return;
+                    if (shell.page !== "apps" || appWheelPause.running) return;
                     var row=Math.floor(shell.selected/shell.appColumns), first=Math.round(appGrid.contentY/appGrid.step);
                     if (row < first) appGrid.contentY=row*appGrid.step;
                     else if (row > first+1) appGrid.contentY=(row-1)*appGrid.step;
                 }
                 onPageChanged: appGrid.contentY=0
             }
+        }
+        // Wheel events over tiles and gaps scroll the viewport; clicks pass through.
+        MouseArea {
+            visible: shell.page === "apps"
+            x: appGrid.x; y: appGrid.y; width: appGrid.width; height: appGrid.height
+            acceptedButtons: Qt.NoButton
+            onWheel: appGrid.scrollWheel(wheel)
         }
         Rectangle {
             visible: page === "apps" && appGrid.contentHeight > appGrid.height
@@ -1687,7 +1746,17 @@ FocusScope {
                 // Room under the last row for the fade at the bottom edge.
                 readonly property int fade: shell.px(18)
                 contentWidth: width; contentHeight: Math.max(height, menuColumn.height + fade)
-                Behavior on contentY { NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
+                Behavior on contentY { enabled: !wheelPause.running; NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
+                Timer { id: wheelPause; interval: 200 }
+                function scrollWheel(wheel) {
+                    var delta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y / 120 * menu.rowHeight * 3;
+                    if (delta === 0) { wheel.accepted = false; return; }
+                    wheelPause.restart();
+                    shell.menuHover = -1;
+                    shell.pointerBlockedUntil = Date.now() + 200;
+                    contentY = Math.max(0, Math.min(contentY - delta, contentHeight - height));
+                    wheel.accepted = true;
+                }
                 // The focused row in view, and clear of the fades at the edges.
                 function follow() {
                     if (shell.page !== "settings") return;
@@ -1705,6 +1774,7 @@ FocusScope {
                             readonly property bool isHeader: modelData.header !== undefined
                             readonly property var setting: isHeader ? null : shell.settingsItems[modelData.index]
                             readonly property bool chosen: !isHeader && shell.selected === modelData.index
+                            readonly property bool hovered: !isHeader && shell.menuHover === modelData.index
                             width: menuColumn.width; height: isHeader ? menu.headerHeight + (index > 0 ? shell.px(12) : 0) : menu.rowHeight
                             // A group's name.
                             Text {
@@ -1717,9 +1787,15 @@ FocusScope {
                                 visible: !isHeader
                                 anchors.fill: parent; anchors.topMargin: shell.px(3); anchors.bottomMargin: shell.px(3)
                                 radius: shell.px(14)
-                                color: chosen ? (shell.pane === 0 ? shell.theme.focus : shell.theme.tile) : "transparent"
-                                border.width: chosen && shell.pane === 1 ? 1 : 0; border.color: shell.theme.focus
-                                Behavior on color { ColorAnimation { duration: shell.dur(120) } }
+                                // On the B4, repainting hover elsewhere can leave the open
+                                // row's background visible but its text missing until another
+                                // repaint. Composite this one row as a texture so its text
+                                // cannot share a scene-graph batch with the changing values.
+                                layer.enabled: chosen
+                                // Pointer feedback never inverts text. Animating the background
+                                // alone left dark text on a still-dark background during hover.
+                                color: chosen ? shell.theme.tile : hovered ? shell.theme.track : "transparent"
+                                border.width: chosen || hovered ? 1 : 0; border.color: shell.theme.focus
                                 // Both texts are measured by hidden twins (no elide, no width:
                                 // their implicitWidth is the text's own, at the text size of
                                 // the moment) and cut to what the row has: the value to half
@@ -1731,7 +1807,7 @@ FocusScope {
                                     anchors.right: parent.right; anchors.rightMargin: shell.px(20); anchors.verticalCenter: parent.verticalCenter
                                     width: Math.min(Math.ceil(valueTwin.implicitWidth) + 1, parent.width*0.5); elide: Text.ElideRight; horizontalAlignment: Text.AlignRight
                                     text: setting ? setting.value : ""; font.family: shell.fontName; font.pixelSize: shell.pt(19)
-                                    color: chosen && shell.pane === 0 ? shell.theme.onFocus2 : shell.ink3
+                                    color: shell.ink3
                                 }
                                 Text {
                                     id: rowName
@@ -1739,13 +1815,22 @@ FocusScope {
                                     width: Math.min(Math.ceil(nameTwin.implicitWidth) + 1, parent.width - rowValue.width - shell.px(60))
                                     elide: Text.ElideRight
                                     text: setting ? setting.title : ""; font.family: shell.fontName; font.pixelSize: shell.pt(22)
-                                    color: chosen && shell.pane === 0 ? shell.theme.onFocus : shell.ink
+                                    color: shell.ink
                                 }
                                 // The pointer: a click focuses the row and opens its values
-                                // (or does what an action does); pointing alone does nothing.
+                                // (or does what an action does). Hover only previews a row.
                                 MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: { shell.pane = 0; shell.selected = modelData.index; shell.activate(shell.itemAt(modelData.index)); }
+                                    id: rowPointer
+                                    anchors.fill: parent; hoverEnabled: true
+                                    // By id: on the TV's Qt 5.6, `this` in a function called
+                                    // by name is not this MouseArea.
+                                    function hoverRow(mouse) {
+                                        if (shell.pointerMoved(rowPointer, mouse)) shell.menuHover = modelData.index;
+                                    }
+                                    onEntered: hoverRow({x: mouseX, y: mouseY})
+                                    onPositionChanged: hoverRow(mouse)
+                                    onExited: { if (shell.menuHover === modelData.index) shell.menuHover = -1; }
+                                    onClicked: { shell.menuHover = -1; shell.pane = 0; shell.selected = modelData.index; shell.activate(shell.itemAt(modelData.index)); }
                                 }
                             }
                         }
@@ -1754,8 +1839,15 @@ FocusScope {
                 Connections {
                     target: shell
                     onSelectedChanged: menuList.follow()
-                    onPageChanged: { menuList.contentY = 0; menuList.follow(); }
+                    onPageChanged: { shell.menuHover = -1; menuList.contentY = 0; menuList.follow(); }
                 }
+            }
+            // Wheel input covers the list viewport, including gaps and headers.
+            // No mouse buttons are accepted, so row clicks still reach their areas.
+            MouseArea {
+                x: menuList.x; y: menuList.y; width: menuList.width; height: menuList.height
+                acceptedButtons: Qt.NoButton
+                onWheel: menuList.scrollWheel(wheel)
             }
             // The list's edges fade into the card, so a row cut by the edge
             // does not look cut.
@@ -1906,9 +1998,12 @@ FocusScope {
                             Rectangle {
                                 readonly property bool current: shell.settings[shell.valueKey] === modelData.id
                                 readonly property bool lit: shell.pane === 1 && shell.valueIndex === index
+                                readonly property bool hovered: shell.valueHover === index
                                 width: valueColumn.width; height: menu.rowHeight; radius: shell.px(14)
-                                color: lit ? shell.theme.focus : "transparent"
-                                Behavior on color { ColorAnimation { duration: shell.dur(120) } }
+                                // Only keyboard focus uses inverted colors, switched together.
+                                // Hover is an outline and tint, independent of the chosen value.
+                                color: lit ? shell.theme.focus : hovered ? shell.theme.track : "transparent"
+                                border.width: hovered && !lit ? 1 : 0; border.color: shell.theme.focus
                                 Rectangle {
                                     x: shell.px(20); anchors.verticalCenter: parent.verticalCenter
                                     width: shell.px(22); height: width; radius: width/2; color: "transparent"
@@ -1921,8 +2016,15 @@ FocusScope {
                                     color: lit ? shell.theme.onFocus : shell.ink
                                 }
                                 MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: { shell.pane = 1; shell.valueIndex = index; shell.applyValue(); }
+                                    id: valuePointer
+                                    anchors.fill: parent; hoverEnabled: true
+                                    function hoverValue(mouse) {
+                                        if (shell.pointerMoved(valuePointer, mouse)) shell.valueHover = index;
+                                    }
+                                    onEntered: hoverValue({x: mouseX, y: mouseY})
+                                    onPositionChanged: hoverValue(mouse)
+                                    onExited: { if (shell.valueHover === index) shell.valueHover = -1; }
+                                    onClicked: { shell.valueHover = -1; shell.pane = 1; shell.valueIndex = index; shell.applyValue(); }
                                 }
                             }
                         }
@@ -1930,7 +2032,8 @@ FocusScope {
                     Connections {
                         target: shell
                         onValueIndexChanged: valueList.follow()
-                        onSelectedChanged: valueList.contentY = 0
+                        onSelectedChanged: { shell.valueHover = -1; valueList.contentY = 0; }
+                        onPageChanged: shell.valueHover = -1
                     }
                 }
             }

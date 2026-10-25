@@ -35,9 +35,17 @@ The focused item's name shows above the row, and the hints under it say what
 OK and the other keys do. The chip in the top-right corner shows what is on
 screen, the [weather](#weather) and the time; each of the three can be hidden. BACK closes the panel; from *Apps* or *System* it goes
 back to Home. The panel fits the TV's screen, HD or FHD/UHD, at the same
-proportions. With the Magic Remote's pointer, a click on anything focuses
-and opens it, and a click held does what holding OK does; pointing alone
-changes nothing, and neither does the wheel. Holding OK also works with a
+proportions.
+
+With the Magic Remote's pointer, moving it over a favourite, an input or a
+tile in *Apps* or *System* focuses it, as the arrows do; a pointer resting
+where the panel opens changes nothing, and neither does one hidden by an
+arrow press (pointing waits a second after a key). A click opens what it
+points at, and a click held does what holding OK does. In *Launcher
+settings* pointing only outlines a row or a value: a click opens the row's
+values or applies the value, so crossing other rows on the way never
+changes anything. The wheel scrolls the settings list, and the *Apps* grid
+one row per notch; scrolling never opens anything. Holding OK also works with a
 remote that sends it by infrared (a plain remote, or a Magic Remote without
 its radio), which repeats a held key as quick presses.
 
