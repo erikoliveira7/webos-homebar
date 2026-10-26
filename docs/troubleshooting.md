@@ -17,6 +17,17 @@ sh /var/lib/webosbrew/rawin-launcher-home/diagnose.sh   # overlay
 sh rawin-launcher/diagnose.sh                           # from the unpacked release
 ```
 
+`No such file or directory` means that this copy was installed before
+`diagnose.sh` was included, or that the other variant's path was used. Find
+an installed copy with:
+
+```sh
+find /var/lib/webosbrew -maxdepth 2 -name diagnose.sh -print
+```
+
+Run the path it prints. If it prints nothing, unpack the current release and
+run `sh rawin-launcher/diagnose.sh` from its parent directory.
+
 It writes `/tmp/rawin-launcher-diagnose.txt`: the TV model, webOS and firmware
 versions, whether the screen is UHD, which variant fits (`probe.sh`, next to
 `diagnose.sh` in the release and in the installed copy), what is installed

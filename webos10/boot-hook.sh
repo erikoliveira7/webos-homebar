@@ -41,7 +41,7 @@ fi
       # Without the app manager's loading spinner and splash, where the
       # launch call takes those flags; else the plain launch (the app then
       # maps its window for a moment, which takes the spinner down).
-      if launch '{"id":"org.rawin.launcher","params":{"preload":true},"noSplash":true,"spinner":false}'; then
+      if launch '{"id":"org.rawin.launcher","params":{"preload":true},"keepAlive":true,"noSplash":true,"spinner":false}'; then
         log 'panel preloaded'
       elif launch '{"id":"org.rawin.launcher","params":{"preload":true}}'; then
         log 'panel preloaded (plain launch)'

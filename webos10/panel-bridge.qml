@@ -26,7 +26,11 @@
     QtObject {
         id: launchService
         function callService(p) {
-            shell.http("/launch?id=" + encodeURIComponent(p.id), function(r) {
+            // Parameters (LG's Settings page to open, e.g. the memory
+            // optimiser) go along as JSON; the helper passes them on.
+            var path = "/launch?id=" + encodeURIComponent(p.id);
+            if (p.params) path += "&params=" + encodeURIComponent(JSON.stringify(p.params));
+            shell.http(path, function(r) {
                 launching = false; launchTimeout.stop();
                 if (r.returnValue) closeHome();
                 else message = t("err_launch");
@@ -52,6 +56,16 @@
         if (helperRetry.running || helperRetry.left <= 0) return;
         helperRetry.left--;
         helperRetry.restart();
+    }
+    // Closing every app in the background: closeAllApps, called by the helper.
+    QtObject {
+        id: closeAppsService
+        function callService(p) {
+            shell.http("/close-apps", function(r) {
+                notice = r.returnValue ? t("close_apps_done") : t("close_apps_failed");
+                catalog.callService({});
+            }, function() { notice = t("err_unavailable"); });
+        }
     }
     QtObject {
         id: catalog
@@ -91,6 +105,11 @@
     function backupRun(step, data) {
         if (step === "save") http("/backup", function(r) { backupResult("save", r); }, function() { backupResult("save", null); }, data);
         else http("/restore", function(r) { backupResult(step, r.saved ? r : null); }, function() { backupResult(step, null); });
+    }
+    // The helper closes and launches the overlay process after replying, so
+    // this QML instance never has to restart itself while handling a click.
+    function restartHomebar() {
+        http("/restart", function() { closeHome(); }, function() { message = t("err_restart"); }, {});
     }
     // What stays visible under the overlay: the first card that is not us.
     QtObject {

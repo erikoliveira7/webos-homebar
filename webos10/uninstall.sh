@@ -11,7 +11,7 @@ rm -f /var/lib/webosbrew/init.d/10-rawin-launcher /var/lib/webosbrew/init.d/77-r
 if [ -f "$KEYS" ]; then
     node -e '
 var fs = require("fs"), f = process.argv[1], k = JSON.parse(fs.readFileSync(f, "utf8"));
-Object.keys(k).forEach(function (code) { if (k[code] && k[code].id === "org.rawin.launcher") delete k[code]; });
+Object.keys(k).forEach(function (code) { var v = k[code]; if (v && (v.id === "org.rawin.launcher" || (typeof v.command === "string" && v.command.indexOf("org.rawin.launcher") >= 0))) delete k[code]; });
 fs.writeFileSync(f, JSON.stringify(k));' "$KEYS"
 fi
 

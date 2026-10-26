@@ -88,14 +88,18 @@ function start(base) {
       var key = place.lat + ',' + place.lon + ',' + units, hit = cache[key];
       if (hit && Date.now() - hit.at < WEATHER_TTL) return done(hit.value);
       getJSON('http://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lon +
-        '&current=temperature_2m,weather_code,is_day&timezone=auto' + (units === 'f' ? '&temperature_unit=fahrenheit' : ''),
+        '&current=temperature_2m,apparent_temperature,weather_code,is_day&timezone=auto' + (units === 'f' ? '&temperature_unit=fahrenheit' : ''),
       function (err, r) {
         var c = r && r.current;
         if (err || !c || typeof c.temperature_2m !== 'number') {
           // The last answer for that place, if any, rather than nothing.
           return done(hit ? hit.value : {ok: false, error: err ? err.message : 'no answer'});
         }
-        var value = {ok: true, temp: Math.round(c.temperature_2m), code: c.weather_code, day: c.is_day === 1, units: units, place: place.name};
+        // apparent_temperature is Open-Meteo's feels-like temperature. Keep
+        // both values in one cached reply: changing the panel preference then
+        // needs no additional network request.
+        var value = {ok: true, temp: Math.round(c.temperature_2m), apparent: typeof c.apparent_temperature === 'number' ? Math.round(c.apparent_temperature) : null,
+          code: c.weather_code, day: c.is_day === 1, units: units, place: place.name};
         cache[key] = {at: Date.now(), value: value};
         done(value);
       });

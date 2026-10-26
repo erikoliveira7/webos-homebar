@@ -32,7 +32,10 @@ LG's Home is a Flutter app that cannot be extended, so the launcher is its own
 app:
 
 - `org.rawin.launcher`: a developer QML app with an overlay window, run by
-  `qml-runner`. The *Input Hook* homebrew app sends the HOME button to it:
+  `qml-runner`. Its Launcher settings menu is a separate component, built the
+  first time the menu is opened (or in the first quiet moment after the panel
+  appears), so the panel's own scene stays small and HOME never waits for it.
+  The *Input Hook* homebrew app sends the HOME button to it:
   HOME shows the panel, or hides it when it is already up. BACK hides the
   window but keeps the process, so the next HOME only has to show it. The
   boot hook starts the app once the helper is up (a launch with
@@ -41,7 +44,20 @@ app:
   with nothing drawn, which takes the app manager's loading spinner down,
   and hidden; the first HOME after a boot is then a show too, not a start of
   `qml-runner`. A preload that lands after a HOME has already started the
-  app changes nothing. The Homebrew Channel runs its hooks in name order
+  app changes nothing. The helper watches the process (in `/proc`, since a
+  closed panel cannot be asked): when it is gone — the system closed it for
+  memory, or a preload failed — it starts it hidden again, with
+  `keepAlive: true` so the app manager keeps it while other apps run. That
+  only happens while nothing but an input, LG's Home or an empty screen is
+  in front (a launch during a video app would briefly take the screen), and
+  not while a restart is under way. Since launching any app closes the panel,
+  it also starts it again while an app is in front — 2.5 s after that app
+  came to the front (and a check every 10 s), at most once every 15 s, and
+  with `quiet: true`, which skips the window entirely (nothing can flash
+  over the picture); on the tested B4 the app stayed in front and the next
+  HOME was a show. The first HOME after a boot still waits
+  for the hooks; this covers the "sometimes 3–5 seconds" case later on. The
+  Homebrew Channel runs its hooks in name order
   some 40 s into a boot; the launcher's is named to run among the first and
   starts Input Hook's service as its first step (the service puts its
   library into the input processes as it loads, once per boot), so HOME

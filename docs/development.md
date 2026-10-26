@@ -72,10 +72,11 @@ Positions hang from the bottom and the right edge (`shell.height - px(…)`,
 `anchors.right`), never from the top left, so a wider screen gets more rail
 and more columns. Text goes through `pt()`, which also takes the text size
 setting. `tools/render-panel.py` draws a set of scenes (Home with seven
-favourites and long HDMI-CEC names, Live TV, hidden inputs and apps, Apps
-in each order, System with an update waiting, the settings menu on a
-setting, on its values and on an action, the larger text size, no
-favourites, two inputs) at a size:
+favourites and long HDMI-CEC names, Live TV and every input, favourites,
+inputs or shortcuts being edited, hidden apps, Apps in each order, System
+with an update waiting, the settings menu on a setting, on its values, on
+the Inputs, Shortcuts and Top bar switches and on an action, the larger
+text size, no favourites, two inputs) at a size:
 
 ```sh
 python3 -m pip install PySide6
@@ -85,6 +86,11 @@ python3 tools/render-panel.py --size 2560x1080    # a wider screen
 ```
 
 Check at least 1920×1080 and 1280×720 after a change to the panel.
+
+For an interactive desktop window, use `python3 tools/simulate-panel.py
+--size 1280x720`. Arrows and Enter act as the remote, Escape/Backspace goes
+back, and F2 opens the panel again after BACK or its timeout hides it. Mouse
+and wheel events use the panel's normal handlers. TV services are stubbed.
 
 ## Adding a language
 

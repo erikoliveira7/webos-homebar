@@ -7,6 +7,11 @@
 #   --replace-lg-home  the stand-in in LG Home's place (the default here)
 #   --home-key=CODE    bind this key code as HOME (Input Hook's number for it)
 #   --home-key=ask     ask for a press of HOME, also when a key is already bound
+#   --home-key-exec    send that press through Input Hook's Execute action with
+#                      noSplash/spinner:false, so the app manager shows no
+#                      loading spinner when the panel has to start (experiment:
+#                      falls back to nothing if Input Hook cannot run commands,
+#                      so try it on the B4 before making it the default)
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 UI=$HERE/../ui
@@ -21,11 +26,13 @@ HOME_KEY=773   # the remote's HOME button as Input Hook reports it
 
 KEEP_LG_HOME=
 HOME_KEY_OPT=
+HOME_KEY_EXEC=
 for a in "$@"; do
     case "$a" in
         --keep-lg-home) KEEP_LG_HOME=1 ;;
         --replace-lg-home) KEEP_LG_HOME= ;;
         --home-key=*) HOME_KEY_OPT=${a#--home-key=} ;;
+        --home-key-exec) HOME_KEY_EXEC=exec ;;
         *) echo "unknown option: $a" >&2; exit 2 ;;
     esac
 done
@@ -63,6 +70,13 @@ rm -f /tmp/rawin-launcher.ipk "$LOG"
 webos=$(sed -n 's/.*release \([0-9][0-9.]*\).*/\1/p' /etc/starfish-release 2>/dev/null | head -n 1)
 [ -f "$APPDIR/Config.js" ] && sed -i "s/^var webos = .*/var webos = \"$webos\";/" "$APPDIR/Config.js"
 
+# Older LG Settings versions ignore the target and open the picture menu.
+# Inspect the shipped route instead of guessing support from the webOS number.
+memory_optimizer=false
+if grep -q 'MemoryOptimizer' /usr/palm/applications/com.palm.app.settings/main.js 2>/dev/null; then
+    memory_optimizer=true
+fi
+printf '\nvar memoryOptimizer = %s;\n' "$memory_optimizer" >> "$APPDIR/Config.js"
 say "giving the helper root (Homebrew elevate-service)"
 "$HBC/elevate-service" "$SERVICE" >/dev/null 2>&1 || fail "elevate-service failed"
 
@@ -87,7 +101,11 @@ else
     sh "$BASE/takeover.sh" apply >/dev/null 2>&1 || say "LG Home kept: the app manager did not take the stand-in"
 fi
 
-say "HOME button -> rawin-launcher (Input Hook)"
+if [ -n "$HOME_KEY_EXEC" ]; then
+    say "HOME button ($HOME_KEY) -> rawin-launcher, Input Hook Execute without the spinner"
+else
+    say "HOME button ($HOME_KEY) -> rawin-launcher (Input Hook)"
+fi
 mkdir -p "$(dirname "$KEYS")"
 [ -f "$KEYS" ] || echo '{}' > "$KEYS"
 [ -f "$KEYS.before-rawin-launcher" ] || cp -p "$KEYS" "$KEYS.before-rawin-launcher"
@@ -98,7 +116,7 @@ mkdir -p "$(dirname "$KEYS")"
 # key it sees; the first code logged after the prompt is taken.
 bound=$(node -e '
 var k = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-Object.keys(k).forEach(function (code) { if (k[code] && k[code].id === "org.rawin.launcher") console.log(code); });' "$KEYS" 2>/dev/null | head -n 1)
+Object.keys(k).forEach(function (code) { var v = k[code]; if (v && (v.id === "org.rawin.launcher" || (typeof v.command === "string" && v.command.indexOf("org.rawin.launcher") >= 0))) console.log(code); });' "$KEYS" 2>/dev/null | head -n 1)
 case "$HOME_KEY_OPT" in
     ask) bound= ;;
     "") ;;
@@ -120,9 +138,12 @@ elif [ -t 0 ] && log=$(ls -t /tmp/lginput-hook-*.log 2>/dev/null | head -n 1) &&
 fi
 node -e '
 var fs = require("fs"), f = process.argv[1], k = JSON.parse(fs.readFileSync(f, "utf8"));
-Object.keys(k).forEach(function (code) { if (k[code] && k[code].id === "org.rawin.launcher") delete k[code]; });
-k[process.argv[2]] = {action: "launch", id: "org.rawin.launcher"};
-fs.writeFileSync(f, JSON.stringify(k));' "$KEYS" "$HOME_KEY"
+Object.keys(k).forEach(function (code) { var v = k[code]; if (v && (v.id === "org.rawin.launcher" || (typeof v.command === "string" && v.command.indexOf("org.rawin.launcher") >= 0))) delete k[code]; });
+var exec = process.argv[3] === "exec";
+k[process.argv[2]] = exec
+  ? {action: "exec", command: "/usr/bin/luna-send -n 1 luna://com.webos.applicationManager/launch '"'"'{\"id\":\"org.rawin.launcher\",\"noSplash\":true,\"spinner\":false}'"'"'"}
+  : {action: "launch", id: "org.rawin.launcher"};
+fs.writeFileSync(f, JSON.stringify(k));' "$KEYS" "$HOME_KEY" "$HOME_KEY_EXEC"
 
 mkdir -p /var/lib/webosbrew/init.d
 rm -f /var/lib/webosbrew/init.d/77-rawin-launcher   # the hook's name up to 0.14.0

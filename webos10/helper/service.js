@@ -14,6 +14,7 @@ const http = require('http');
 const path = require('path');
 const urlModule = require('url');
 const { AfterExit, cardOf } = require('./after-exit');
+const { Preloader, panelRunning, foregroundSafe } = require('./preload');
 const setup = require('./setup');
 
 const APP = 'org.rawin.launcher';
@@ -143,10 +144,35 @@ const server = http.createServer(async (req, res) => {
       if (!known.size) { const inv = await inventory(); if (inv.apps) known = new Set(inv.apps.map((a) => a.id)); }
       if (!known.has(id) && !SYSTEM_IDS.test(id)) return send(res, 403, { returnValue: false, errorText: 'unknown id' });
       if (id === 'com.webos.app.home') returner.noteHomeRequest();
-      return send(res, 200, await luna('luna://com.webos.applicationManager/launch', { id }));
+      // Launch parameters (the Settings page to open) as JSON, up to 2 KB.
+      const params = {};
+      if (query.params) {
+        try {
+          const given = JSON.parse(String(query.params));
+          if (given && typeof given === 'object') for (const k in given) if (Object.prototype.hasOwnProperty.call(given, k)) params[k] = given[k];
+        } catch (e) { return send(res, 400, { returnValue: false, errorText: 'params must be JSON' }); }
+      }
+      return send(res, 200, await luna('luna://com.webos.applicationManager/launch', { id, params }));
+    }
+    if (url.pathname === '/close-apps') {
+      // LG also closes our overlay; the watchdog preloads it again afterward.
+      return send(res, 200, await luna('luna://com.webos.applicationManager/closeAllApps', {}));
+    }
+    if (url.pathname === '/restart' && req.method === 'POST') {
+      // Reply first: closing the overlay tears down the QML request that asked
+      // for it. The helper is a separate resident service, so it can launch a
+      // clean process once applicationManager has removed the old one.
+      send(res, 200, { ok: true });
+      preloader.pause(15000);   // this closes and starts the app itself
+      setTimeout(() => {
+        luna('luna://com.webos.applicationManager/closeByAppId', { id: APP });
+        setTimeout(() => luna('luna://com.webos.applicationManager/launch', { id: APP, params: { restart: true }, keepAlive: true }), 400);
+      }, 50);
+      return;
     }
     if (url.pathname === '/state') {
-      return send(res, 200, { lastInput: returner.lastInput, target: returner.target, card: returner.card, subscribed, events });
+      return send(res, 200, { lastInput: returner.lastInput, target: returner.target, card: returner.card,
+                             subscribed: subscribed, preload: preloader.state(), events: events });
     }
     // The TV's UI language ("pl-PL"), for the launcher's "system language".
     if (url.pathname === '/locale') {
@@ -228,12 +254,47 @@ const returner = new AfterExit({
 });
 
 let subscribed = false;
+// What is in front, as preload.js sees it: 'free' (nothing, the panel, LG's
+// Home or an input), 'app' (an app, where only a quiet start is allowed) or
+// 'unknown' before the first answer.
+let frontState = 'unknown';
 function onForeground(payload) {
   if (!payload || !payload.foregroundAppInfo) return;
   const card = cardOf(payload);
   if (card !== returner.card) note('card ' + (card || 'empty'));
   returner.onForeground(card);
+  const ids = (payload.foregroundAppInfo || []).map((a) => a.appId || '');
+  const state = ids.length && !foregroundSafe(ids) ? 'app' : 'free';
+  if (state === frontState) return;
+  frontState = state;
+  // Let after-exit's switch to an input happen first (and an app's own launch
+  // take its first frame; ours is a hidden, quiet start), then look for the
+  // panel. The wait is small on purpose: every app launch closes the panel,
+  // and a HOME pressed just after wants it back.
+  clearTimeout(preloadSoon);
+  preloadSoon = setTimeout(() => { preloader.tick(frontState).catch(() => {}); },
+                           state === 'app' ? 2500 : 3000);
 }
+let preloadSoon = null;
+// The panel is started hidden at boot and kept across HOMEs; if the system
+// closed it, this brings it back within a minute so the next HOME is a show.
+const preloader = new Preloader({
+  isRunning: () => panelRunning(fs),
+  // keepAlive asks the app manager to keep the panel while other apps run;
+  // a webOS that does not know the flag is launched the plain way instead.
+  // quiet starts it with no window at all, for a start while an app is in
+  // front (the panel maps its window for a moment otherwise, to take the
+  // app manager's spinner down).
+  launch: async (quiet) => {
+    const params = quiet ? { preload: true, quiet: true } : { preload: true };
+    const r = await luna('luna://com.webos.applicationManager/launch',
+                         { id: APP, params: params, keepAlive: true, noSplash: true, spinner: false });
+    if (r && r.returnValue) return r;
+    return luna('luna://com.webos.applicationManager/launch', { id: APP, params: params });
+  },
+  log: note
+});
+setInterval(() => { preloader.tick(frontState).catch(() => {}); }, 10000);
 try {
   const sub = service.subscribe('luna://com.webos.applicationManager/getForegroundAppInfo', { extraInfo: true, subscribe: true });
   sub.on('response', (m) => { subscribed = true; onForeground(m.payload); });

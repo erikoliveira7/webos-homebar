@@ -68,17 +68,20 @@ function injection(ROOT) {
     '',
     '    // Homebar: the panel on top of LG Home, in LG\'s own process.',
     '    property bool cleanHomeStock: false',
+    // Kept separate from cleanHomeStock: a timeout must hide just Homebar,
+    // without opening LG\'s ribbon or closing Home (which hides the pointer).
+    '    property bool cleanHomeHidden: false',
     '    // LG Home\'s own foreground state (systemProperties), or true on a Home',
     '    // that has none to read: the panel shows whenever Home is in front and',
     '    // LG\'s ribbon was not asked for.',
     '    property bool cleanHomeForeground: true',
-    '    onCleanHomeForegroundChanged: { if (cleanHomeForeground) cleanHomeStock = false; }',
+    '    onCleanHomeForegroundChanged: { if (cleanHomeForeground) { cleanHomeStock = false; cleanHomeHidden = false; } }',
     '    Loader {',
     '        id: cleanHomeLoader',
     '        z: 500',
     '        anchors.fill: parent',
     '        source: "file:///var/lib/webosbrew/rawin-launcher/current/Launcher.qml"',
-    '        visible: !' + ROOT + '.cleanHomeStock',
+    '        visible: !' + ROOT + '.cleanHomeStock && !' + ROOT + '.cleanHomeHidden',
     '        onStatusChanged: {',
     '            if (status === Loader.Error) ' + ROOT + '.cleanHomeStock = true;',
     '        }',
@@ -90,12 +93,13 @@ function injection(ROOT) {
     '                ' + ROOT + '.cleanHomeForeground = Qt.binding(function() { return systemProperties.isAppForeground; });',
     '            item.ready = props && props.isAppReadyToUse !== undefined',
     '                ? Qt.binding(function() { return systemProperties.isAppReadyToUse; }) : true;',
-    '            item.foreground = Qt.binding(function() { return ' + ROOT + '.cleanHomeForeground && !' + ROOT + '.cleanHomeStock; });',
+    '            item.foreground = Qt.binding(function() { return ' + ROOT + '.cleanHomeForeground && !' + ROOT + '.cleanHomeStock && !' + ROOT + '.cleanHomeHidden; });',
     '        }',
     '    }',
     '    Connections {',
     '        target: cleanHomeLoader.item',
     '        ignoreUnknownSignals: true',
+    '        onTimeoutRequested: { ' + ROOT + '.cleanHomeHidden = true; }',
     '        onStockRequested: {',
     '            ' + ROOT + '.cleanHomeStock = true;',
     '            try { uiController.currentMode = "main"; uiController.startApp(); } catch (e) {}',
@@ -159,12 +163,17 @@ main = replaceOnce(main, /^([ \t]*)id:[ \t]*uiController[ \t]*$/m, function (m) 
 }, 'the UI controller (id: uiController)', true);
 // Focus coming back to Home goes to the panel, not LG's ribbon.
 main = replaceOnce(main, /^([ \t]*)function focusIn\(\)[ \t]*\{/m, function (m) {
-  return m[0] + '\n' + m[1] + '    ' + ROOT + '.cleanHomeStock = false;';
+  return m[0] + '\n' + m[1] + '    ' + ROOT + '.cleanHomeStock = false; ' + ROOT + '.cleanHomeHidden = false;';
 }, 'function focusIn()', false);
 // BLUE, while LG's ribbon is shown, brings the panel back.
 main = replaceOnce(main, /^([ \t]*)function keyPressEvent\((\w+)\)[ \t]*\{/m, function (m) {
   var ind = m[1] + '    ', key = m[2];
   return [m[0],
+    ind + 'if (' + ROOT + '.cleanHomeHidden) {',
+    ind + '    ' + ROOT + '.cleanHomeHidden = false;',
+    ind + '    if (cleanHomeLoader.item) cleanHomeLoader.item.forceActiveFocus();',
+    ind + '    return;',
+    ind + '}',
     ind + 'if (' + ROOT + '.cleanHomeStock && ' + key + ' === WebOS.Key_webOS_Blue) {',
     ind + '    ' + ROOT + '.cleanHomeStock = false;',
     ind + '    if (cleanHomeLoader.item) cleanHomeLoader.item.forceActiveFocus();',

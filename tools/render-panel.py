@@ -9,7 +9,8 @@ Live TV on the rail, hidden inputs and apps, Apps in each order, System with
 an update waiting with its notes, About, the settings and a setting's values,
 the weather's place with its code (from the setup server, shared/setup.js,
 when one runs on this computer), the weather in each of its symbols, the larger text
-size, the key hints hidden, the hidden inputs list, no favourites, and a set with two inputs.
+size, the key hints hidden, the hidden inputs list, no favourites, a set with two inputs,
+editing a favourite or a shortcut, and the shortcuts with System moved between them.
 
 Usage: tools/render-panel.py [--size 1920x1080] [--out dist/render] [--theme default]
 Needs Python 3 with PySide6 (pip install PySide6) and a display (or Xvfb);
@@ -66,17 +67,23 @@ Item {
         shell.updateInfo = {state: s.updateState || "idle", latest: "9.9.9", failed: "", notes: s.notes || ""};
         if (s.weather) shell.weather = s.weather;
         shell.page = "home"; shell.selected = 0; shell.pane = 0;
-        shell.page = s.page; shell.selected = s.selected;
+        shell.editIndex = -1; shell.editSourceIndex = -1; shell.editActionIndex = -1;
+        shell.page = s.page; shell.selected = s.selected || 0;
+        if (s.setting !== undefined) shell.selected = shell.settingKeys.indexOf(s.setting);
+        if (s.editFav !== undefined) { shell.editIndex = s.editFav; shell.selected = s.editFav; }
+        if (s.editSource !== undefined) { shell.editSourceIndex = s.editSource; shell.selected = shell.favSlots + s.editSource; }
+        if (s.editAction !== undefined) { shell.editActionIndex = s.editAction; shell.selected = shell.favSlots + shell.sourceCount + s.editAction; }
         if (s.pane) { shell.enterValues(); if (s.valueIndex !== undefined) shell.valueIndex = s.valueIndex; }
     }
     // A new app list, as the TV would send one: the glow reader runs through the icons.
     function glow() { shell.applications = shell.applications.slice(0); }
+    function focusPanel() { shell.forceActiveFocus(); }
 }
 '''
 
 
 def inputs(spec):
-    return [{"id": "com.webos.app.hdmi%d" % (i + 1), "title": "HDMI %d" % (i + 1), "detail": d, "present": p}
+    return [{"id": "com.webos.app.hdmi%d" % (i + 1), "title": "HDMI %d" % (i + 1), "label": "", "cec": d, "name": d, "present": p}
             for i, (d, p) in enumerate(spec)]
 
 
@@ -84,14 +91,17 @@ def panel(app_dir):
     """The panel as a desktop Qt 6 can load it, plus Config.js and app icons."""
     q = (ROOT / "ui/Launcher.qml").read_text()
     q = q.replace("import QtGraphicalEffects 1.0\n", "import Qt5Compat.GraphicalEffects\n")
-    q = q.replace("import WebOSServices 1.0\n", "").replace("import WebOS.Global 1.0\n", "")
+    q = q.replace("import WebOSServices 1.0\n", "").replace("import WebOS.Global 1.0\n", 'import "WebOS.js" as WebOS\n')
     q = q.replace(FONTS, (ROOT / "ui/fonts").as_uri() + "/")
     start = q.index("    Service {\n        id: launchService")
     end = q.index("    Timer { id: launchTimeout;")
     stubs = "".join("    QtObject { id: %s; function callService(a) {} }\n" % name for name in
                     ("launchService", "catalog", "foregroundInfo", "localeService", "inputService", "updateService", "backupService"))
-    stubs += "    function loadInputs() {}\n    function updateRun(step, channel) {}\n    function backupRun(step, data) {}\n"
+    # Counted, so a test can see the close-apps shortcut call its service.
+    stubs += "    QtObject { id: closeAppsService; function callService(a) { shell.notice = 'closeAppsCalled'; } }\n"
+    stubs += "    function loadInputs() {}\n    function updateRun(step, channel) {}\n    function backupRun(step, data) {}\n    function restartHomebar() {}\n"
     (app_dir / "Launcher.qml").write_text(q[:start] + stubs + q[end:])
+    (app_dir / "WebOS.js").write_text(".pragma library\nvar Key_webOS_Back = 461;\nvar Key_webOS_Yellow = 405;\nvar Key_webOS_Red = 403;\n")
     for name in ("FavouriteStore.qml", "Strings.js", "Themes.js", "About.js"):
         (app_dir / name).write_bytes((ROOT / "ui" / name).read_bytes())
     apps = []
@@ -154,25 +164,43 @@ def main():
             scene("home-hdmi2", page="home", selected=8),
             scene("home-fav0", page="home", selected=0, settings=dict(theme, hours="12")),
             scene("home-tv", page="home", selected=0, settings=dict(theme, tv=True)),
+            scene("home-tv-labels", page="home", selected=8, settings=dict(theme, tv=True, inputText="labelHdmi")),
             scene("home-hidden-shown", page="home", selected=10, settings=dict(theme, showHidden=True), hiddenInputs=["com.webos.app.hdmi4"], hidden=["kids"]),
             scene("apps", page="apps", selected=14),
             scene("apps-az-hidden", page="apps", selected=13, settings=dict(theme, sort="az", showHidden=True), hidden=["kids", "kodi"]),
             scene("system-update", page="system", selected=1, updateState="available"),
-            scene("settings-about", page="settings", selected=0),
-            scene("settings", page="settings", selected=2),
-            scene("settings-end", page="settings", selected=21, updateState="available"),
-            scene("settings-update", page="settings", selected=20, updateState="available", notes=NOTES),
-            scene("settings-place", page="settings", selected=14),
-            scene("settings-hidden-inputs", page="settings", selected=7, pane=1, valueIndex=2, hiddenInputs=["com.webos.app.hdmi4"]),
-            scene("settings-hints", page="settings", selected=17, settings=dict(theme, hints=False)),
-            scene("settings-values", page="settings", selected=2, pane=1, valueIndex=3),
+            scene("settings-about", page="settings", setting="about"),
+            scene("settings", page="settings", setting="theme"),
+            scene("settings-end", page="settings", setting="beta", updateState="available"),
+            scene("settings-update", page="settings", setting="update", updateState="available", notes=NOTES),
+            scene("settings-place", page="settings", setting="place"),
+            scene("settings-temperature", page="settings", setting="temperature", pane=1, valueIndex=1),
+            scene("settings-restart", page="settings", setting="restart"),
+            scene("settings-inputs", page="settings", setting="sources", pane=1, valueIndex=2, settings=dict(theme, tv=True)),
+            scene("settings-shortcuts", page="settings", setting="homeShortcuts", pane=1, valueIndex=1),
+            scene("settings-topbar", page="settings", setting="topBar", pane=1, valueIndex=1),
+            scene("settings-input-text", page="settings", setting="inputText", pane=1, valueIndex=2),
+            scene("settings-input-overflow", page="settings", setting="inputOverflow", pane=1, valueIndex=1),
+            scene("settings-hints", page="settings", setting="hints", settings=dict(theme, hints=False)),
+            scene("settings-timeout", page="settings", setting="timeout", pane=1, valueIndex=3, settings=dict(theme, timeout=10)),
+            scene("settings-values", page="settings", setting="theme", pane=1, valueIndex=3),
             scene("home-larger", page="home", selected=8, settings=dict(theme, size="larger")),
             scene("home-nohints", page="home", selected=0, settings=dict(theme, hints=False)),
             scene("home-nofavs", page="home", selected=0, favs=[]),
             scene("home-2inputs", page="home", selected=3, favs=favs[:3], inputs=inputs(INPUTS_SMALL)),
+            scene("home-shortcuts", page="home", selected=11, settings=dict(theme, homeActionOrder=["system", "apps", "closeApps"])),
+            scene("home-shortcut-focus", page="home", selected=13),
+            scene("home-shortcut-close", page="home", selected=11),
+            scene("home-edit-fav", page="home", editFav=2),
+            scene("home-edit-shortcut", page="home", settings=dict(theme), editAction=1),
+            scene("home-edit-system", page="home", settings=dict(theme), editAction=2),
+            scene("home-edit-input", page="home", settings=dict(theme, tv=True), editSource=1),
+            scene("home-edit-input-last", page="home", settings=dict(theme, tv=True), editSource=4),
+            scene("home-edit-fav-first", page="home", editFav=0),
         ]
-        scenes += [scene("weather-%d-%s" % (code, "day" if day else "night"), page="home", selected=0, weather={"ok": True, "temp": -3 + code % 30, "code": code, "day": day})
+        scenes += [scene("weather-%d-%s" % (code, "day" if day else "night"), page="home", selected=0, weather={"ok": True, "temp": -3 + code % 30, "apparent": -5 + code % 30, "code": code, "day": day})
                    for code, day in ((0, True), (0, False), (2, True), (2, False), (3, True), (45, True), (61, True), (73, True), (95, True))]
+        scenes.append(scene("weather-apparent", page="home", selected=0, settings=dict(theme, temperature="apparent"), weather={"ok": True, "temp": 18, "apparent": 23, "code": 2, "day": True}))
         for name, spec in scenes:
             root.scene(json.dumps(spec))
             wait(700)

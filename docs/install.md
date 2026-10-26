@@ -51,12 +51,16 @@ Installer options:
 | `--replace-lg-home` | Overlay on an untested webOS: put the black stand-in in LG Home's place anyway (on webOS 10 it always is) |
 | `--home-key=CODE` | Overlay: bind this key code as HOME (the number Input Hook logs for it) |
 | `--home-key=ask` | Overlay: ask for a press of HOME, also when a key is already bound |
+| `--home-key-exec` | Overlay: send that press through Input Hook's *Execute* action with `noSplash`/`spinner:false`, so the app manager does not show its loading spinner when the panel has to start. Experimental: Input Hook must be able to run commands, so try it and keep the plain binding if HOME stops opening the panel |
 | `--try-webos10` | The same as `--overlay`; older instructions use it |
 
 On the overlay the installer, run from a terminal, asks for a press of HOME
 and binds the key Input Hook logs for it (15 s; without a press, the tested
 Magic Remote's `773`). An install that finds the launcher already bound to a
-key keeps that key; an update from the panel never asks.
+key keeps that key; an update from the panel never asks. The panel is started
+hidden at boot and kept across HOMEs, and the helper starts it again if the
+system closed it, so a HOME is normally a show rather than a start (see
+[How it works](how-it-works.md#the-overlay-webos-10)).
 
 ### Without internet on the TV
 

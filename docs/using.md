@@ -18,25 +18,43 @@ stays visible above it. One row, from the left:
 
 - **Favourites**: up to seven apps. With none yet, an *Add favourites* tile
   opens *Apps*.
-- **Sources**: *TV* (Live TV) when turned on in the settings, then the TV's
-  inputs: HDMI, and DisplayPort or USB-C where a set has them, as many as
-  the TV has. Each shows the device the TV sees on it: its HDMI-CEC name, or
-  the input's own name when one is set on the TV. An input with nothing
-  plugged in is dimmed. Long device names are cut to what the row has room
-  for. RED hides an input you never use (see
-  [Hiding apps and inputs](#hiding-apps-and-inputs)); on the overlay, hold
-  OK on an input to make it where the TV goes after holding BACK.
-- **Apps** and **System**. A dot on *System* means a new version of the
-  launcher is there (see [Updates](#launcher-settings)).
+- **Sources**: *TV* (Live TV) as a tile the size of the shortcuts, then the
+  TV's inputs: HDMI, and DisplayPort or USB-C where a set has them, as many
+  as the TV has. Each shows the device
+  the TV sees on it: the name set on the TV for that input, else its
+  HDMI-CEC name. An input with nothing plugged in is dimmed. Long names are
+  cut to what the row has room for. *Input text* in the settings chooses
+  whether a pill shows the port (`HDMI 2`), that name, or both, in either
+  order. *TV* and the inputs are edited
+  like the shortcuts: hold OK (or press YELLOW) on one, ← → moves it along
+  the row and ▼ takes it off; *Launcher settings → Home row → Inputs and TV* lists
+  them all with a box each and brings back the ones that are off (see
+  [Hiding apps and inputs](#hiding-apps-and-inputs)).
+- **Shortcuts** after the inputs: *Close background apps* first by default,
+  then *Apps*, then *System*. *Memory freeing action* chooses between closing apps
+  immediately (`closeAllApps`) and opening LG's Memory Optimizer.
+  Closing apps may also close Homebar; press HOME to open it again. The tile's
+  name follows that choice. Opening LG's screen does not press *Start*;
+  on the tested webOS 25 that button closes recent application windows.
+  A shortcut is edited like a
+  favourite: hold OK (or press YELLOW) on it, then ← → move it among the
+  shortcuts and ▼ takes it off the row; *System* can be moved as well, but
+  never removed, and *Shortcuts* in the Launcher settings brings the other
+  two back. A dot on *System* means a new version of the launcher is there
+  (see [Updates](#launcher-settings)).
 
 <img src="screenshots/home-input.jpg" width="100%" alt="An HDMI input focused: its name above the row, the device under each input, the hints for OK, hold OK and RED at the bottom">
 
 The focused item's name shows above the row, and the hints under it say what
 OK and the other keys do, the remote's colour keys in their own colour
-(YELLOW does what holding OK does, RED hides). The chip in the top-right corner shows what is on
+(YELLOW does what holding OK does, RED hides an app in *Apps*). The chip in the top-right corner shows what is on
 screen, the [weather](#weather) and the time; each of the three can be hidden. BACK closes the panel; from *Apps* or *System* it goes
 back to Home. The panel fits the TV's screen, HD or FHD/UHD, at the same
-proportions.
+proportions. Each input fits its own label or CEC name and optional second
+line, with padding, up to 200 px at FHD. Short names keep their pills narrow.
+When inputs or shortcuts leave less space, the favourite tiles shrink so
+the row keeps both screen margins. Longer input names use the selected
+ellipsis or scrolling mode.
 
 With the Magic Remote's pointer, moving it over a favourite, an input or a
 tile in *Apps* or *System* focuses it, as the arrows do; a pointer resting
@@ -70,12 +88,12 @@ uninstalled simply drops out of them.
 ## Hiding apps and inputs
 
 **RED** on an app in *Apps* hides it from the list (and drops it from the
-favourites); RED on an input on Home hides it from the row. *Launcher
-settings → Hidden apps and inputs → Shown dimmed* shows the hidden ones
-again, dimmed, so RED on one can bring it back for good. A hidden input
-also comes back from *Launcher settings → Hidden inputs*, which lists all of
-the TV's inputs: OK there hides or shows the one chosen. Nothing is
-uninstalled; hidden apps are only out of the launcher's lists.
+favourites); *Launcher settings → Apps → Hidden apps → Shown dimmed*
+shows the hidden apps again, dimmed, so RED on one can bring it back for
+good. *TV* and the inputs are taken off the Home row with ▼ in their edit
+mode (hold OK on one, then ▼) and come back from *Launcher settings → Home
+row → Inputs and TV*: a box for *TV* and each input, and OK switches the chosen one.
+Nothing is uninstalled; hidden items are only out of the launcher's lists.
 
 ## Apps
 
@@ -134,23 +152,27 @@ at *Larger* and the 12-hour clock:
 | | Theme | Default or one of seven two-colour themes, see [Themes](themes.md) |
 | | Text size | Normal, Large or Larger: the names, hints, labels and the menu grow; the tiles and pills keep their size, so the row still fits |
 | | Animations | On or off |
-| Home row | Live TV on Home | A *TV* pill before the inputs, shown or hidden |
-| | Hidden apps and inputs | Hidden, or shown dimmed (to bring one back with RED) |
-| | Hidden inputs | Every input of the TV with a box: OK hides or shows the one chosen, so a hidden input comes back without showing them dimmed first |
-| | After holding BACK | Overlay only: the last input, or one of the TV's inputs. Also where the TV goes when an app exits |
+| Home row | Inputs and TV | A box for *TV* and each input the TV has, in their row order: OK takes the chosen one off the Home row or puts it back |
+| | Input text | *Label only*, *HDMI only*, *CEC only*, *Label, then HDMI*, *HDMI, then label*, and the same pairs for the device's HDMI-CEC name (*CEC, then HDMI*, *HDMI, then CEC*): what a pill shows of the port, the name set on the TV for that input and the CEC name. The label modes fall back to the CEC name when no label is set, and the other way round. A pill drawn with the choice appears under the values |
+| | Long input names | *Ellipsis* (default) or *Scroll*: a name wider than the 200 px a pill can take either ends in "…", or, while that tile is focused, scrolls slowly to its end and back |
+| | Shortcuts | A box for *Free up memory* and for the *Apps* shortcut: the same, for the tiles after the inputs |
+| | Memory freeing action | *Close background apps* (default) or *Open LG Memory Optimizer*. The first closes apps immediately; the second opens LG's optimiser screen and leaves *Start* to you. The shortcut's title follows the chosen action. The optimiser option is offered only when the TV's LG Settings includes that screen |
+| | After holding BACK | Overlay only: the last input, or any of the TV's inputs, including those hidden on the Home row. Also where the TV goes when an app exits |
 | Apps | Apps order | The TV's order, A to Z, or the most used first |
-| Top bar | Clock | Shown or hidden |
+| | Hidden apps | Hidden, or shown dimmed in *Apps* (to bring one back with RED) |
+| Top bar | Items | A box for the clock, the app on screen and the weather: OK shows the chosen one in the chip or hides it |
 | | Clock format | 24-hour (16:05) or 12-hour (4:05 PM); the backup's time follows it |
-| | Current app | The app or input on screen, shown or hidden |
-| | Weather | Shown or hidden, see [Weather](#weather) |
 | | Weather place | The place of the weather; a code on the right opens a page on a phone to choose it |
 | | Temperature | *Automatic* (°F when the TV's language is set for the United States, else °C), Celsius or Fahrenheit |
+| | Temperature shown | *Standard temperature* from Open-Meteo, or *Feels like* (`apparent_temperature`, its equivalent of RealFeel) |
 | On screen | App name above favourites | Whether the big name of the focused item shows on Home and in *Apps* (System always shows it) |
 | | Key hints | The keys and what they do, on the bottom line: shown or hidden (the settings menu and editing favourites keep theirs) |
+| | Homebar timeout | *Off* by default, or 3–60 seconds. The panel closes after that much inactivity outside Launcher settings; a key, click, wheel scroll or actual Magic Remote pointer movement starts the count again. The pointer stays visible when the panel hides |
 | Backup | Back up favourites and settings | OK writes everything the launcher keeps to a file next to it; the status says when the last backup was made, see [Backup](#backup) |
 | | Restore from the backup | OK brings that file back |
 | Updates | Updates | The installed version; OK checks, downloads and installs a new release, see [Update](install.md#update). The launcher also looks once a day, the first time Home opens, and shows a dot on *System* and *Launcher settings* when a new version is there |
 | | Test builds | Also offer pre-releases as updates |
+| Help | Restart Homebar | Restarts the Homebar process and opens it again. Use it when the panel stops responding; favourites and settings stay saved |
 
 Up to 0.14 one setting, *Clock bar*, showed or hid the whole chip. When it
 was hidden, the clock, the app and the weather start hidden too.
@@ -179,9 +201,9 @@ launcher is updated); after that, scan the code again.
 
 <img src="screenshots/settings-backup.jpg" width="100%" alt="The Back up row focused: its status on the right, and OK to back up">
 
-*Back up favourites and settings* writes the favourites, the settings, the
-hidden apps and inputs and the launch counts to `backup.json` next to the
-installed launcher:
+*Back up favourites and settings* writes the favourites, the settings (the
+row's order included), the hidden apps and inputs and the launch counts to
+`backup.json` next to the installed launcher:
 `/var/lib/webosbrew/rawin-launcher/backup.json` (Home panel) or
 `/var/lib/webosbrew/rawin-launcher-home/backup.json` (overlay). *Restore
 from the backup* brings it back; the file outlasts updates, and the

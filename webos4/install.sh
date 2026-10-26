@@ -47,6 +47,13 @@ cp "$UI"/fonts/* "$BASE/current/fonts/"
 # The TV's webOS version, shown in the panel's corner with the variant.
 webos=$(sed -n 's/.*release \([0-9][0-9.]*\).*/\1/p' /etc/starfish-release 2>/dev/null | head -n 1)
 sed -i "s/^var webos = .*/var webos = \"$webos\";/" "$BASE/current/Config.js"
+# Older LG Settings versions ignore the target and open the picture menu.
+# Inspect the shipped route instead of guessing support from the webOS number.
+memory_optimizer=false
+if grep -q 'MemoryOptimizer' /usr/palm/applications/com.palm.app.settings/main.js 2>/dev/null; then
+    memory_optimizer=true
+fi
+printf '\nvar memoryOptimizer = %s;\n' "$memory_optimizer" >> "$BASE/current/Config.js"
 cp "$HERE/apply.sh" "$HERE/uninstall.sh" "$HERE/../update.sh" "$HERE/../diagnose.sh" "$HERE/../VERSION" "$BASE/"
 # The probe (which variant fits) next to diagnose.sh, with the patch it checks with.
 cp "$HERE/../probe.sh" "$HERE/patch-home.js" "$BASE/"

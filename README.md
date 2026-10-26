@@ -72,7 +72,7 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
 
 | webOS (LG's name) | How Homebar runs | Status |
 | :--- | :--- | :--- |
-| 4.x (webOS 4.0 / 4.5, 2018–2019) | Inside LG's own Home, which keeps its HOME handling (the *Basic* Home screen, where a TV has two) | Tested on 4.10 (LG C9, and LG UM7100 and B9 by users) |
+| 4.x (webOS 4.0 / 4.5, 2018–2019) | Inside LG's own Home, which keeps its HOME handling (the *Basic* Home screen, where a TV has two) | Tested on 4.10 (LG C9, and LG UM7100, B9 and E9 by users) |
 | 5.x (webOS 5.0, 2020) | Inside LG's own Home, as on 4.x | Tested on 5.6 (LG NANO80 and LG UN73, by users) |
 | 6.x (webOS 6.0, 2021) | The overlay, with LG's Home kept | Tested on 6.3 and 6.5 (LG C1 and LG UP78, by users) |
 | 10.x (webOS 25, 2025) | A separate overlay app with a root helper | Tested on 10.3 (LG B4, and LG UR78 by a user) |

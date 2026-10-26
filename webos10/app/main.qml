@@ -28,13 +28,17 @@ WebOSWindow {
     // a panel that is up.
     property bool preloaded: isPreload(launchParams)
     function isPreload(p) { return p !== null && p !== undefined && p.preload === true; }
+    // A quiet start is the helper preloading the panel while another app is
+    // in front: then the window is not mapped at all, so nothing can flash
+    // over the picture (there is no spinner to take down either).
+    function isQuiet(p) { return p !== null && p !== undefined && p.quiet === true; }
     visible: !preloaded
     // The app manager keeps its loading spinner on screen until a launched
     // app shows a window: a preloaded start maps the window for a moment,
     // with the panel faded out (nothing is drawn), and hides it again.
     Component.onCompleted: {
         preloaded = isPreload(launchParams);   // ends the binding
-        if (preloaded) { win.visible = true; mapTimer.start(); }
+        if (preloaded && !isQuiet(launchParams)) { win.visible = true; mapTimer.start(); }
     }
     Timer { id: mapTimer; interval: 500; onTriggered: if (!home.foreground) win.visible = false }
     color: "transparent"
@@ -66,6 +70,9 @@ WebOSWindow {
         anchors.fill: parent
         foreground: !win.preloaded
         onCloseRequested: win.hide()
+        // A timeout is not a BACK press: hide this overlay window only, so
+        // the system keeps the Magic Remote pointer where it is.
+        onTimeoutRequested: win.hide()
         // Original LG Home: SAM opens it as a card; we step aside.
         onStockRequested: http("/launch?id=com.webos.app.home", function() { win.hide(); })
         Component.onCompleted: { home.ready = true; home.loadInputs(); if (!win.preloaded) home.forceActiveFocus(); }
