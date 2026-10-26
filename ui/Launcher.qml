@@ -1033,10 +1033,13 @@ FocusScope {
         if (item.action === "apps" || item.action === "system") {
             page = item.action; selected = 0; return;
         }
-        noteLaunch(item.id);
+        // "tv" is the saved rail identity, not LG's application id. Resolve
+        // it here so both the Home panel and overlay launch the real app.
+        var launchId = item.kind === "tv" ? "com.webos.app.livetv" : item.id;
+        noteLaunch(launchId);
         launching = true;
         launchTimeout.restart();
-        launchService.callService({id: item.id, params: {}, reason: "launcher"});
+        launchService.callService({id: launchId, params: {}, reason: "launcher"});
     }
     function itemAt(index) {
         if (page === "apps") return apps[index];
