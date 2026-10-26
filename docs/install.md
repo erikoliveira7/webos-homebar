@@ -10,8 +10,10 @@
 - A rooted TV with the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel)
   and a root shell (SSH or telnet, enabled in the Homebrew Channel settings).
 - For the overlay variant (webOS 10, and any TV whose Home cannot take the
-  panel): the **Input Hook** app, installed from the Homebrew Channel, and
-  node 8 or newer on the TV (webOS 5 and later have it).
+  panel): **install and open the Input Hook app from the Homebrew Channel
+  before running the installer**. Installation is blocked if Input Hook is
+  missing. The overlay also needs node 8 or newer on the TV (webOS 5 and
+  later have it). The Home panel does not need Input Hook.
 - The TV's own `node`, `tar` and `curl`/`wget` (present on the tested TVs).
 - For the Home panel on a TV with LG's two Home screens (some 2019 models):
   the TV's *Home screen* setting on *Basic*, see

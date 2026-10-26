@@ -44,7 +44,7 @@ luna() { luna-send -n 1 "$1" "$2" </dev/null 2>/dev/null; }
 [ "$(id -u)" = 0 ] || fail "run this as root on the TV"
 [ -x "$HBC/elevate-service" ] || fail "the Homebrew Channel (root) is not set up on this TV"
 [ -d /media/developer/apps/usr/palm/applications/org.webosbrew.inputhook ] ||
-    fail "install 'Input Hook' from the Homebrew Channel first: it sends the HOME button to the launcher"
+    fail "installation blocked: Input Hook is required. Install and open 'Input Hook' from the Homebrew Channel, then run this installer again"
 command -v node >/dev/null || fail "node is missing on this TV"
 node -e 'process.exit(parseInt(process.versions.node, 10) >= 8 ? 0 : 1)' 2>/dev/null ||
     fail "the helper needs node 8 or newer; this TV has node $(node -v 2>/dev/null) (the Home panel may fit instead: sh install.sh --home-panel)"

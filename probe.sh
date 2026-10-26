@@ -66,7 +66,7 @@ overlay_why=
 overlay_fits() {
     [ -x "$HBC/elevate-service" ] || { overlay_why="the Homebrew Channel (root) is not set up on this TV"; return 1; }
     [ -d "$APPS/org.webosbrew.inputhook" ] ||
-        { overlay_why="the Input Hook app is not installed (Homebrew Channel); it sends the HOME button to the launcher"; return 1; }
+        { overlay_why="Input Hook is required for the overlay. Install and open 'Input Hook' from the Homebrew Channel, then run this installer again; it sends the HOME button to Homebar"; return 1; }
     command -v node >/dev/null || { overlay_why="node is missing on this TV"; return 1; }
     node -e 'process.exit(parseInt(process.versions.node, 10) >= 8 ? 0 : 1)' 2>/dev/null ||
         { overlay_why="the helper needs node 8 or newer; this TV has node $(node -v 2>/dev/null)"; return 1; }
@@ -83,7 +83,7 @@ case "$1" in
         detail "$panel_why"
         note=$(full_home_note)
         [ -n "$note" ] && detail "$note"
-        if overlay_fits; then say "overlay: fits"; else say "overlay: does not fit"; fi
+        if overlay_fits; then say "overlay: fits"; else say "overlay: requirements not met"; fi
         detail "$overlay_why"
         ;;
     *) echo "usage: $0 [panel|overlay|full-home]" >&2; exit 2 ;;

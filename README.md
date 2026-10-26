@@ -88,8 +88,13 @@ fits, and changes nothing. Details in [Compatibility](docs/compatibility.md#webo
 
 You need a rooted TV with the
 [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel) and a
-root shell (SSH or telnet), and for the overlay variant (webOS 10, or a Home
-that cannot take the panel) the **Input Hook** app from the Homebrew Channel.
+root shell (SSH or telnet).
+
+**Before installing the overlay (webOS 6 and newer on the tested TVs), install
+and open the “Input Hook” app from the Homebrew Channel.** It sends the HOME
+button to Homebar. Installation is blocked if Input Hook is missing. The Home
+panel on older TVs (tested on webOS 4 and 5) does not need Input Hook.
+
 Log in to the TV as root, then:
 
 ```sh

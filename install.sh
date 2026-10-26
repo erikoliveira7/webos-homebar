@@ -66,9 +66,9 @@ if [ -z "$variant" ]; then
     if panel_why=$(sh "$PROBE" panel 2>&1); then variant=panel
     elif overlay_why=$(sh "$PROBE" overlay 2>&1); then variant=overlay
     else
-        { say "no variant fits this TV"
+        { say "installation blocked; see the requirements below"
           say "Home panel: does not fit"; detail "$panel_why"
-          say "overlay: does not fit"; detail "$overlay_why"; } >&2
+          say "overlay: requirements not met"; detail "$overlay_why"; } >&2
         fail "see docs/compatibility.md; sh install.sh --probe repeats this check"
     fi
 fi
