@@ -111,6 +111,7 @@ pills, one with DisplayPort or USB-C shows those too.
 | LG OLED55E9PLA (E9, 2019) | 4.10.2 (webOS 4.5) | 05.50.00 | Home panel, with the TV's Home screen on *Basic* | 0.16.0, by a user |
 | LG 55NANO803NA (NANO80, 2020) | 5.6.2 (webOS 5.0) | 04.64.00 | Home panel | 0.15.2, by a user |
 | LG 55UN731C0SC (UN73, 2020) | 5.6.2 (webOS 5.0) | 04.64.00 | Home panel, with the TV's Home screen on *Basic* | 0.15.3, by a user |
+| LG 75UN9070AUD (UN90, 2020) | 5.6.2 (webOS 5.0) | 04.64.00 | Home panel, with the TV's Home screen on *Basic* | 0.17.1, by a user |
 | LG OLED55C16LA (C1, 2021) | 6.3.2 (webOS 6.0) | 03.34.80 | Overlay, LG's Home kept | 0.14.0, by a user |
 | LG 43UP78006LB (UP78, 2021) | 6.5.3 (webOS 6.0) | 03.53.45 | Overlay, LG's Home kept | 0.15.1, by a user |
 | A 2022 LG TV (family HE_DTV_C22P) | 7.5.8 (webOS 22) | 04.56.35 | Overlay, LG's Home kept | 0.16.0, by a user |

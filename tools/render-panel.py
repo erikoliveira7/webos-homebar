@@ -18,6 +18,7 @@ not the TV. The webOS-only parts of the panel are stubbed out, as in
 render-themes.py; the icons are plain coloured squares, so the glow read
 from them is their colour.
 """
+import shutil
 import argparse
 import json
 import sys
@@ -104,6 +105,9 @@ def panel(app_dir):
     (app_dir / "WebOS.js").write_text(".pragma library\nvar Key_webOS_Back = 461;\nvar Key_webOS_Yellow = 405;\nvar Key_webOS_Red = 403;\n")
     for name in ("FavouriteStore.qml", "Strings.js", "Themes.js", "About.js"):
         (app_dir / name).write_bytes((ROOT / "ui" / name).read_bytes())
+    for name in ("DeviceIcons.js", "DeviceIcon.qml"):
+        (app_dir / name).write_bytes((ROOT / "ui" / name).read_bytes())
+    shutil.copytree(ROOT / "ui/input-icons", app_dir / "input-icons")
     apps = []
     for app_id, title, color in APPS:
         icon = QImage(240, 240, QImage.Format_RGB32)

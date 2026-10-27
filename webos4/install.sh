@@ -44,6 +44,9 @@ mkdir -p "$BASE/current/fonts"
 cp "$TMP/main.original.qml" "$TMP/UIController.original.qml" "$TMP/main.qml" "$TMP/UIController.qml" "$BASE/"
 cp "$UI/Launcher.qml" "$UI/FavouriteStore.qml" "$UI/Strings.js" "$UI/Themes.js" "$UI/About.js" "$HERE/Config.js" "$BASE/current/"
 cp "$UI"/fonts/* "$BASE/current/fonts/"
+cp "$UI/DeviceIcons.js" "$UI/DeviceIcon.qml" "$BASE/current/"
+mkdir -p "$BASE/current/input-icons"
+cp "$UI"/input-icons/* "$BASE/current/input-icons/"
 # The TV's webOS version, shown in the panel's corner with the variant.
 webos=$(sed -n 's/.*release \([0-9][0-9.]*\).*/\1/p' /etc/starfish-release 2>/dev/null | head -n 1)
 sed -i "s/^var webos = .*/var webos = \"$webos\";/" "$BASE/current/Config.js"

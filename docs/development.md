@@ -5,6 +5,7 @@
 - [Configuration](#configuration)
 - [Layout](#layout)
 - [Checking the layout](#checking-the-layout)
+- [Device icons](#device-icons)
 - [Adding a language](#adding-a-language)
 - [Adding a theme](#adding-a-theme)
 - [Theme pictures](#theme-pictures)
@@ -49,7 +50,7 @@ tested and whether the overlay replaces LG's Home by default.
 
 | Path | What |
 | :--- | :--- |
-| `ui/` | The panel shared by both variants: `Launcher.qml`, texts in `Strings.js`, colours in `Themes.js`, the About page's links and QR code in `About.js`, LocalStorage in `FavouriteStore.qml`, fonts |
+| `ui/` | The panel shared by both variants: `Launcher.qml`, texts in `Strings.js`, colours in `Themes.js`, the About page's links and QR code in `About.js`, LocalStorage in `FavouriteStore.qml`, fonts, device choices in `DeviceIcons.js` and the tinted masks in `DeviceIcon.qml` / `input-icons/` |
 | `webos4/` | The Home panel: the LG Home patch, boot hook and scripts |
 | `webos10/` | The overlay: the overlay app, helper, HTTP bridge, Home stand-in and scripts |
 | `shared/` | The setup server of both variants: the weather, the page to choose its place on a phone, and that page's QR code |
@@ -91,6 +92,42 @@ For an interactive desktop window, use `python3 tools/simulate-panel.py
 --size 1280x720`. Arrows and Enter act as the remote, Escape/Backspace goes
 back, and F2 opens the panel again after BACK or its timeout hides it. Mouse
 and wheel events use the panel's normal handlers. TV services are stubbed.
+
+## Device icons
+
+The input and TV catalogues in `ui/DeviceIcons.js` use stable ids: saved choices
+belong to a physical input, so changing an icon title or sort order must not
+change its id. Generic device names are translated in all nine languages;
+brand names stay as supplied. The TV picker has a separate restricted list.
+
+`ui/input-icons/manifest.json` records each original SVG URL, pinned revision,
+SHA-256 and licence. Preserve the original SVG and include the upstream licence
+and notice when adding an entry. Regenerate the optically sized PNG masks with:
+
+```sh
+QT_QPA_PLATFORM=offscreen python3 tools/prepare-input-icons.py
+```
+
+`DeviceIcon.qml` tints a 128px mask and uses a smooth mipmapped texture; the
+48px icon field stays the same with or without text. Do not rasterise into the
+small field first: focus scaling makes those edges visibly jagged on a TV.
+Both installers package the component and its assets; building needs no SVG
+plugin on the TV and does not download artwork.
+
+With PySide6 installed, the focused checks are:
+
+```sh
+QT_QPA_PLATFORM=offscreen python3 tests/input-icons.py
+QT_QPA_PLATFORM=offscreen python3 tests/input-icons-visual.py
+QT_QPA_PLATFORM=offscreen python3 tests/input-icons-quality.py
+QT_QPA_PLATFORM=offscreen python3 tests/icon-picker-position.py
+QT_QPA_PLATFORM=offscreen python3 tests/edit-removal.py
+```
+
+The visual audit writes contact sheets to `dist/icon-audit/`. The other tests
+exercise real Qt keys, mouse and wheel events, saved choices, independent
+headings, popup anchoring and two-step removal. Desktop tests do not replace
+checking the Magic Remote's pointer and held keys on an actual TV.
 
 ## Adding a language
 

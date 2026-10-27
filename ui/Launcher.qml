@@ -6,6 +6,7 @@ import "Config.js" as Config
 import "Strings.js" as Strings
 import "Themes.js" as Themes
 import "About.js" as About
+import "DeviceIcons.js" as DeviceIcons
 
 FocusScope {
     id: shell
@@ -45,14 +46,79 @@ FocusScope {
     // in the TV's order, A to Z or most used first.
     readonly property var apps: appsFor(applications, hiddenIds, settings.sort, settings.showHidden)
     property int editIndex: -1
+    onEditIndexChanged: pendingRemoval = ""
     // The settings menu is a large subtree, built on its first use (or in the
     // first quiet moment) so the panel itself comes up at once.
     property bool menuLoaded: false
     // The rail's sources and shortcuts are edited like favourites: hold OK or
-    // YELLOW, ← → moves, ▼ takes it off the row.
+    // YELLOW, ← → moves, two ▼ presses take it off the row.
     property int editSourceIndex: -1
+    property bool editInputIcon: false
+    onEditSourceIndexChanged: { editInputIcon = false; pendingRemoval = ""; }
+    readonly property var iconSource: editSourceIndex >= 0 ? sources[editSourceIndex] : null
+    readonly property bool inputIconsVisible: ["icon", "iconHdmi", "iconLabel", "iconCec"].indexOf(settings.inputText) >= 0
+    readonly property bool inputIconOnly: settings.inputText === "icon"
+    readonly property var editIconChoices: sortedIconChoices(iconSource && iconSource.kind === "tv")
+    function sortedIconChoices(tv) {
+        var list = (tv ? DeviceIcons.tvCatalog : DeviceIcons.catalog).slice(0);
+        list.sort(function(a, b) {
+            var first = a.titleKey ? t(a.titleKey) : a.title;
+            var second = b.titleKey ? t(b.titleKey) : b.title;
+            return first.localeCompare(second);
+        });
+        return list;
+    }
+    function sourceIcon(source) {
+        return source && source.kind === "tv" ? DeviceIcons.tvIcon(settings.tvIcon).id : DeviceIcons.icon(source && settings.inputIcons[source.id]).id;
+    }
+    function sourceIconIndex() { return DeviceIcons.index(sourceIcon(iconSource), editIconChoices); }
+    function sourceIconTitle() {
+        var choice = editIconChoices[sourceIconIndex()];
+        return choice.titleKey ? t(choice.titleKey) : choice.title;
+    }
+    function cycleInputIcon(direction) {
+        if (!iconSource) return;
+        var icons = editIconChoices, next = {}, id = icons[(sourceIconIndex() + direction + icons.length) % icons.length].id;
+        if (iconSource.kind === "tv") { setSetting("tvIcon", id); return; }
+        for (var key in settings.inputIcons) next[key] = settings.inputIcons[key];
+        next[iconSource.id] = id;
+        setSetting("inputIcons", next);
+    }
+    function iconEditorCenter() {
+        // Delegates disappear briefly when settings rebuild the input model.
+        // Measure the rail instead, so the popup never caches a screen-centre
+        // fallback and follows row layout changes and the rail's own scale.
+        if (!iconSource) return margin;
+        var currentWidth = iconSource.kind === "tv" ? sourceTileWidth : pillWidthFor(iconSource, titleTwins.rev);
+        var prefixWidth = sourcesWidthFor(sources.slice(0, editSourceIndex+1), titleTwins.rev);
+        return rail.x + (sourceRow.x + prefixWidth-currentWidth/2)*rail.scale;
+    }
     // System can be moved among the shortcuts but never removed.
     property int editActionIndex: -1
+    onEditActionIndexChanged: pendingRemoval = ""
+    property string pendingRemoval: ""
+    readonly property string removalKey: {
+        if (page !== "home" || editInputIcon) return "";
+        if (editIndex >= 0 && favourites[editIndex]) return "favourite:" + favourites[editIndex].id;
+        if (editSourceIndex >= 0 && sources[editSourceIndex]) return "source:" + sources[editSourceIndex].id;
+        if (editActionIndex >= 0 && homeActions[editActionIndex] && homeActions[editActionIndex].action !== "system")
+            return "shortcut:" + homeActions[editActionIndex].action;
+        return "";
+    }
+    onRemovalKeyChanged: pendingRemoval = ""
+    onSelectedChanged: pendingRemoval = ""
+    function requestRemoval() {
+        if (!removalKey) return;
+        if (pendingRemoval !== removalKey) { pendingRemoval = removalKey; return; }
+        pendingRemoval = "";
+        if (editIndex >= 0) removeFavourite(editIndex);
+        else if (editSourceIndex >= 0) hideSource(editSourceIndex);
+        else if (editActionIndex >= 0) removeHomeAction(editActionIndex);
+    }
+    function removalTarget() {
+        var loader = editIndex >= 0 ? favouriteCells.itemAt(editIndex) : editSourceIndex >= 0 ? sourceCells.itemAt(editSourceIndex) : editActionIndex >= 0 ? shortcutCells.itemAt(editActionIndex) : null;
+        return loader ? loader.item : null;
+    }
     property string notice: ""
     property bool okHeld: false
     property bool longFired: false
@@ -66,11 +132,12 @@ FocusScope {
     readonly property var sources: allSources.filter(function(s) { return !s.hidden; })
     readonly property int sourceCount: sources.length
     readonly property var inputs: allInputs.filter(function(d) { return hiddenInputs.indexOf(d.id) < 0; })
-    // The source the "Input text" preview draws: the first with a name (a
-    // label or a device), else the first on the row, else nothing.
+    // Preview a physical input, including a hidden one if none is on the row.
+    // TV has its own appearance and its default text has no image asset.
     readonly property var previewSource: {
-        for (var i=0; i<sources.length; i++) if (sources[i].name) return sources[i];
-        return sources.length ? sources[0] : {title: "", name: ""};
+        var list = inputs.length ? inputs : allInputs;
+        for (var i=0; i<list.length; i++) if (list[i].name) return list[i];
+        return list.length ? list[0] : {title: "", name: ""};
     }
     // The moment the clock shows (tick() moves it on the minute) and the
     // clock itself, in the setting's format: 24-hour or 12-hour.
@@ -83,6 +150,7 @@ FocusScope {
     // order; tv: Live TV on the rail; sourceOrder: the order of Live TV and
     // the inputs on the rail; inputText: what an input's pill shows ("hdmiLabel"
     // is "HDMI 2" over the label, "label", "hdmi" or "labelHdmi");
+    // inputHeading: "hdmi", "label" or "cec" for the name above favourites;
     // inputOverflow: "ellipsis" or "scroll" for a name wider than the pill;
     // showHidden: hidden apps shown dimmed; exitTo
     // (overlay only, sent to the helper): "last"
@@ -306,7 +374,7 @@ FocusScope {
         if (moved) noteActivity();
         // Keys can hide the Magic Remote cursor. Keep their focus even if Qt
         // delivers hover during that transition; a held OK keeps its target.
-        return moved && foreground && visible && Date.now() >= pointerBlockedUntil && !okHeld && editIndex < 0 && editActionIndex < 0;
+        return moved && foreground && visible && Date.now() >= pointerBlockedUntil && !okHeld && editIndex < 0 && editSourceIndex < 0 && editActionIndex < 0;
     }
 
     FontLoader { id: inter; source: "file:///var/lib/webosbrew/rawin-launcher/current/fonts/Inter-Regular.ttf" }
@@ -341,16 +409,19 @@ FocusScope {
             return !(x.optional && !installed(x.id, apps)) && !(x.stock && !stockHome);
         });
     }
-    // What a source's pill (and the name above the row) shows, in the
+    // What a source's pill shows, independently of the heading above the row, in the
     // setting's arrangement: the port's title ("HDMI 2"), the label set on
     // the TV, or the HDMI-CEC name. The label modes fall back to the CEC name
     // when no label is set, the CEC modes to the label when the device is
-    // silent; the port is always the last fallback. See Input text.
+    // silent; the port is always the last fallback. See Input appearance.
     function inputTexts(source) {
         var mode = settings.inputText || "hdmiLabel";
         var title = source ? source.title : "";
         var label = source ? (source.label || source.cec || "") : "";
         var cec = source ? (source.cec || source.label || "") : "";
+        if (mode === "icon" || mode === "iconHdmi") return inputPair(title, "", title);
+        if (mode === "iconLabel") return inputPair(label, "", title);
+        if (mode === "iconCec") return inputPair(cec, "", title);
         if (mode === "hdmi") return inputPair(title, "", title);
         if (mode === "label") return inputPair(label, "", title);
         if (mode === "cec") return inputPair(cec, "", title);
@@ -358,6 +429,14 @@ FocusScope {
         if (mode === "cecHdmi") return inputPair(cec, title, title);
         if (mode === "hdmiCec") return inputPair(title, cec, title);
         return inputPair(title, label, title);   // hdmiLabel
+    }
+    // The large input heading has its own choice, even for icon-only tiles.
+    function sourceHeading(source) {
+        if (!source) return "";
+        if (source.kind === "tv") return source.title;
+        if (settings.inputHeading === "label") return source.label || source.cec || source.title;
+        if (settings.inputHeading === "cec") return source.cec || source.label || source.title;
+        return source.title;
     }
     function inputPair(first, second, title) {
         var primary = first || title;
@@ -409,7 +488,7 @@ FocusScope {
             {title: "grp_about", keys: ["about"]},
             {title: "grp_look", keys: ["lang", "theme", "size", "motion"]},
             // Live TV is switched with the inputs, so the row stays one list.
-            {title: "grp_home", keys: exitTarget ? ["sources", "inputText", "inputOverflow", "homeShortcuts", "closeAppsMode", "exitTo"] : ["sources", "inputText", "inputOverflow", "homeShortcuts", "closeAppsMode"]},
+            {title: "grp_home", keys: exitTarget ? ["sources", "inputText", "inputHeading", "inputOverflow", "homeShortcuts", "closeAppsMode", "exitTo"] : ["sources", "inputText", "inputHeading", "inputOverflow", "homeShortcuts", "closeAppsMode"]},
             {title: "grp_apps", keys: ["sort", "showHidden"]},
             {title: "grp_bar", keys: ["topBar", "hours", "place", "units", "temperature"]},
             {title: "grp_screen", keys: ["title", "hints", "timeout"]},
@@ -441,7 +520,7 @@ FocusScope {
                      restore: "set_restore", update: "set_update", beta: "set_beta",
                      place: "set_place", units: "set_units", temperature: "set_temperature", about: "set_about", hints: "set_hints",
                      timeout: "set_timeout", restart: "set_restart_homebar",
-                     sources: "set_sources", inputText: "set_input_text", inputOverflow: "set_input_overflow", homeShortcuts: "set_home_shortcuts",
+                     sources: "set_sources", inputText: "set_input_text", inputHeading: "set_input_heading", inputOverflow: "set_input_overflow", homeShortcuts: "set_home_shortcuts",
                      closeAppsMode: "set_close_apps_mode",
                      topBar: "set_topbar"};
         var item = {key: key, title: t(names[key]), action: "setting", value: ""};
@@ -498,7 +577,12 @@ FocusScope {
             list = [{id: "label", title: t("val_input_label")}, {id: "hdmi", title: t("val_input_hdmi")},
                     {id: "cec", title: t("val_input_cec")},
                     {id: "labelHdmi", title: t("val_input_label_hdmi")}, {id: "hdmiLabel", title: t("val_input_hdmi_label")},
-                    {id: "cecHdmi", title: t("val_input_cec_hdmi")}, {id: "hdmiCec", title: t("val_input_hdmi_cec")}];
+                    {id: "cecHdmi", title: t("val_input_cec_hdmi")}, {id: "hdmiCec", title: t("val_input_hdmi_cec")},
+                    {id: "icon", title: t("val_input_icon")}, {id: "iconHdmi", title: t("val_input_icon_hdmi")},
+                    {id: "iconLabel", title: t("val_input_icon_label")}, {id: "iconCec", title: t("val_input_icon_cec")}];
+        } else if (key === "inputHeading") {
+            list = [{id: "hdmi", title: t("val_heading_hdmi")}, {id: "label", title: t("val_heading_label")},
+                    {id: "cec", title: t("val_heading_cec")}];
         } else if (key === "inputOverflow") {
             list = [{id: "ellipsis", title: t("val_input_ellipsis")}, {id: "scroll", title: t("val_input_scroll")}];
         } else if (key === "units") {
@@ -641,10 +725,13 @@ FocusScope {
             // What an input's pill shows: the port, its label, or both.
             // No key (an install from before the setting) keeps the old
             // look: "HDMI 2" big, the label or CEC name under it.
-            inputText: ["label", "hdmi", "cec", "labelHdmi", "hdmiLabel", "cecHdmi", "hdmiCec"].indexOf(s.inputText) >= 0 ? s.inputText : "hdmiLabel",
+            inputHeading: ["hdmi", "label", "cec"].indexOf(s.inputHeading) >= 0 ? s.inputHeading : "hdmi",
+            inputText: ["label", "hdmi", "cec", "labelHdmi", "hdmiLabel", "cecHdmi", "hdmiCec", "icon", "iconHdmi", "iconLabel", "iconCec"].indexOf(s.inputText) >= 0 ? s.inputText : "hdmiLabel",
             // A name longer than a pill: end it with an ellipsis (as before)
             // or scroll it while the tile is focused.
             inputOverflow: s.inputOverflow === "scroll" ? "scroll" : "ellipsis",
+            inputIcons: DeviceIcons.assignments(s.inputIcons),
+            tvIcon: DeviceIcons.tvIcon(s.tvIcon).id,
             homeCloseApps: s.homeCloseApps !== false,
             // Older TVs may lack LG's optimiser screen. Keep a saved memory
             // action from opening unrelated Settings there; old combined mode
@@ -761,8 +848,8 @@ FocusScope {
             h = {title: f.title, sub: editing >= 0 ? t("edit_sub") : "", color: styleFor(f.id).accent};
         } else if (index < favSlots + sourceList.length) {
             var source = sourceList[index - favSlots];
-            // The same big text the pill shows (port or label, per the setting).
-            h = {title: inputTexts(source).primary, sub: editSourceIndex >= 0 ? t("edit_inputs_sub") : "", color: neutral};
+            // The heading is independent of the tile, including icon-only inputs.
+            h = {title: sourceHeading(source), sub: editSourceIndex >= 0 ? (editInputIcon ? "← → " + t("hint_input_icon") : t("edit_inputs_sub") + "   ▲ " + t("hint_input_icon")) : "", color: neutral};
         } else {
             var action = homeActions[index - favSlots - sourceList.length] || {title: ""};
             // Under the name the same line as a favourite's while editing;
@@ -800,10 +887,12 @@ FocusScope {
             return [hint([ok], t("hint_change")), hint([back], t("hint_system"))];
         }
         // Editing a favourite, a source or a shortcut: the same keys for all.
-        // DOWN takes it off the row, except System, which only moves.
+        // Two DOWN presses take it off the row; System only moves.
         if (editing >= 0 || editSourceIndex >= 0 || editActionIndex >= 0) {
+            if (editInputIcon) return [hint([hintKey("← →")], t("hint_input_icon")), hint([ok, back], t("hint_done"))];
             var editingSystem = editActionIndex >= 0 && homeActions[editActionIndex] !== undefined && homeActions[editActionIndex].action === "system";
             var editHints = [hint([hintKey("← →")], t("hint_move"))];
+            if (editSourceIndex >= 0 && iconSource) editHints.push(hint([hintKey("▲")], t("hint_input_icon")));
             if (!editingSystem) editHints.push(hint([hintKey("▼")], t("hint_remove")));
             editHints.push(hint([ok], t("hint_done")));
             return editHints;
@@ -853,12 +942,14 @@ FocusScope {
         return out;
     }
     function moveFavourite(from, to) {
+        pendingRemoval = "";
         var ids = favouriteKeys.slice(0), id = ids[from];
         ids[from] = ids[to]; ids[to] = id;
         setFavourites(ids);
         editIndex = to; selected = to;
     }
     function moveSource(from, to) {
+        pendingRemoval = "";
         var moving = sources[from], target = sources[to];
         if (!moving || !target) return;
         // The whole order, hidden sources included, so their places stay.
@@ -881,6 +972,7 @@ FocusScope {
         selected = Math.max(0, Math.min(selected, favSlots + sourceCount + homeActions.length - 1));
     }
     function moveHomeAction(from, to) {
+        pendingRemoval = "";
         var moving = homeActions[from], target = homeActions[to];
         if (!moving || !target) return;
         var order = homeActionOrderFor(settings.homeActionOrder), a = order.indexOf(moving.action), b = order.indexOf(target.action);
@@ -941,6 +1033,7 @@ FocusScope {
     // Hold OK (or the yellow key): edit a favourite, a source or a shortcut
     // on Home; toggle a favourite in Apps.
     function secondaryAction() {
+        pendingRemoval = "";
         if (!ready || launching) return;
         if (page === "apps") { if (apps[selected]) toggleFavourite(apps[selected]); }
         else if (page !== "home") return;
@@ -1008,7 +1101,9 @@ FocusScope {
     }
     onValueIndexChanged: applyValue()
     function activate(item) {
+        pendingRemoval = "";
         if (!ready || launching || !item) return;
+        if (editInputIcon) { editInputIcon = false; return; }
         message = "";
         if (item.action === "stock") { stockRequested(); return; }
         if (item.action === "close") { closeHome(); return; }
@@ -1103,20 +1198,28 @@ FocusScope {
     }
     function navigate(key) {
         notice = "";
+        if (key !== Qt.Key_Down) pendingRemoval = "";
         if (page === "settings") return navigateMenu(key);
-        // Editing a favourite: arrows move it, DOWN removes it, OK/BACK/UP finish.
+        // Editing a favourite: arrows move it, two DOWN presses remove it; OK/BACK/UP finish.
         if (page === "home" && editIndex >= 0) {
             if (key === Qt.Key_Left) { if (editIndex > 0) moveFavourite(editIndex, editIndex-1); }
             else if (key === Qt.Key_Right) { if (editIndex < favCount-1) moveFavourite(editIndex, editIndex+1); }
-            else if (key === Qt.Key_Down) removeFavourite(editIndex);
+            else if (key === Qt.Key_Down) requestRemoval();
             else if (isOk(key) || isBack(key) || key === Qt.Key_Up) editIndex = -1;
             else return false;
             return true;
         }
         if (page === "home" && editSourceIndex >= 0) {
+            if (editInputIcon) {
+                if (key === Qt.Key_Left || key === Qt.Key_Right) cycleInputIcon(key === Qt.Key_Left ? -1 : 1);
+                else if (isOk(key) || isBack(key) || key === Qt.Key_Down || key === Qt.Key_Up) editInputIcon = false;
+                else return false;
+                return true;
+            }
+            if (key === Qt.Key_Up && iconSource) { editInputIcon = true; return true; }
             if (key === Qt.Key_Left) { if (editSourceIndex > 0) moveSource(editSourceIndex, editSourceIndex-1); }
             else if (key === Qt.Key_Right) { if (editSourceIndex < sourceCount-1) moveSource(editSourceIndex, editSourceIndex+1); }
-            else if (key === Qt.Key_Down) hideSource(editSourceIndex);
+            else if (key === Qt.Key_Down) requestRemoval();
             else if (isOk(key) || isBack(key) || key === Qt.Key_Up) editSourceIndex = -1;
             else return false;
             return true;
@@ -1124,7 +1227,7 @@ FocusScope {
         if (page === "home" && editActionIndex >= 0) {
             if (key === Qt.Key_Left) { if (editActionIndex > 0) moveHomeAction(editActionIndex, editActionIndex-1); }
             else if (key === Qt.Key_Right) { if (editActionIndex < homeActions.length-1) moveHomeAction(editActionIndex, editActionIndex+1); }
-            else if (key === Qt.Key_Down) removeHomeAction(editActionIndex);
+            else if (key === Qt.Key_Down) requestRemoval();
             else if (isOk(key) || isBack(key) || key === Qt.Key_Up) editActionIndex = -1;
             else return false;
             return true;
@@ -1171,6 +1274,9 @@ FocusScope {
         }
         menuHover = -1; valueHover = -1;
         pointerBlockedUntil = Date.now() + 1000;
+        if (event.key !== Qt.Key_Down) pendingRemoval = "";
+        // A held DOWN must never confirm its own warning through auto-repeat.
+        if (event.key === Qt.Key_Down && event.isAutoRepeat && (editIndex >= 0 || editSourceIndex >= 0 || editActionIndex >= 0)) { event.accepted = true; return; }
         if (isYellow(event.key) || isRed(event.key)) { event.accepted=true; return; }
         if (actionKey(event.key)) {
             event.accepted=true;
@@ -1216,6 +1322,7 @@ FocusScope {
         onTriggered: shell.menuLoaded = true
     }
     onPageChanged: {
+        pendingRemoval = "";
         if (page === "settings") { menuLoaded = true; inactivityTimer.stop(); } else noteActivity();
     }
     onForegroundChanged: {
@@ -1754,7 +1861,7 @@ FocusScope {
         // setting "hints" hides them on Home, Apps and System; the settings
         // menu and editing favourites or shortcuts keep theirs.
         Row {
-            visible: shell.settings.hints || shell.page === "settings" || shell.editIndex >= 0 || shell.editActionIndex >= 0
+            visible: shell.pendingRemoval === "" && (shell.settings.hints || shell.page === "settings" || shell.editIndex >= 0 || shell.editSourceIndex >= 0 || shell.editActionIndex >= 0)
             x: shell.margin; y: shell.height - shell.px(47); spacing: shell.px(24)
             Repeater {
                 model: shell.hints
@@ -1839,6 +1946,7 @@ FocusScope {
                 // pointer shows). Movement only changes the highlighted item.
                 MouseArea {
                     id: cellPointer
+                    enabled: !shell.editInputIcon
                     anchors.fill: parent; hoverEnabled: true
                     onEntered: { if (shell.pointerMoved(cellPointer, {x: mouseX, y: mouseY})) shell.selected=cell.navIndex; }
                     onPositionChanged: { if (shell.pointerMoved(cellPointer, mouse)) shell.selected=cell.navIndex; }
@@ -1900,17 +2008,16 @@ FocusScope {
                     width: shell.px(20); height: width; radius: width/2
                     color: shell.warning; border.width: shell.px(3); border.color: shell.theme.gap
                 }
-                // The edit handles of a favourite, on a shortcut's edges too.
-                Repeater {
-                    model: glyphCell.editing ? shell.moveHandles(shell.editActionIndex, shell.homeActions.length) : []
-                    Rectangle {
-                        x: modelData === "‹" ? -shell.px(14) : glyphCell.size-shell.px(14); anchors.verticalCenter: parent.verticalCenter
-                        width: shell.px(28); height: shell.px(44); radius: shell.px(14); color: shell.theme.handle; border.width: Math.max(1, 2*shell.u); border.color: shell.warning
-                        Text { anchors.centerIn: parent; anchors.verticalCenterOffset: -2*shell.u; text: modelData; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.px(30); color: shell.warning }
-                    }
+                Loader {
+                    visible: glyphCell.editing; active: visible; sourceComponent: sourceEditControls
+                    width: shell.px(68); height: shell.px(28)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.top; anchors.bottomMargin: shell.px(12)
+                    onLoaded: item.forShortcut = true
                 }
                 MouseArea {
                     id: glyphPointer
+                    enabled: !shell.editInputIcon
                     anchors.fill: parent; hoverEnabled: true
                     onEntered: { if (shell.pointerMoved(glyphPointer, {x: mouseX, y: mouseY})) shell.selected=glyphCell.navIndex; }
                     onPositionChanged: { if (shell.pointerMoved(glyphPointer, mouse)) shell.selected=glyphCell.navIndex; }
@@ -1932,44 +2039,55 @@ FocusScope {
                 readonly property bool editing: shell.page === "home" && shell.editSourceIndex === navIndex - shell.favSlots
                 property real lift: chosen ? -4*shell.u : 0
                 width: shell.pillWidthFor(pill.entry, titleTwins.rev)
-                readonly property int textCap: Math.max(shell.px(20), width - shell.px(44))
-                height: Math.max(shell.px(64), pillText.height + shell.px(20)); radius: shell.px(18)
+                readonly property int textCap: Math.max(shell.px(20), width - shell.px(44) - (shell.inputIconsVisible ? shell.px(44) : 0))
+                height: shell.inputIconOnly ? shell.sourceTileWidth : Math.max(shell.px(64), pillText.height + shell.px(20)); radius: shell.px(18)
                 color: chosen ? shell.theme.focus : shell.chip
                 border.width: chosen ? 0 : 1; border.color: shell.chipEdge
                 // Nothing plugged in: the pill stays solid, its text dimmed.
                 readonly property bool dim: !chosen && entry !== undefined && entry.present === false
-                // Editing: the same amber outline and ‹ › handles as a
-                // favourite; the Loader raises the chosen pill over its neighbours.
+                // Editing keeps an amber outline, with the controls above the tile;
+                // the Loader raises the chosen pill over its neighbours.
                 Rectangle {
                     visible: pill.editing; anchors.fill: parent; anchors.margins: -shell.px(5)
                     radius: pill.radius + shell.px(5); color: "transparent"
                     border.width: Math.max(1, 2*shell.u); border.color: shell.warning
                 }
-                Repeater {
-                    model: pill.editing ? shell.moveHandles(shell.editSourceIndex, shell.sourceCount) : []
-                    Rectangle {
-                        x: modelData === "‹" ? -shell.px(14) : pill.width-shell.px(14); anchors.verticalCenter: parent.verticalCenter
-                        width: shell.px(28); height: shell.px(44); radius: shell.px(14); color: shell.theme.handle; border.width: Math.max(1, 2*shell.u); border.color: shell.warning
-                        Text { anchors.centerIn: parent; anchors.verticalCenterOffset: -2*shell.u; text: modelData; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.px(30); color: shell.warning }
-                    }
-                }
+
                 scale: chosen ? (shell.pressing ? 1.02 : 1.06) : 1
                 transform: Translate { y: pill.lift }
                 Behavior on lift { NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
                 Behavior on scale { NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: shell.dur(180) } }
+                DeviceIcon {
+                    visible: shell.inputIconsVisible
+                    iconId: shell.sourceIcon(pill.entry)
+                    objectName: "deviceGlyph"
+                    width: shell.px(48); height: width
+                    x: shell.inputIconOnly ? (parent.width-width)/2 : shell.px(12); anchors.verticalCenter: parent.verticalCenter
+                    ink: pill.chosen ? shell.theme.onFocus : pill.dim ? shell.theme.dim : shell.ink
+                }
+                // UP opens the icon picker without changing the input's order.
+                Loader {
+                    visible: pill.editing && !shell.editInputIcon
+                    active: visible; sourceComponent: sourceEditControls
+                    width: shell.px(104); height: shell.px(28)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.top; anchors.bottomMargin: shell.px(12)
+                }
                 Column {
                     id: pillText
+                    visible: !shell.inputIconOnly
                     // What the setting "Input text" makes of this source: the
                     // port, its label, or both in the chosen order.
                     readonly property var texts: shell.inputTexts(pill.entry)
                     readonly property bool scrolls: shell.settings.inputOverflow === "scroll"
-                    anchors.centerIn: parent; spacing: 1
+                    anchors.centerIn: parent; anchors.horizontalCenterOffset: shell.inputIconsVisible ? shell.px(28) : 0; spacing: 1
                     // A line wider than the pill ends with an ellipsis, or
                     // scrolls slowly to its end and back while the tile is
                     // focused (the setting "Long input names").
                     Item {
                         id: firstBox
+                        objectName: "inputPrimaryBox"
                         readonly property real full: firstTwin.implicitWidth
                         readonly property bool over: full > pill.textCap + 0.5
                         readonly property bool marquee: pillText.scrolls && over && pill.chosen
@@ -1983,7 +2101,7 @@ FocusScope {
                             font.pixelSize: pillText.texts.secondary ? shell.pt(19) : shell.pt(21); font.letterSpacing: -0.2*shell.u
                         }
                         Text {
-                            id: firstText; text: pillText.texts.primary
+                            id: firstText; objectName: "inputPrimaryText"; text: pillText.texts.primary
                             width: firstBox.marquee ? firstBox.full : firstBox.width
                             horizontalAlignment: Text.AlignHCenter; elide: firstBox.marquee ? Text.ElideNone : Text.ElideRight
                             font.family: shell.fontName; font.bold: true
@@ -2033,6 +2151,7 @@ FocusScope {
                 }
                 MouseArea {
                     id: pillPointer
+                    enabled: !shell.editInputIcon
                     anchors.fill: parent; hoverEnabled: true
                     onEntered: { if (shell.pointerMoved(pillPointer, {x: mouseX, y: mouseY})) shell.selected=pill.navIndex; }
                     onPositionChanged: { if (shell.pointerMoved(pillPointer, mouse)) shell.selected=pill.navIndex; }
@@ -2069,7 +2188,22 @@ FocusScope {
                     border.width: tvCell.chosen ? 0 : 1; border.color: shell.chipEdge
                     Behavior on color { ColorAnimation { duration: shell.dur(180) } }
                 }
+                DeviceIcon {
+                    objectName: "tvDeviceGlyph"
+                    visible: shell.settings.tvIcon !== "tv"
+                    anchors.centerIn: parent; width: shell.px(48); height: width
+                    iconId: shell.settings.tvIcon === "tv" ? "tv-screen" : shell.settings.tvIcon
+                    ink: tvCell.chosen ? shell.theme.onFocus : shell.ink
+                }
+                Loader {
+                    visible: tvCell.editing && !shell.editInputIcon
+                    active: visible; sourceComponent: sourceEditControls
+                    width: shell.px(104); height: shell.px(28)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.top; anchors.bottomMargin: shell.px(12)
+                }
                 Text {
+                    visible: shell.settings.tvIcon === "tv"
                     anchors.centerIn: parent; text: tvCell.entry ? tvCell.entry.title : ""
                     font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(19)
                     color: tvCell.chosen ? shell.theme.onFocus : shell.ink
@@ -2079,16 +2213,10 @@ FocusScope {
                     radius: shell.px(18) + shell.px(5); color: "transparent"
                     border.width: Math.max(1, 2*shell.u); border.color: shell.warning
                 }
-                Repeater {
-                    model: tvCell.editing ? shell.moveHandles(shell.editSourceIndex, shell.sourceCount) : []
-                    Rectangle {
-                        x: modelData === "‹" ? -shell.px(14) : tvCell.size-shell.px(14); anchors.verticalCenter: parent.verticalCenter
-                        width: shell.px(28); height: shell.px(44); radius: shell.px(14); color: shell.theme.handle; border.width: Math.max(1, 2*shell.u); border.color: shell.warning
-                        Text { anchors.centerIn: parent; anchors.verticalCenterOffset: -2*shell.u; text: modelData; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.px(30); color: shell.warning }
-                    }
-                }
+
                 MouseArea {
                     id: tvPointer
+                    enabled: !shell.editInputIcon
                     anchors.fill: parent; hoverEnabled: true
                     onEntered: { if (shell.pointerMoved(tvPointer, {x: mouseX, y: mouseY})) shell.selected = tvCell.navIndex; }
                     onPositionChanged: { if (shell.pointerMoved(tvPointer, mouse)) shell.selected = tvCell.navIndex; }
@@ -2114,8 +2242,8 @@ FocusScope {
                 Item {
                     readonly property string sourceId: modelData.id
                     readonly property var texts: shell.inputTexts(modelData)
-                    readonly property int pillWidth: Math.max(shell.sourceMinWidth,
-                        Math.min(shell.px(200), Math.ceil(Math.max(primaryTwin.implicitWidth, secondaryTwin.implicitWidth)) + shell.px(44)))
+                    readonly property int pillWidth: shell.inputIconOnly ? shell.px(72) : Math.max(shell.sourceMinWidth,
+                        Math.min(shell.px(200), Math.ceil(Math.max(primaryTwin.implicitWidth, secondaryTwin.implicitWidth)) + shell.px(shell.inputIconsVisible ? 88 : 44)))
                     onPillWidthChanged: titleTwins.rev++
                     Text {
                         id: primaryTwin; text: parent.texts.primary
@@ -2143,6 +2271,7 @@ FocusScope {
             Row {
                 spacing: shell.gap; anchors.verticalCenter: parent.verticalCenter
                 Repeater {
+                    id: favouriteCells
                     model: favourites
                     Loader {
                         property int tileSize: shell.favouriteTile
@@ -2159,8 +2288,10 @@ FocusScope {
                 }
             }
             Row {
+                id: sourceRow
                 spacing: shell.px(12); anchors.verticalCenter: parent.verticalCenter
                 Repeater {
+                    id: sourceCells
                     model: sources
                     Loader {
                         sourceComponent: modelData.kind === "tv" ? tvTile : pillTile
@@ -2172,6 +2303,7 @@ FocusScope {
             Row {
                 spacing: shell.px(12); anchors.verticalCenter: parent.verticalCenter
                 Repeater {
+                    id: shortcutCells
                     model: shell.homeActions
                     Loader {
                         property int glyphSize: shell.px(64)
@@ -2185,6 +2317,130 @@ FocusScope {
                         }
                     }
                 }
+            }
+        }
+
+        // Keep all edit directions above the artwork, in a single row.
+        // Empty end directions retain their space so UP always stays centred.
+        Component {
+            id: sourceEditControls
+            Row {
+                property bool forShortcut: false
+                readonly property int editAt: forShortcut ? shell.editActionIndex : shell.editSourceIndex
+                readonly property int editCount: forShortcut ? shell.homeActions.length : shell.sourceCount
+                id: editControls
+                objectName: forShortcut ? "shortcutEditControls" : "sourceEditControls"
+                spacing: shell.px(4)
+                Repeater {
+                    model: editControls.forShortcut ? ["‹", "›"] : ["‹", "▲", "›"]
+                    Rectangle {
+                        readonly property bool available: modelData === "▲" || (modelData === "‹" ? editControls.editAt > 0 : editControls.editAt < editControls.editCount-1)
+                        width: shell.px(32); height: shell.px(28); radius: shell.px(8)
+                        color: shell.theme.handle; border.color: shell.warning
+                        opacity: available ? 1 : 0
+                        Text {
+                            anchors.centerIn: parent; anchors.verticalCenterOffset: modelData === "▲" ? 0 : -shell.u
+                            text: modelData; color: shell.warning; font.family: shell.fontName
+                            font.bold: true; font.pixelSize: shell.px(modelData === "▲" ? 16 : 26)
+                        }
+                        MouseArea {
+                            anchors.fill: parent; enabled: parent.available
+                            onClicked: {
+                                shell.noteActivity();
+                                if (modelData === "▲") shell.editInputIcon = true;
+                                else if (editControls.forShortcut) shell.moveHomeAction(shell.editActionIndex, shell.editActionIndex + (modelData === "‹" ? -1 : 1));
+                                else shell.moveSource(shell.editSourceIndex, shell.editSourceIndex + (modelData === "‹" ? -1 : 1));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // One warning follows the edited tile in panel coordinates, so it
+        // stays inside the screen even at either end of a scaled rail.
+        Rectangle {
+            id: removalWarning
+            objectName: "removalWarning"
+            readonly property var targetTile: shell.removalTarget()
+            readonly property point below: {
+                if (!targetTile) return Qt.point(0, 0);
+                // Track the focus animation as well as the item's geometry.
+                var focusScale = targetTile.scale, lift = targetTile.lift;
+                return targetTile.mapToItem(removalWarning.parent, targetTile.width/2, targetTile.height);
+            }
+            visible: shell.pendingRemoval !== "" && shell.pendingRemoval === shell.removalKey && targetTile !== null
+            z: 40; width: Math.min(shell.width-2*shell.margin, removeLabel.implicitWidth+shell.px(52)); height: shell.px(38)
+            x: Math.max(shell.margin, Math.min(shell.width-shell.margin-width, below.x-width/2))
+            y: Math.min(below.y+shell.px(12), shell.height-height-shell.px(14))
+            radius: shell.px(12); color: "#451d27"; border.color: "#ff7187"; border.width: Math.max(1, shell.u)
+            opacity: visible ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: shell.dur(100) } }
+            Rectangle {
+                anchors.left: parent.left; anchors.leftMargin: shell.px(12); anchors.verticalCenter: parent.verticalCenter
+                width: shell.px(18); height: width; radius: width/2; color: "#ff8da0"
+                Text { anchors.centerIn: parent; text: "!"; color: "#451d27"; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.px(13) }
+            }
+            Text {
+                id: removeLabel; anchors.centerIn: parent; anchors.horizontalCenterOffset: shell.px(10)
+                text: shell.t("confirm_remove_down"); color: "#fff0f3"; font.family: shell.fontName; font.pixelSize: shell.pt(14)
+            }
+        }
+
+        Rectangle {
+            id: iconPicker
+            objectName: "inputIconPicker"
+            visible: shell.page === "home" && shell.editSourceIndex >= 0 && shell.editInputIcon
+            z: 30; width: shell.px(480); height: shell.px(264); radius: shell.px(22)
+            x: Math.max(shell.margin, Math.min(shell.width-shell.margin-width, shell.iconEditorCenter()-width/2))
+            y: shell.railY-height-shell.px(28)
+            color: shell.chip; border.color: shell.warning; border.width: Math.max(1, 2*shell.u)
+            MouseArea { anchors.fill: parent; onClicked: {} }
+
+            Text {
+                anchors.top: parent.top; anchors.topMargin: shell.px(18); anchors.horizontalCenter: parent.horizontalCenter
+                text: shell.t("hint_input_icon"); color: shell.ink2; font.family: shell.fontName; font.pixelSize: shell.pt(16)
+            }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter; y: shell.px(52); spacing: shell.px(12)
+                Repeater {
+                    model: [-2, -1, 0, 1, 2]
+                    Rectangle {
+                        width: shell.px(64); height: width; radius: shell.px(16)
+                        readonly property var choice: shell.editIconChoices[(shell.sourceIconIndex() + modelData + shell.editIconChoices.length) % shell.editIconChoices.length]
+                        color: modelData === 0 ? shell.theme.focus : "transparent"
+                        opacity: Math.abs(modelData) === 2 ? 0.45 : 1
+                        DeviceIcon { visible: parent.choice.id !== "tv"; anchors.centerIn: parent; width: shell.px(48); height: width; iconId: parent.choice.id === "tv" ? "tv-screen" : parent.choice.id; ink: modelData === 0 ? shell.theme.onFocus : shell.ink }
+                        Text { visible: parent.choice.id === "tv"; anchors.centerIn: parent; text: "TV"; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(21); color: modelData === 0 ? shell.theme.onFocus : shell.ink }
+                        MouseArea { anchors.fill: parent; onClicked: { shell.noteActivity(); shell.cycleInputIcon(modelData); } }
+                    }
+                }
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter; y: shell.px(132)
+                text: shell.sourceIconTitle() + "  ·  " + (shell.sourceIconIndex()+1) + " / " + shell.editIconChoices.length
+                color: shell.ink; font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(21)
+            }
+            Text {
+                x: shell.px(22); width: parent.width-2*x; y: shell.px(170); horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap
+                text: shell.iconSource && shell.iconSource.kind === "tv" ? shell.t("tv_icon_help") : shell.t("input_icon_help"); color: shell.ink3; font.family: shell.fontName; font.pixelSize: shell.pt(14)
+            }
+            Rectangle {
+                objectName: "closeIconPicker"
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom; anchors.bottomMargin: shell.px(12)
+                width: closeIconLabel.implicitWidth+shell.px(28); height: shell.px(30)
+                radius: shell.px(8); color: shell.theme.handle
+                Text {
+                    id: closeIconLabel; anchors.centerIn: parent
+                    text: "▼  " + shell.t("hint_close_icons"); color: shell.warning
+                    font.family: shell.fontName; font.pixelSize: shell.pt(14)
+                }
+                MouseArea { anchors.fill: parent; onClicked: { shell.noteActivity(); shell.editInputIcon = false; } }
+            }
+            MouseArea {
+                anchors.fill: parent; acceptedButtons: Qt.NoButton
+                onWheel: { shell.noteActivity(); var delta = wheel.angleDelta.y || wheel.pixelDelta.y; if (delta) shell.cycleInputIcon(delta > 0 ? -1 : 1); }
             }
         }
 
@@ -2576,10 +2832,11 @@ FocusScope {
                             }
                         }
                     }
-                    // "Input text": a pill drawn the way the row will draw it with
+                    // "Input appearance": a pill below the choices, drawn as on Home with
                     // the value being tried, so the choice is clear in the menu.
                     Column {
                         id: inputPreview
+                        objectName: "inputAppearancePreview"
                         visible: shell.valueKey === "inputText" && shell.pane === 1 && shell.previewSource.title !== ""
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
@@ -2590,13 +2847,20 @@ FocusScope {
                         }
                         Rectangle {
                             id: previewPill
+                            anchors.horizontalCenter: parent.horizontalCenter
                             readonly property var texts: shell.inputTexts(shell.previewSource)
-                            readonly property int textCap: Math.max(shell.px(20), width - shell.px(44))
-                            width: shell.pillWidthFor(shell.previewSource, titleTwins.rev); height: Math.max(shell.px(64), previewText.height + shell.px(20)); radius: shell.px(18)
+                            readonly property int textCap: Math.max(shell.px(20), width - shell.px(44) - (shell.inputIconsVisible ? shell.px(44) : 0))
+                            width: shell.pillWidthFor(shell.previewSource, titleTwins.rev); height: shell.inputIconOnly ? shell.sourceTileWidth : Math.max(shell.px(64), previewText.height + shell.px(20)); radius: shell.px(18)
                             color: shell.theme.focus
+                            DeviceIcon {
+                                visible: shell.inputIconsVisible; iconId: shell.sourceIcon(shell.previewSource)
+                                width: shell.px(48); height: width
+                                x: shell.inputIconOnly ? (parent.width-width)/2 : shell.px(12); anchors.verticalCenter: parent.verticalCenter
+                                ink: shell.theme.onFocus
+                            }
                             Column {
-                                id: previewText
-                                anchors.centerIn: parent; spacing: 1
+                                id: previewText; visible: !shell.inputIconOnly
+                                anchors.centerIn: parent; anchors.horizontalCenterOffset: shell.inputIconsVisible ? shell.px(28) : 0; spacing: 1
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: previewPill.texts.primary; width: previewPill.textCap; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
@@ -2615,11 +2879,27 @@ FocusScope {
                     }
                     // The values: a dot on the chosen one; the focused one lit
                     // while the values have the focus.
+                    MouseArea {
+                        x: valueList.x; y: valueList.y; width: valueList.width; height: valueList.height; z: 2
+                        visible: valueList.visible; acceptedButtons: Qt.NoButton
+                        onWheel: {
+                            shell.noteActivity();
+                            var delta = wheel.pixelDelta.y || wheel.angleDelta.y / 120 * menu.rowHeight * 2;
+                            shell.pointerBlockedUntil = Date.now() + 200;
+                            valueList.contentY = Math.max(0, Math.min(valueList.contentY-delta, valueList.contentHeight-valueList.height));
+                        }
+                    }
                     Flickable {
                         id: valueList
+                        objectName: "inputValueList"
+                        // Values can be longer than the viewport, especially with
+                        // larger text. Follow after layout as well as key changes.
+                        onHeightChanged: follow()
+                        onContentHeightChanged: follow()
                         visible: !valuesPane.actionRow
-                        x: 0; y: valuesTitle.y + valuesTitle.height + shell.px(14); width: parent.width
-                        height: parent.height - y - (inputPreview.visible ? inputPreview.height + shell.px(18) : 0)
+                        x: 0; y: valuesTitle.y + valuesTitle.height + shell.px(14)
+                        width: parent.width
+                        height: parent.height - y - (inputPreview.visible ? inputPreview.height+shell.px(18) : 0)
                         clip: true; interactive: false
                         contentWidth: width; contentHeight: Math.max(height, valueColumn.height)
                         Behavior on contentY { NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
@@ -2680,6 +2960,7 @@ FocusScope {
                         Connections {
                             target: shell
                             onValueIndexChanged: valueList.follow()
+                            onPaneChanged: valueList.follow()
                             onSelectedChanged: { shell.valueHover = -1; valueList.contentY = 0; }
                             onPageChanged: shell.valueHover = -1
                         }

@@ -91,6 +91,10 @@ def panel_qml():
     return q[:start] + bridge + q[end:]
 
 
+def input_icon_files():
+    return sorted((ROOT / "ui/input-icons").iterdir())
+
+
 def shared_files():
     """The setup server (weather, the place page, its QR code), run by the
     overlay's helper and by the Home panel's boot hook alike."""
@@ -117,6 +121,8 @@ def webos10_ipk(spec, version):
         (app_dir + "About.js", (ROOT / "ui/About.js").read_bytes()),
         (app_dir + "icon.png", (ROOT / "ui/icon.png").read_bytes()),
     ]
+    files += [(app_dir + name, (ROOT / "ui" / name).read_bytes()) for name in ("DeviceIcons.js", "DeviceIcon.qml")]
+    files += [(app_dir + "input-icons/" + p.name, p.read_bytes()) for p in input_icon_files()]
     files += [(app_dir + "fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
     files += [(svc_dir + p.name, p.read_bytes()) for p in sorted((ROOT / "webos10/helper").glob("*.js"))]
     files += [(svc_dir + p.name, p.read_bytes()) for p in shared_files()]
@@ -150,6 +156,8 @@ def release_files(spec, version):
     ]
     for name in ("Launcher.qml", "FavouriteStore.qml", "Strings.js", "Themes.js", "About.js", "icon.png"):
         files.append(("ui/" + name, (ROOT / "ui" / name).read_bytes()))
+    files += [("ui/" + name, (ROOT / "ui" / name).read_bytes()) for name in ("DeviceIcons.js", "DeviceIcon.qml")]
+    files += [("ui/input-icons/" + p.name, p.read_bytes()) for p in input_icon_files()]
     files += [("ui/fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
     for name in ("install.sh", "uninstall.sh", "apply.sh"):
         files.append(("webos4/" + name, (ROOT / "webos4" / name).read_bytes(), exe))

@@ -30,7 +30,7 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
     <td width="50%"><img src="docs/screenshots/apps.jpg" alt="All apps in a grid of twelve columns over the picture"></td>
   </tr>
   <tr>
-    <td><b>Inputs by name.</b> Each HDMI input shows the device the TV sees on it, from HDMI-CEC; an empty one is dimmed. RED hides one you never use.</td>
+    <td><b>Inputs by name or icon.</b> Choose a port number, label, HDMI-CEC name or one of 61 device icons. Hold OK or press YELLOW to edit; two DOWN presses hide an input.</td>
     <td><b>Every app, one row away.</b> Twelve to a row on a 16:9 screen, in the TV's order, A to Z, or the most used first. LG's promotional apps are left out.</td>
   </tr>
   <tr>
@@ -38,7 +38,7 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
     <td><img src="docs/screenshots/edit-favourite.jpg" alt="A favourite in edit mode, with handles to move it"></td>
   </tr>
   <tr>
-    <td><b>Settings with a live preview.</b> One menu: language, theme, text size, the clock and the weather, what the row shows, backup and updates. Every value applies as you move to it.</td>
+    <td><b>Settings with a live preview.</b> One menu: language, theme, text size, the clock and the weather, what the row shows, backup and updates. Arrow keys preview values; pointing only highlights them until you click.</td>
     <td><b>Favourites chosen on the TV.</b> Hold OK on an app to add it, up to seven; hold OK on a favourite to move it or take it off the row.</td>
   </tr>
   <tr>
@@ -53,6 +53,11 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
 
 ## What else it does
 
+- **Device icons** for inputs and TV: choose a brand or a generic device,
+  such as a soundbar, console or projector. Show an icon alone or with text;
+  choose the input heading separately. [How to edit them](docs/using.md#device-icons).
+- **Safer editing**: a red warning appears before a second DOWN press removes
+  a favourite, input or optional shortcut from the Home row.
 - **Nine languages**, the TV's own by default: English, Spanish, German,
   Polish, French, Italian, Portuguese, Dutch and Czech.
 - **The weather** in the corner, next to the clock, from Open-Meteo with no
@@ -73,7 +78,7 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
 | webOS (LG's name) | How Homebar runs | Status |
 | :--- | :--- | :--- |
 | 4.x (webOS 4.0 / 4.5, 2018–2019) | Inside LG's own Home, which keeps its HOME handling (the *Basic* Home screen, where a TV has two) | Tested on 4.10 (LG C9, and LG UM7100, B9 and E9 by users) |
-| 5.x (webOS 5.0, 2020) | Inside LG's own Home, as on 4.x | Tested on 5.6 (LG NANO80 and LG UN73, by users) |
+| 5.x (webOS 5.0, 2020) | Inside LG's own Home, as on 4.x | Tested on 5.6 (LG NANO80, LG UN73 and LG UN90, by users) |
 | 6.x (webOS 6.0, 2021) | The overlay, with LG's Home kept | Tested on 6.3 and 6.5 (LG C1 and LG UP78, by users) |
 | 10.x (webOS 25, 2025) | A separate overlay app with a root helper | Tested on 10.3 (LG B4, and LG UR78 by a user) |
 | 7.x (webOS 22, 2022) | The overlay, with LG's Home kept | Tested on 7.5 (a 2022 TV, by a user) |

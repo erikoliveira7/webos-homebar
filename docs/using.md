@@ -6,6 +6,7 @@
 - [Apps](#apps)
 - [System](#system)
 - [Launcher settings](#launcher-settings)
+- [Device icons](#device-icons)
 - [Backup](#backup)
 - [Languages](#languages)
 
@@ -23,12 +24,32 @@ stays visible above it. One row, from the left:
   as the TV has. Each shows the device
   the TV sees on it: the name set on the TV for that input, else its
   HDMI-CEC name. An input with nothing plugged in is dimmed. Long names are
-  cut to what the row has room for. *Input text* in the settings chooses
+  cut to what the row has room for. *Input appearance* in the settings chooses
   whether a pill shows the port (`HDMI 2`), that name, or both, in either
   order. *TV* and the inputs are edited
   like the shortcuts: hold OK (or press YELLOW) on one, ← → moves it along
-  the row and ▼ takes it off; *Launcher settings → Home row → Inputs and TV* lists
-  them all with a box each and brings back the ones that are off (see
+  the row and ▼ twice takes it off; *Launcher settings → Home row → Inputs and TV* lists
+  them all with a box each and brings back the ones that are off. While editing
+  an input, **▲ opens the device-icon picker; ← → changes its icon**. The edit
+  arrows sit together above the tile and disappear while the picker is open.
+  The picker centres above the edited tile, shifting only as needed to stay
+  inside the screen margins.
+  Shortcut move arrows also sit above their tiles, without an icon picker.
+  Click **▼ Hide** at the bottom of the picker, or press DOWN, to fold it away. OK, BACK
+  or ▼ closes the picker and returns to arranging inputs; another OK/BACK finishes
+  editing. The choice is saved immediately for that port, even if it is hidden
+  or its CEC name changes. The *TV* tile has the same ▲ picker but offers only
+  four television symbols and its original **TV** text. Its choice is independent
+  of the HDMI appearance setting. The picker also supports clicking and the scroll wheel.
+  Icons include generic devices such as a soundbar, AV receiver, speakers,
+  projector or game console, alongside device and brand marks. The picker is
+  sorted alphabetically by the names shown in your selected language.
+  Choose **Icon only**, **Icon + HDMI**, **Icon + label** or **Icon + CEC** under
+  *Launcher settings → Home row → Input appearance*. Icon-only inputs are slightly wider (72 × 64 px at FHD); other arrangements keep the fitted width, capped at 200 px.
+  **Input name above favourites** independently chooses **HDMI**, **Label** or
+  **CEC** for the large heading (default: HDMI). A missing label falls back to
+  CEC, a missing CEC name to the label, and finally to the port name.
+  Existing text arrangements stay available and remain the default (see
   [Hiding apps and inputs](#hiding-apps-and-inputs)).
 - **Shortcuts** after the inputs: *Close background apps* first by default,
   then *Apps*, then *System*. *Memory freeing action* chooses between closing apps
@@ -38,7 +59,7 @@ stays visible above it. One row, from the left:
   on the tested webOS 25 that button closes recent application windows.
   A shortcut is edited like a
   favourite: hold OK (or press YELLOW) on it, then ← → move it among the
-  shortcuts and ▼ takes it off the row; *System* can be moved as well, but
+  shortcuts and ▼ twice takes it off the row; *System* can be moved as well, but
   never removed, and *Shortcuts* in the Launcher settings brings the other
   two back. A dot on *System* means a new version of the launcher is there
   (see [Updates](#launcher-settings)).
@@ -71,13 +92,21 @@ its radio), which repeats a held key as quick presses.
 LG's promotional apps (LG Channels, Sports, Alexa, …) are left out of the
 launcher's lists. Nothing is uninstalled.
 
+### Confirming removal
+
+While editing a favourite, input, TV tile or optional shortcut, the first DOWN
+shows a red warning below it; press DOWN again to remove it from the row. Moving
+left/right, opening the icon picker or ending edit mode cancels the warning.
+Holding DOWN does not confirm via key auto-repeat. The System/settings tile
+cannot be removed. This changes the Home row only; it does not uninstall apps.
+
 ## Favourites
 
 Favourites are chosen on the TV:
 
 - In *Apps*, **hold OK** (or press YELLOW) on an app to add it, up to seven.
   A favourite is marked with a dot; holding OK on it again removes it.
-- On Home, **hold OK** on a favourite to edit it: ← → move it, ▼ removes it,
+- On Home, **hold OK** on a favourite to edit it: ← → move it, ▼ twice removes it,
   OK, BACK or ▲ finish.
 
 <img src="screenshots/edit-favourite.jpg" width="100%" alt="A favourite being edited: an amber ring, handles to move it left or right, and the hint to remove it with the down arrow">
@@ -90,8 +119,8 @@ uninstalled simply drops out of them.
 **RED** on an app in *Apps* hides it from the list (and drops it from the
 favourites); *Launcher settings → Apps → Hidden apps → Shown dimmed*
 shows the hidden apps again, dimmed, so RED on one can bring it back for
-good. *TV* and the inputs are taken off the Home row with ▼ in their edit
-mode (hold OK on one, then ▼) and come back from *Launcher settings → Home
+good. *TV* and the inputs are taken off the Home row with ▼ twice in their edit
+mode (hold OK on one, then press ▼ twice) and come back from *Launcher settings → Home
 row → Inputs and TV*: a box for *TV* and each input, and OK switches the chosen one.
 Nothing is uninstalled; hidden items are only out of the launcher's lists.
 
@@ -153,7 +182,8 @@ at *Larger* and the 12-hour clock:
 | | Text size | Normal, Large or Larger: the names, hints, labels and the menu grow; the tiles and pills keep their size, so the row still fits |
 | | Animations | On or off |
 | Home row | Inputs and TV | A box for *TV* and each input the TV has, in their row order: OK takes the chosen one off the Home row or puts it back |
-| | Input text | *Label only*, *HDMI only*, *CEC only*, *Label, then HDMI*, *HDMI, then label*, and the same pairs for the device's HDMI-CEC name (*CEC, then HDMI*, *HDMI, then CEC*): what a pill shows of the port, the name set on the TV for that input and the CEC name. The label modes fall back to the CEC name when no label is set, and the other way round. A pill drawn with the choice appears under the values |
+| | Input appearance | *Icon only*, *Icon + HDMI*, *Icon + label*, *Icon + CEC*, or the existing text arrangements: *Label only*, *HDMI only*, *CEC only*, *Label, then HDMI*, *HDMI, then label*, and the same pairs for the device's HDMI-CEC name (*CEC, then HDMI*, *HDMI, then CEC*): what a pill shows of the port, the name set on the TV for that input and the CEC name. The label modes fall back to the CEC name when no label is set, and the other way round. A pill drawn with the choice appears below the values. Missing label/CEC names fall back as before. Icons are chosen per input in its edit mode |
+| | Input name above favourites | HDMI (default), Label or CEC; independent of the tile appearance, with the same fallback for missing names |
 | | Long input names | *Ellipsis* (default) or *Scroll*: a name wider than the 200 px a pill can take either ends in "…", or, while that tile is focused, scrolls slowly to its end and back |
 | | Shortcuts | A box for *Free up memory* and for the *Apps* shortcut: the same, for the tiles after the inputs |
 | | Memory freeing action | *Close background apps* (default) or *Open LG Memory Optimizer*. The first closes apps immediately; the second opens LG's optimiser screen and leaves *Start* to you. The shortcut's title follows the chosen action. The optimiser option is offered only when the TV's LG Settings includes that screen |
@@ -176,6 +206,30 @@ at *Larger* and the 12-hour clock:
 
 Up to 0.14 one setting, *Clock bar*, showed or hid the whole chip. When it
 was hidden, the clock, the app and the weather start hidden too.
+
+## Device icons
+
+61 local input icons cover PlayStation (including PS3/4/5), Xbox, Apple TV, WiiM, NVIDIA
+Shield, PC/laptop, Steam Deck, Nintendo Switch/GameCube, Sega Saturn, Chromecast,
+Android TV, Fire TV, Roku, Dune HD, Zidoo, Blu-ray/DVD, Raspberry Pi, Intel NUC,
+Sonos, Denon, Yamaha and Cambridge Audio, plus ASUS, Bose, Google, Kodi, LG,
+Onkyo, Panasonic, Samsung, Sony, Steam, Xiaomi and XGIMI. Generic symbols include
+a soundbar, AV receiver, amplifier, projector, console, decoder, monitor, disc
+player, speaker, speakers, streamer, satellite receiver and HDMI. They are
+selected manually; Homebar does not guess from device names or change TV settings.
+The icons work offline and follow the theme's text colour. Four additional TV
+symbols are restricted to the Live TV tile. All icon fields are 48 × 48 px,
+including layouts with text. Transparent margins and optical sizing are normalised
+without stretching logos; wide wordmarks retain their natural proportions.
+
+Source: [Custom Brand Icons](https://github.com/elax46/custom-brand-icons), MIT.
+The included [license and source manifest](../ui/input-icons/README.md) record
+provenance; brand marks identify products without implying endorsement.
+
+Generic device symbols and TV-only symbols (screen, classic TV, programme guide
+and playback) come from
+[Material Design Icons](https://github.com/Templarian/MaterialDesign), Apache 2.0;
+licenses and provenance are included with the assets.
 
 ## Weather
 
