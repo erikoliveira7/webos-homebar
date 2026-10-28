@@ -1,11 +1,12 @@
 .pragma library
 // Homebar texts. English is the fallback for a missing language or key.
 // "{n}", "{lang}", "{version}", "{date}", "{name}" and "{unit}" are filled in by format().
-var languages = ["en", "es", "de", "pl", "fr", "it", "pt", "nl", "cs"];
+var languages = ["en", "es", "de", "pl", "fr", "it", "pt", "pt_br", "nl", "cs"];
 var names = {en: "English", es: "Español", de: "Deutsch", pl: "Polski", fr: "Français", it: "Italiano",
-             pt: "Português", nl: "Nederlands", cs: "Čeština"};
+             pt: "Português (Portugal)", pt_br: "Português (Brasil)", nl: "Nederlands", cs: "Čeština"};
 var table = {
     en: {
+        hint_or: "or",
         confirm_remove_down: "Press ▼ again to remove",
         set_input_heading: "Input name above favourites", val_heading_hdmi: "HDMI", val_heading_label: "Label", val_heading_cec: "CEC",
         device_soundbar: "Soundbar", device_receiver: "AV receiver", device_amplifier: "Amplifier", device_projector: "Projector", device_console: "Game console", device_set_top_box: "Set-top box", device_monitor: "Monitor", device_disc_player: "Disc player", device_speaker: "Speaker", device_speakers: "Speakers", device_streamer: "Media streamer", device_satellite: "Satellite receiver",
@@ -69,6 +70,7 @@ var table = {
         grp_bar: "Top bar", set_hidden_inputs: "Hidden inputs", val_none_hidden: "None", set_sources: "Inputs and TV", set_input_text: "Input appearance", val_input_label: "Label only", val_input_hdmi: "HDMI only", val_input_label_hdmi: "Label, then HDMI", val_input_hdmi_label: "HDMI, then label", val_input_cec: "CEC only", val_input_cec_hdmi: "CEC, then HDMI", val_input_hdmi_cec: "HDMI, then CEC", set_input_overflow: "Long input names", val_input_ellipsis: "Ellipsis", val_input_scroll: "Scroll", preview: "Preview", set_home_shortcuts: "Shortcuts", set_topbar: "Items", hint_edit_inputs: "edit inputs", edit_inputs_sub: "← → move   ▼ remove input", removed_input: "Input hidden — turn it back on in Launcher settings", grp_shortcuts: "Shortcuts", set_close_apps: "Free up memory", set_home_apps: "All apps shortcut", close_apps_title: "Free up memory", set_close_apps_mode: "Memory freeing action", val_close_apps: "Close background apps", val_close_memory: "Open LG Memory Optimizer", close_apps_done: "Closed the apps in the background", close_apps_failed: "Could not close the apps", hint_close: "close", edit_shortcuts_sub: "← → move shortcut", edit_shortcuts_remove_sub: "← → move   ▼ remove shortcut", hint_edit_shortcuts: "edit shortcuts", hint_move: "move", hint_remove: "remove", removed_shortcut: "Shortcut hidden — turn it back on in Launcher settings", grp_support: "Help", set_restart_homebar: "Restart Homebar", restart_sub: "Restart the Homebar process", hint_restart: "restart", err_restart: "Could not restart Homebar."
     },
     es: {
+        hint_or: "o",
         confirm_remove_down: "Pulsa ▼ otra vez para quitar",
         set_input_heading: "Nombre de entrada sobre favoritos", val_heading_hdmi: "HDMI", val_heading_label: "Etiqueta", val_heading_cec: "CEC",
         device_soundbar: "Barra de sonido", device_receiver: "Receptor AV", device_amplifier: "Amplificador", device_projector: "Proyector", device_console: "Consola", device_set_top_box: "Decodificador", device_monitor: "Monitor", device_disc_player: "Reproductor de discos", device_speaker: "Altavoz", device_speakers: "Altavoces", device_streamer: "Reproductor multimedia", device_satellite: "Receptor satélite",
@@ -132,6 +134,7 @@ var table = {
         grp_bar: "Barra superior", set_hidden_inputs: "Entradas ocultas", val_none_hidden: "Ninguna", set_sources: "Entradas y TV", set_input_text: "Aspecto de entradas", val_input_label: "Solo la etiqueta", val_input_hdmi: "Solo HDMI", val_input_label_hdmi: "Etiqueta y luego HDMI", val_input_hdmi_label: "HDMI y luego la etiqueta", val_input_cec: "Solo CEC", val_input_cec_hdmi: "CEC y luego HDMI", val_input_hdmi_cec: "HDMI y luego CEC", set_input_overflow: "Nombres largos", val_input_ellipsis: "Puntos suspensivos", val_input_scroll: "Desplazar", preview: "Vista previa", set_home_shortcuts: "Accesos directos", set_topbar: "Elementos", hint_edit_inputs: "editar entradas", edit_inputs_sub: "← → mover   ▼ quitar entrada", removed_input: "Entrada oculta: actívala en los ajustes del launcher", grp_shortcuts: "Accesos directos", set_close_apps: "Liberar memoria", set_home_apps: "Acceso a Aplicaciones", close_apps_title: "Liberar memoria", set_close_apps_mode: "Acción para liberar memoria", val_close_apps: "Cerrar apps en segundo plano", val_close_memory: "Abrir optimizador de memoria LG", close_apps_done: "Apps en segundo plano cerradas", close_apps_failed: "No se pudieron cerrar las apps", hint_close: "cerrar", edit_shortcuts_sub: "← → mover acceso", edit_shortcuts_remove_sub: "← → mover   ▼ quitar acceso", hint_edit_shortcuts: "editar accesos", hint_move: "mover", hint_remove: "quitar", removed_shortcut: "Acceso oculto: actívalo en los ajustes del launcher", grp_support: "Ayuda", set_restart_homebar: "Reiniciar Homebar", restart_sub: "Reiniciar el proceso de Homebar", hint_restart: "reiniciar", err_restart: "No se pudo reiniciar Homebar."
     },
     de: {
+        hint_or: "oder",
         confirm_remove_down: "Zum Entfernen erneut ▼ drücken",
         set_input_heading: "Eingangsname über Favoriten", val_heading_hdmi: "HDMI", val_heading_label: "Bezeichnung", val_heading_cec: "CEC",
         device_soundbar: "Soundbar", device_receiver: "AV-Receiver", device_amplifier: "Verstärker", device_projector: "Projektor", device_console: "Spielkonsole", device_set_top_box: "Set-Top-Box", device_monitor: "Monitor", device_disc_player: "Disc-Player", device_speaker: "Lautsprecher", device_speakers: "Lautsprecherpaar", device_streamer: "Streaming-Gerät", device_satellite: "Satellitenreceiver",
@@ -195,6 +198,7 @@ var table = {
         grp_bar: "Obere Leiste", set_hidden_inputs: "Ausgeblendete Eingänge", val_none_hidden: "Keine", set_sources: "Eingänge und TV", set_input_text: "Eingangsdarstellung", val_input_label: "Nur Beschriftung", val_input_hdmi: "Nur HDMI", val_input_label_hdmi: "Beschriftung, dann HDMI", val_input_hdmi_label: "HDMI, dann Beschriftung", val_input_cec: "Nur CEC", val_input_cec_hdmi: "CEC, dann HDMI", val_input_hdmi_cec: "HDMI, dann CEC", set_input_overflow: "Lange Eingangsnamen", val_input_ellipsis: "Auslassungspunkte", val_input_scroll: "Scrollen", preview: "Vorschau", set_home_shortcuts: "Kurzbefehle", set_topbar: "Elemente", hint_edit_inputs: "Eingänge bearbeiten", edit_inputs_sub: "← → verschieben   ▼ Eingang entfernen", removed_input: "Eingang ausgeblendet – in den Launcher-Einstellungen wieder einblenden", grp_shortcuts: "Kurzbefehle", set_close_apps: "Speicher freigeben", set_home_apps: "Apps-Verknüpfung", close_apps_title: "Speicher freigeben", set_close_apps_mode: "Aktion zur Speicherfreigabe", val_close_apps: "Hintergrund-Apps schließen", val_close_memory: "LG-Speicheroptimierung öffnen", close_apps_done: "Hintergrund-Apps geschlossen", close_apps_failed: "Apps konnten nicht geschlossen werden", hint_close: "schließen", edit_shortcuts_sub: "← → Kurzbefehl verschieben", edit_shortcuts_remove_sub: "← → verschieben   ▼ Kurzbefehl entfernen", hint_edit_shortcuts: "Kurzbefehle bearbeiten", hint_move: "verschieben", hint_remove: "entfernen", removed_shortcut: "Kurzbefehl ausgeblendet – in den Launcher-Einstellungen wieder einblenden", grp_support: "Hilfe", set_restart_homebar: "Homebar neu starten", restart_sub: "Den Homebar-Prozess neu starten", hint_restart: "neu starten", err_restart: "Homebar konnte nicht neu gestartet werden."
     },
     pl: {
+        hint_or: "lub",
         confirm_remove_down: "Naciśnij ▼ ponownie, aby usunąć",
         set_input_heading: "Nazwa wejścia nad ulubionymi", val_heading_hdmi: "HDMI", val_heading_label: "Etykieta", val_heading_cec: "CEC",
         device_soundbar: "Soundbar", device_receiver: "Amplituner AV", device_amplifier: "Wzmacniacz", device_projector: "Projektor", device_console: "Konsola", device_set_top_box: "Dekoder", device_monitor: "Monitor", device_disc_player: "Odtwarzacz płyt", device_speaker: "Głośnik", device_speakers: "Zestaw głośników", device_streamer: "Odtwarzacz multimedialny", device_satellite: "Odbiornik satelitarny",
@@ -258,6 +262,7 @@ var table = {
         grp_bar: "Pasek u góry", set_hidden_inputs: "Ukryte wejścia", val_none_hidden: "Brak", set_sources: "Wejścia i TV", set_input_text: "Wygląd wejść", val_input_label: "Tylko etykieta", val_input_hdmi: "Tylko HDMI", val_input_label_hdmi: "Etykieta, potem HDMI", val_input_hdmi_label: "HDMI, potem etykieta", val_input_cec: "Tylko CEC", val_input_cec_hdmi: "CEC, potem HDMI", val_input_hdmi_cec: "HDMI, potem CEC", set_input_overflow: "Długie nazwy wejść", val_input_ellipsis: "Wielokropek", val_input_scroll: "Przewijanie", preview: "Podgląd", set_home_shortcuts: "Skróty", set_topbar: "Elementy", hint_edit_inputs: "edytuj wejścia", edit_inputs_sub: "← → przesuń   ▼ usuń wejście", removed_input: "Wejście ukryte — włącz je w Ustawieniach launchera", grp_shortcuts: "Skróty", set_close_apps: "Zwalnianie pamięci", set_home_apps: "Skrót do aplikacji", close_apps_title: "Zwalnianie pamięci", set_close_apps_mode: "Działanie zwalniania pamięci", val_close_apps: "Zamknij aplikacje w tle", val_close_memory: "Otwórz optymalizator LG", close_apps_done: "Zamknięto aplikacje w tle", close_apps_failed: "Nie udało się zamknąć aplikacji", hint_close: "zamknij", edit_shortcuts_sub: "← → przesuń skrót", edit_shortcuts_remove_sub: "← → przesuń   ▼ usuń skrót", hint_edit_shortcuts: "edytuj skróty", hint_move: "przesuń", hint_remove: "usuń", removed_shortcut: "Skrót ukryty — włącz go w Ustawieniach launchera", grp_support: "Pomoc", set_restart_homebar: "Zrestartuj Homebar", restart_sub: "Uruchom ponownie proces Homebara", hint_restart: "zrestartuj", err_restart: "Nie udało się zrestartować Homebara."
     },
     fr: {
+        hint_or: "ou",
         confirm_remove_down: "Appuyez encore sur ▼ pour retirer",
         set_input_heading: "Nom de l’entrée au-dessus des favoris", val_heading_hdmi: "HDMI", val_heading_label: "Libellé", val_heading_cec: "CEC",
         device_soundbar: "Barre de son", device_receiver: "Ampli AV", device_amplifier: "Amplificateur", device_projector: "Projecteur", device_console: "Console de jeux", device_set_top_box: "Décodeur", device_monitor: "Moniteur", device_disc_player: "Lecteur de disques", device_speaker: "Enceinte", device_speakers: "Enceintes", device_streamer: "Lecteur multimédia", device_satellite: "Récepteur satellite",
@@ -321,6 +326,7 @@ var table = {
         grp_bar: "Barre du haut", set_hidden_inputs: "Entrées masquées", val_none_hidden: "Aucune", set_sources: "Entrées et TV", set_input_text: "Apparence des entrées", val_input_label: "Libellé seul", val_input_hdmi: "HDMI seul", val_input_label_hdmi: "Libellé, puis HDMI", val_input_hdmi_label: "HDMI, puis libellé", val_input_cec: "CEC seul", val_input_cec_hdmi: "CEC, puis HDMI", val_input_hdmi_cec: "HDMI, puis CEC", set_input_overflow: "Noms longs", val_input_ellipsis: "Points de suspension", val_input_scroll: "Défilement", preview: "Aperçu", set_home_shortcuts: "Raccourcis", set_topbar: "Éléments", hint_edit_inputs: "modifier les entrées", edit_inputs_sub: "← → déplacer   ▼ retirer l’entrée", removed_input: "Entrée masquée — réactivez-la dans les paramètres du launcher", grp_shortcuts: "Raccourcis", set_close_apps: "Libérer de la mémoire", set_home_apps: "Raccourci Applications", close_apps_title: "Libérer de la mémoire", set_close_apps_mode: "Action de libération de mémoire", val_close_apps: "Fermer les apps en arrière-plan", val_close_memory: "Ouvrir l’optimiseur de mémoire LG", close_apps_done: "Apps en arrière-plan fermées", close_apps_failed: "Impossible de fermer les apps", hint_close: "fermer", edit_shortcuts_sub: "← → déplacer le raccourci", edit_shortcuts_remove_sub: "← → déplacer   ▼ retirer le raccourci", hint_edit_shortcuts: "modifier les raccourcis", hint_move: "déplacer", hint_remove: "retirer", removed_shortcut: "Raccourci masqué — réactivez-le dans les paramètres du launcher", grp_support: "Aide", set_restart_homebar: "Redémarrer Homebar", restart_sub: "Redémarrer le processus Homebar", hint_restart: "redémarrer", err_restart: "Impossible de redémarrer Homebar."
     },
     it: {
+        hint_or: "o",
         confirm_remove_down: "Premi ancora ▼ per rimuovere",
         set_input_heading: "Nome ingresso sopra i preferiti", val_heading_hdmi: "HDMI", val_heading_label: "Etichetta", val_heading_cec: "CEC",
         device_soundbar: "Soundbar", device_receiver: "Ricevitore AV", device_amplifier: "Amplificatore", device_projector: "Proiettore", device_console: "Console", device_set_top_box: "Decoder", device_monitor: "Monitor", device_disc_player: "Lettore dischi", device_speaker: "Altoparlante", device_speakers: "Altoparlanti", device_streamer: "Lettore multimediale", device_satellite: "Ricevitore satellitare",
@@ -384,6 +390,7 @@ var table = {
         grp_bar: "Barra in alto", set_hidden_inputs: "Ingressi nascosti", val_none_hidden: "Nessuno", set_sources: "Ingressi e TV", set_input_text: "Aspetto ingressi", val_input_label: "Solo etichetta", val_input_hdmi: "Solo HDMI", val_input_label_hdmi: "Etichetta, poi HDMI", val_input_hdmi_label: "HDMI, poi etichetta", val_input_cec: "Solo CEC", val_input_cec_hdmi: "CEC, poi HDMI", val_input_hdmi_cec: "HDMI, poi CEC", set_input_overflow: "Nomi lunghi", val_input_ellipsis: "Puntini", val_input_scroll: "Scorrimento", preview: "Anteprima", set_home_shortcuts: "Scorciatoie", set_topbar: "Elementi", hint_edit_inputs: "modifica ingressi", edit_inputs_sub: "← → sposta   ▼ rimuovi ingresso", removed_input: "Ingresso nascosto: riattivalo nelle impostazioni del launcher", grp_shortcuts: "Scorciatoie", set_close_apps: "Libera memoria", set_home_apps: "Scorciatoia App", close_apps_title: "Libera memoria", set_close_apps_mode: "Azione per liberare memoria", val_close_apps: "Chiudi le app in background", val_close_memory: "Apri ottimizzatore memoria LG", close_apps_done: "App in background chiuse", close_apps_failed: "Impossibile chiudere le app", hint_close: "chiudi", edit_shortcuts_sub: "← → sposta la scorciatoia", edit_shortcuts_remove_sub: "← → sposta   ▼ rimuovi scorciatoia", hint_edit_shortcuts: "modifica scorciatoie", hint_move: "sposta", hint_remove: "rimuovi", removed_shortcut: "Scorciatoia nascosta: riattivala nelle impostazioni del launcher", grp_support: "Aiuto", set_restart_homebar: "Riavvia Homebar", restart_sub: "Riavvia il processo di Homebar", hint_restart: "riavvia", err_restart: "Impossibile riavviare Homebar."
     },
     pt: {
+        hint_or: "ou",
         confirm_remove_down: "Prime ▼ novamente para remover",
         set_input_heading: "Nome da entrada acima dos favoritos", val_heading_hdmi: "HDMI", val_heading_label: "Etiqueta", val_heading_cec: "CEC",
         device_soundbar: "Barra de som", device_receiver: "Recetor AV", device_amplifier: "Amplificador", device_projector: "Projetor", device_console: "Consola", device_set_top_box: "Descodificador", device_monitor: "Monitor", device_disc_player: "Leitor de discos", device_speaker: "Coluna", device_speakers: "Colunas", device_streamer: "Leitor multimédia", device_satellite: "Recetor de satélite",
@@ -446,7 +453,72 @@ var table = {
         set_hints: "Ajuda das teclas", set_timeout: "Tempo limite do Homebar", val_timeout_off: "Desativado", val_timeout_seconds: "{seconds} segundos", key_yellow: "AMARELO",
         grp_bar: "Barra superior", set_hidden_inputs: "Entradas ocultas", val_none_hidden: "Nenhuma", set_sources: "Entradas e TV", set_input_text: "Aspeto das entradas", val_input_label: "Apenas a etiqueta", val_input_hdmi: "Apenas HDMI", val_input_label_hdmi: "Etiqueta e depois HDMI", val_input_hdmi_label: "HDMI e depois a etiqueta", val_input_cec: "Apenas CEC", val_input_cec_hdmi: "CEC e depois HDMI", val_input_hdmi_cec: "HDMI e depois CEC", set_input_overflow: "Nomes longos", val_input_ellipsis: "Reticências", val_input_scroll: "Deslizar", preview: "Pré-visualização", set_home_shortcuts: "Atalhos", set_topbar: "Elementos", hint_edit_inputs: "editar entradas", edit_inputs_sub: "← → mover   ▼ remover entrada", removed_input: "Entrada oculta — ative-a nas definições do launcher", grp_shortcuts: "Atalhos", set_close_apps: "Libertar memória", set_home_apps: "Atalho para Aplicações", close_apps_title: "Libertar memória", set_close_apps_mode: "Ação para libertar memória", val_close_apps: "Fechar apps em segundo plano", val_close_memory: "Abrir otimizador de memória LG", close_apps_done: "Apps em segundo plano fechadas", close_apps_failed: "Não foi possível fechar as apps", hint_close: "fechar", edit_shortcuts_sub: "← → mover atalho", edit_shortcuts_remove_sub: "← → mover   ▼ remover atalho", hint_edit_shortcuts: "editar atalhos", hint_move: "mover", hint_remove: "remover", removed_shortcut: "Atalho oculto — ative-o nas definições do launcher", grp_support: "Ajuda", set_restart_homebar: "Reiniciar Homebar", restart_sub: "Reiniciar o processo do Homebar", hint_restart: "reiniciar", err_restart: "Não foi possível reiniciar o Homebar."
     },
+    pt_br: {
+        hint_or: "ou",
+        confirm_remove_down: "Aperte ▼ de novo para remover",
+        set_input_heading: "Nome da entrada acima dos favoritos", val_heading_hdmi: "HDMI", val_heading_label: "Nome", val_heading_cec: "CEC",
+        device_soundbar: "Barra de som", device_receiver: "Receptor AV", device_amplifier: "Amplificador", device_projector: "Projetor", device_console: "Console", device_set_top_box: "Decodificador", device_monitor: "Monitor", device_disc_player: "Reprodutor de disco", device_speaker: "Caixa de som", device_speakers: "Caixas de som", device_streamer: "Streamer", device_satellite: "Receptor de satélite",
+        tv_icon_screen: "Tela de TV", tv_icon_classic: "TV clássica", tv_icon_guide: "Guia de TV", tv_icon_play: "Reprodução de TV",
+        tv_icon_help: "Escolha um símbolo de TV ou restaure o texto. Os ícones HDMI não mudam.",
+        hint_close_icons: "Ocultar",
+        hint_input_icon: "Escolher ícone", input_icon_help: "Escolha a aparência em Configurações → Aparência das entradas.", val_input_icon: "Só ícone", val_input_icon_hdmi: "Ícone + HDMI", val_input_icon_label: "Ícone + nome", val_input_icon_cec: "Ícone + CEC",
+        set_update: "Atualizações", set_beta: "Versões de teste", val_on: "Ligado", val_off: "Desligado",
+        upd_idle: "Versão {version}", upd_checking: "Buscando atualizações…", upd_current: "Atualizado · versão {version}",
+        upd_available: "A versão {version} está disponível", upd_downloading: "Baixando {version}…",
+        upd_ready: "{version} baixada e verificada", upd_installing: "Instalando {version}… o launcher reinicia sozinho",
+        upd_done: "Atualizado. Aperte HOME.", upd_err_check: "Não foi possível conectar ao GitHub. Verifique a conexão.",
+        upd_err_download: "O download falhou.", upd_err_install: "A atualização falhou; veja /tmp/rawin-launcher-update/install.log",
+        hint_check: "procurar atualizações", hint_download: "baixar", hint_install: "instalar",
+        set_title: "Nome do app acima dos favoritos", val_name_show: "Visível", val_name_hide: "Oculto",
+        add_favs_title: "Adicionar favoritos", add_favs_sub: "Abra Apps e segure OK em um app",
+        tv_settings: "Configurações da TV",
+        stock_home: "Home original",
+        back_to_picture: "Voltar à TV",
+        launcher_settings: "Configurações do launcher",
+        edit_sub: "← → mover   ▼ remover dos favoritos",
+        apps_title: "Apps",
+        system_title: "Sistema",
+        opening: "Abrindo…",
+        hint_open: "abrir", hint_hold_ok: "segure OK", hint_remove_fav: "para remover dos favoritos",
+        hint_add_fav: "para adicionar aos favoritos", hint_back: "Voltar", hint_favourites: "favoritos",
+        hint_done: "concluído", hint_edit_favs: "para editar favoritos", hint_change: "alterar", hint_system: "sistema",
+        err_store_unavailable: "Não é possível salvar os favoritos nesta TV: as mudanças se perdem ao reiniciar.",
+        err_save: "Não foi possível salvar os favoritos.",
+        removed_fav: "Removido dos favoritos", added_fav: "Adicionado aos favoritos",
+        max_favs: "Você já tem {n} favoritos: remova um na tela inicial",
+        live_tv: "TV",
+        err_launch: "Não foi possível abrir o app. Tente novamente.",
+        err_unavailable: "O app não está disponível no momento.",
+        err_slow: "A abertura está demorando demais. Tente novamente.",
+        err_helper: "O serviço do launcher não responde.",
+        set_language: "Idioma", set_exit: "Ao segurar VOLTAR", set_clock: "Relógio",
+        set_theme: "Tema",
+        theme_default: "Padrão", theme_lime: "Lima", theme_lagoon: "Lagoa",
+        theme_midnight: "Meia-noite", theme_terracotta: "Terracota",
+        theme_cherry: "Cereja", theme_cobalt: "Cobalto", theme_indigo: "Índigo",
+        val_system: "Idioma do sistema ({lang})", val_last_input: "Última entrada",
+        val_show: "Visível", val_hide: "Oculta",
+        set_size: "Tamanho do texto", val_size_normal: "Normal", val_size_large: "Grande", val_size_larger: "Maior", set_motion: "Animações",
+        set_sort: "Ordem dos apps", val_sort_lg: "Ordem da TV", val_sort_az: "De A a Z", val_sort_used: "Mais usadas primeiro",
+        set_tv: "TV no início",
+        set_hidden: "Apps ocultos", val_hidden_hide: "Ocultos", val_hidden_show: "Visíveis, esmaecidos", hidden_sub: "Oculto",
+        hidden_app: "Oculto dos Apps", unhidden_app: "De volta aos Apps", hidden_input: "Oculta da tela inicial", unhidden_input: "De volta à tela inicial",
+        hint_hide: "ocultar", hint_unhide: "mostrar de novo", key_red: "VERMELHO", hint_choose: "escolher", hint_back_target: "abrir ao segurar Voltar", exit_set: "Ao segurar Voltar: {name}",
+        set_backup: "Backup de favoritos e configurações", set_restore: "Restaurar do backup", bak_none: "Nenhum backup", bak_saved: "Backup de {date}", bak_done: "Backup salvo", bak_restored: "Restaurado do backup",
+        bak_err: "Não foi possível salvar o backup.", bak_err_read: "Não foi possível ler o backup.", hint_backup: "salvar backup", hint_restore: "restaurar",
+        grp_look: "Aparência", grp_home: "Tela inicial", grp_apps: "Apps", grp_screen: "Na tela", grp_backup: "Backup", grp_updates: "Atualizações",
+        set_hours: "Formato da hora", val_hours_24: "24 horas", val_hours_12: "12 horas",
+        set_now_app: "App atual", set_weather: "Clima", set_place: "Local do clima", set_units: "Temperatura", set_temperature: "Temperatura exibida", val_temperature_standard: "Temperatura padrão", val_temperature_apparent: "Sensação térmica",
+        val_chip_on: "Mostrar", val_chip_off: "Ocultar", val_units_auto: "Automática ({unit})", val_units_c: "Celsius (°C)", val_units_f: "Fahrenheit (°F)",
+        place_auto: "{name} (automático)", place_unknown: "Ainda desconhecido", place_noip: "A TV não está conectada a nenhuma rede.", upd_notes: "Novidades",
+        place_scan: "Escaneie o código com a câmera do celular e escolha uma cidade. O celular deve estar na mesma rede que a TV.",
+        grp_about: "Sobre", set_about: "Sobre o Homebar", about_scan: "Escaneie para me pagar um café",
+        about_text: "Crio apps e ferramentas gratuitas no GitHub. Se curte meus projetos, pode apoiar meu trabalho me pagando um café!",
+        set_hints: "Dicas das teclas", set_timeout: "Tempo limite do Homebar", val_timeout_off: "Desativado", val_timeout_seconds: "{seconds} segundos", key_yellow: "AMARELO",
+        grp_bar: "Barra superior", set_hidden_inputs: "Entradas ocultas", val_none_hidden: "Nenhuma", set_sources: "Entradas e TV", set_input_text: "Aparência das entradas", val_input_label: "Só o nome", val_input_hdmi: "Apenas HDMI", val_input_label_hdmi: "Nome e depois HDMI", val_input_hdmi_label: "HDMI e depois o nome", val_input_cec: "Apenas CEC", val_input_cec_hdmi: "CEC e depois HDMI", val_input_hdmi_cec: "HDMI e depois CEC", set_input_overflow: "Nomes longos", val_input_ellipsis: "Reticências", val_input_scroll: "Rolar", preview: "Prévia", set_home_shortcuts: "Atalhos", set_topbar: "Elementos", hint_edit_inputs: "para editar entradas", edit_inputs_sub: "← → mover   ▼ remover entrada", removed_input: "Entrada oculta — ative nas configurações do launcher", grp_shortcuts: "Atalhos", set_close_apps: "Liberar memória", set_home_apps: "Atalho para Apps", close_apps_title: "Liberar memória", set_close_apps_mode: "Ação para liberar memória", val_close_apps: "Fechar apps em segundo plano", val_close_memory: "Abrir otimizador de memória LG", close_apps_done: "Apps em segundo plano fechados", close_apps_failed: "Não foi possível fechar os apps", hint_close: "fechar", edit_shortcuts_sub: "← → mover atalho", edit_shortcuts_remove_sub: "← → mover   ▼ remover atalho", hint_edit_shortcuts: "para editar atalhos", hint_move: "mover", hint_remove: "remover", removed_shortcut: "Atalho oculto — ative nas configurações do launcher", grp_support: "Ajuda", set_restart_homebar: "Reiniciar Homebar", restart_sub: "Reiniciar o processo do Homebar", hint_restart: "reiniciar", err_restart: "Não foi possível reiniciar o Homebar."
+    },
     nl: {
+        hint_or: "of",
         confirm_remove_down: "Druk nogmaals op ▼ om te verwijderen",
         set_input_heading: "Ingangsnaam boven favorieten", val_heading_hdmi: "HDMI", val_heading_label: "Label", val_heading_cec: "CEC",
         device_soundbar: "Soundbar", device_receiver: "AV-receiver", device_amplifier: "Versterker", device_projector: "Projector", device_console: "Spelconsole", device_set_top_box: "Decoder", device_monitor: "Monitor", device_disc_player: "Discspeler", device_speaker: "Luidspreker", device_speakers: "Luidsprekers", device_streamer: "Mediaspeler", device_satellite: "Satellietontvanger",
@@ -510,6 +582,7 @@ var table = {
         grp_bar: "Bovenbalk", set_hidden_inputs: "Verborgen ingangen", val_none_hidden: "Geen", set_sources: "Ingangen en TV", set_input_text: "Weergave van ingangen", val_input_label: "Alleen label", val_input_hdmi: "Alleen HDMI", val_input_label_hdmi: "Label, dan HDMI", val_input_hdmi_label: "HDMI, dan label", val_input_cec: "Alleen CEC", val_input_cec_hdmi: "CEC, dan HDMI", val_input_hdmi_cec: "HDMI, dan CEC", set_input_overflow: "Lange namen", val_input_ellipsis: "Beletselteken", val_input_scroll: "Scrollen", preview: "Voorbeeld", set_home_shortcuts: "Snelkoppelingen", set_topbar: "Elementen", hint_edit_inputs: "ingangen bewerken", edit_inputs_sub: "← → verplaatsen   ▼ ingang verwijderen", removed_input: "Ingang verborgen — zet hem aan in de launcherinstellingen", grp_shortcuts: "Snelkoppelingen", set_close_apps: "Geheugen vrijmaken", set_home_apps: "Apps-snelkoppeling", close_apps_title: "Geheugen vrijmaken", set_close_apps_mode: "Actie voor geheugen vrijmaken", val_close_apps: "Achtergrondapps sluiten", val_close_memory: "LG-geheugenoptimalisatie openen", close_apps_done: "Achtergrondapps gesloten", close_apps_failed: "Kon de apps niet sluiten", hint_close: "sluiten", edit_shortcuts_sub: "← → snelkoppeling verplaatsen", edit_shortcuts_remove_sub: "← → verplaatsen   ▼ snelkoppeling verwijderen", hint_edit_shortcuts: "snelkoppelingen bewerken", hint_move: "verplaatsen", hint_remove: "verwijderen", removed_shortcut: "Snelkoppeling verborgen — zet hem aan in de launcherinstellingen", grp_support: "Hulp", set_restart_homebar: "Homebar herstarten", restart_sub: "Het Homebar-proces herstarten", hint_restart: "herstarten", err_restart: "Homebar kon niet worden herstart."
     },
     cs: {
+        hint_or: "nebo",
         confirm_remove_down: "Dalším stiskem ▼ odeberete",
         set_input_heading: "Název vstupu nad oblíbenými", val_heading_hdmi: "HDMI", val_heading_label: "Popisek", val_heading_cec: "CEC",
         device_soundbar: "Soundbar", device_receiver: "AV přijímač", device_amplifier: "Zesilovač", device_projector: "Projektor", device_console: "Herní konzole", device_set_top_box: "Set-top box", device_monitor: "Monitor", device_disc_player: "Přehrávač disků", device_speaker: "Reproduktor", device_speakers: "Reproduktory", device_streamer: "Multimediální přehrávač", device_satellite: "Satelitní přijímač",
@@ -575,7 +648,10 @@ var table = {
 };
 // "pl-PL", "pl_PL" or "pl" → "pl" when supported, else "".
 function supported(locale) {
-    var code = String(locale || "").toLowerCase().slice(0, 2);
+    var lower = String(locale || "").toLowerCase();
+    // Brazilian Portuguese has its own table; other Portuguese locales use pt.
+    if (/^pt[-_]br/.test(lower)) return "pt_br";
+    var code = lower.slice(0, 2);
     return languages.indexOf(code) >= 0 ? code : "";
 }
 function get(lang, key) {
