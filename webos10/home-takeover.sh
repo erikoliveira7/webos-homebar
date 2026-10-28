@@ -85,6 +85,8 @@ case "$1" in
       log 'another Home mount is present; refusing takeover'
       exit 1
     fi
+    # The type LG's Home has (flutter on webOS 9 to 11, qml before): what restore waits for.
+    mounted || [ -f "$BASE/home-type-orig" ] || luna getAppInfo '{"id":"com.webos.app.home"}' | tr -d '\n ' | sed -n 's/.*"type":"\([a-z]*\)".*/\1/p' | head -n 1 >"$BASE/home-type-orig"
     mounted || mount --bind "$STAGE" "$HOMEAPP" || { log 'mount failed: LG Home kept'; exit 1; }
     if reread && home_type_is "$HOME_TYPE"; then
       for pid in $(lg_home_pids); do kill "$pid" 2>/dev/null; done
@@ -106,7 +108,9 @@ case "$1" in
     [ ! -f "$BASE/native-home" ] || sh "$BASE/native-home.sh" stop
     if mounted && ! umount "$HOMEAPP"; then reread; exit 1; fi
     reread || exit 1
-    home_type_is flutter
+    orig=$(cat "$BASE/home-type-orig" 2>/dev/null); [ -n "$orig" ] || orig=flutter
+    home_type_is "$orig"
+    [ ! -f "$BASE/native-home.sh" ] || sh "$BASE/native-home.sh" stop-home
     # The black page may still run in the web app manager; sam then takes it for
     # the running Home and every launch of Home waits on it. Close it there.
     luna-send -n 1 luna://com.webos.service.webappmanager/killApp '{"appId":"com.webos.app.home"}' </dev/null >/dev/null 2>&1

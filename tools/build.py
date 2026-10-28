@@ -166,7 +166,7 @@ def release_files(spec, version):
     files.append(("webos4/patch-home.js", (ROOT / "webos4/patch-home.js").read_bytes()))
     files += [("shared/" + p.name, p.read_bytes()) for p in shared_files()]
     files.append(("webos4/Config.js", config_js(spec, version, "Home panel")))
-    for name in ("install.sh", "uninstall.sh", "home-takeover.sh", "boot-hook.sh", "native-home.sh", "mode-switch.sh"):
+    for name in ("install.sh", "uninstall.sh", "home-takeover.sh", "boot-hook.sh", "native-home.sh", "native-trial.sh", "mode-switch.sh"):
         files.append(("webos10/" + name, (ROOT / "webos10" / name).read_bytes(), exe))
     files.append(("webos10/native-stage.js", (ROOT / "webos10/native-stage.js").read_bytes()))
     files.append(("webos10/integration.js", (ROOT / "webos10/integration.js").read_bytes()))

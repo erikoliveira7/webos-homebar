@@ -29,6 +29,36 @@ stop_current() {
 launch() {
     luna-send -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$1\"}" </dev/null | grep -q '"returnValue": *true'
 }
+# The input or app card in front when a switch starts. Restarting the Home host
+# replaces it (it opens as a card of its own first) and LG then falls back to Live
+# TV, so the card is brought back and the panel opened above it again.
+front_card() {
+    luna-send -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{"extraInfo":true}' </dev/null 2>/dev/null |
+        node -e 'var s="";process.stdin.on("data",function(d){s+=d}).on("end",function(){try{var a=JSON.parse(s).foregroundAppInfo||[];for(var i=0;i<a.length;i++)if(/CARD$/.test(a[i].windowType||"")&&a[i].appId!=="com.webos.app.home"&&a[i].appId!=="org.rawin.launcher"){console.log(a[i].windowGroupOwnerId||a[i].appId);return}}catch(e){}})' 2>/dev/null || true
+}
+panel_up() {
+    luna-send -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{"extraInfo":true}' </dev/null 2>/dev/null | grep -q "\"appId\": *\"$1\""
+}
+return_card() {
+    # LG Home itself was in front: it is gone with the switch, and LG would open
+    # Live TV. Go to the last input instead, as the helper does after an app exits.
+    [ -n "$front" ] || front=$(cat /var/lib/webosbrew/rawin-launcher-last-input 2>/dev/null || true)
+    sleep 2
+    if [ -n "$front" ] && [ "$(front_card)" != "$front" ]; then
+        launch "$front" || true
+        sleep 2
+    fi
+    panel_up "$1" || launch "$1" || true
+}
+# LG creates the app tile only when the app is installed, and only for a visible
+# app. Without it, Additional overlay has no way in before a button is mapped,
+# so add the launch point whenever it is missing (best effort, idempotent).
+tile() {
+    luna-send -n 1 luna://com.webos.applicationManager/listLaunchPoints '{}' </dev/null 2>/dev/null |
+        grep -q '"id": *"org.rawin.launcher"' && return 0
+    luna-send -n 1 luna://com.webos.service.applicationmanager/addLaunchPoint \
+        "{\"id\":\"org.rawin.launcher\",\"title\":\"Homebar\",\"icon\":\"$APP/icon.png\"}" </dev/null >/dev/null 2>&1
+}
 paths() {
     printf '%s\n' "$BASE/native-home" "$BASE/additional-overlay" "$BASE/keep-lg-home" "$BASE/keys-before-native.json" "$BASE/mapper-backup.json" "$APP/Config.js"
     for id in org.rawin.launcher com.webos.app.home; do
@@ -81,8 +111,9 @@ recover() {
 }
 case "${1:-}" in
   recover) recover; exit ;;
+  tile) tile; exit ;;
   native|overlay) mode=$1 ;;
-  *) echo 'usage: mode-switch.sh native|overlay|recover' >&2; exit 2 ;;
+  *) echo 'usage: mode-switch.sh native|overlay|recover|tile' >&2; exit 2 ;;
 esac
 expected=${2:-}
 [ -z "$expected" ] || node "$BASE/integration.js" match "$expected"
@@ -91,7 +122,7 @@ if foreign && [ "$mode" = native ]; then
     echo 'Another launcher owns Home; disable its Home replacement first' >&2; exit 1
 fi
 if [ "$mode" = native ]; then
-    grep -qE 'release (10|11)\.' /etc/starfish-release || { echo 'Native Home currently supports webOS 10/11 only' >&2; exit 1; }
+    { grep -qE 'release (10|11)\.' /etc/starfish-release || { [ -f "$BASE/native-trial" ] && grep -qE 'release (7|8|9)\.' /etc/starfish-release; }; } || { echo 'Native Home currently supports webOS 10/11 only' >&2; exit 1; }
     sh "$BASE/native-home.sh" check-owner
 elif [ -f "$BASE/additional-overlay" ] && [ ! -f "$BASE/native-home" ]; then
     exit 0
@@ -103,6 +134,7 @@ trap 'code=$?; trap - EXIT HUP INT TERM; if [ "$code" != 0 ]; then if [ -f "$TX/
 trap 'exit 1' HUP INT TERM
 # Once a process is stopped, copied SQLite files are consistent, including WAL.
 # Register recovery only after the complete journal has been written.
+front=$(front_card)
 stop_current
 snapshot
 [ -z "$expected" ] || node "$BASE/integration.js" match "$expected"
@@ -119,8 +151,10 @@ else
     node "$BASE/integration.js" restore overlay "$TX/mapper-journal.json" >"$TX/result.json"
     node "$BASE/integration.js" clean overlay "$TX/mapper-journal.json"
     node -e 'var fs=require("fs"),f=process.argv[1],s=fs.readFileSync(f,"utf8");fs.writeFileSync(f,s.replace(/^var exitTarget = .*$/m,"var exitTarget = false;"));' "$APP/Config.js"
+    tile || true
     launch org.rawin.launcher
 fi
+if [ -f "$BASE/native-home" ]; then return_card com.webos.app.home; else return_card org.rawin.launcher; fi
 if [ -f "$TX/result.json" ]; then cat "$TX/result.json"; else echo '{"restoreSkipped":false}'; fi
 rm -rf "$TX"
 # The helper keeps this result after the old QML process has gone away.

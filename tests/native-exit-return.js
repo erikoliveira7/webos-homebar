@@ -2,7 +2,7 @@ const assert=require('assert');
 const {AfterExit,cardOf}=require('../webos10/helper/after-exit');
 let now=10000,foreign=false,native=true;
 const launched=[],saved=[];
-const r=new AfterExit({nativeHome:()=>native,homeTaken:()=>foreign,now:()=>now,
+const r=new AfterExit({later:fn=>fn(),nativeHome:()=>native,homeTaken:()=>foreign,now:()=>now,
  lastInput:'com.webos.app.hdmi4',target:'com.webos.app.hdmi1',launch:id=>launched.push(id),save:id=>saved.push(id)});
 r.onForeground('netflix');r.onForeground('com.webos.app.home');assert.deepStrictEqual(launched,[],'manual HOME must not redirect');
 r.onForeground('netflix');r.onForeground('');assert.deepStrictEqual(launched,['com.webos.app.hdmi1'],'real app exit returns immediately');
@@ -14,4 +14,6 @@ const child={appId:'com.webos.app.livedmost',windowType:'_WEBOS_WINDOW_TYPE_CARD
 assert.strictEqual(cardOf({foregroundAppInfo:[child]}),'com.webos.app.livetv','TV child must resolve to owner');
 assert.strictEqual(cardOf({foregroundAppInfo:[child,{appId:'com.webos.app.livetv',windowType:'_WEBOS_WINDOW_TYPE_CARD',windowGroupOwner:true}]}),'com.webos.app.livetv');
 foreign=false;native=false;now+=2000;r.onForeground('com.webos.app.home');assert.strictEqual(launched.length,4,'legacy overlay Home fallback retained');
+now+=2000;native=true;r.setTarget('none');r.onForeground('netflix');r.onForeground('');assert.strictEqual(launched.length,5,'do nothing: no input, only Homebar when nothing else came up');assert.strictEqual(launched[4],'com.webos.app.home');
+now+=2000;r.setTarget('last');r.onForeground('netflix');r.onForeground('');assert.strictEqual(launched.length,6,'back to last input after do nothing');
 console.log('PASS native exit return: manual HOME safe, app exit, duplicate fallback, fixed HDMI/TV/last, foreign owner and Live TV group');

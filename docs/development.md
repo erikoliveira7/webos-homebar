@@ -24,9 +24,9 @@ python3 tools/deploy.py --host <tv-ip>   # build, copy over SSH and run install.
 key, `--keep-lg-home` and `--uninstall` do what they say, `--backup file`
 and `--restore file` copy the TV's `backup.json` either way, and anything
 after `--` goes to `install.sh` on the TV (`-- --probe` only says which
-variant fits; `-- --overlay --replace-lg-home` forces one). The archive
-holds both variants; on the TV `install.sh` picks the one the TV has the
-makings for.
+method fits; `-- --additional-overlay` or `-- --try-native-home` choose one).
+The archive holds every method; on the TV `install.sh` picks the one the TV has
+the makings for.
 
 ## Another webOS version, on purpose
 
@@ -34,7 +34,9 @@ makings for.
 that webOS version (`HOMEBAR_WEBOS=9.1 sh install.sh --probe` shows what the
 installer would do on a webOS 9 TV with this TV's makings). The variant is
 still chosen by what the TV has; the version only decides what counts as
-tested and whether the overlay replaces LG's Home by default.
+tested and whether the overlay replaces LG's Home by default. On webOS 7 to 9
+it does not enable System HOME; that is `--try-native-home` (see
+[Install](install.md#trying-system-home-on-webos-7-to-9)).
 
 ## Configuration
 
@@ -62,7 +64,7 @@ For the overlay, `tools/build.py` turns `ui/Launcher.qml` into the app's
 `webos10/panel-bridge.qml` (HTTP to the helper). The top-level `install.sh`
 picks the variant by what the TV has (`probe.sh`, which the installers also
 put next to `diagnose.sh` on the TV), see
-[Compatibility](compatibility.md#which-variant-a-tv-gets).
+[Compatibility](compatibility.md#how-homebar-opens).
 
 ## Checking the layout
 
@@ -129,6 +131,23 @@ exercise real Qt keys, mouse and wheel events, saved choices, independent
 headings, popup anchoring and two-step removal. Desktop tests do not replace
 checking the Magic Remote's pointer and held keys on an actual TV.
 
+## Tests
+
+With PySide6 installed (Qt 6, for the QML ones) and Node:
+
+```sh
+for t in tests/*.js; do node $t; done
+for t in tests/*.py; do QT_QPA_PLATFORM=offscreen python3 $t; done
+```
+
+They cover the launch-method scripts against a fake TV root (`mode-switch.py`,
+`install-policy.py`, `integration.js`), the settings menu and its Yes/No popup
+(`mode-menu.py`), the HTTP bridge, the after-exit logic and the icon and
+removal flows. The QML tests share one LocalStorage on the computer (the
+`QML/OfflineStorage` folder of the Python app); a leftover saved language or
+favourites there can fail `mode-bridge.py`, and deleting that database fixes it.
+None of this replaces trying a method on a real TV.
+
 ## Adding a language
 
 Copy the `en` table in `ui/Strings.js`, translate it and add the code to
@@ -160,6 +179,9 @@ a computer:
 python3 -m pip install PySide6
 python3 tools/render-themes.py
 ```
+
+Run it on the default Qt platform, not `QT_QPA_PLATFORM=offscreen`: the
+software renderer cannot draw the rounded app icons, and they come out blank.
 
 It stubs the webOS-only parts (Luna services, webOS keys), gives the apps plain
 coloured icons and puts a gradient where the picture would be.

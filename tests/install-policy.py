@@ -3,7 +3,7 @@ import importlib.util, json, re, subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 s=importlib.util.spec_from_file_location('mode_shell',ROOT/'tests/mode-switch.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
-def run(release='10.3.1',panel=False,setup=lambda t:None,expected='native',args=()):
+def run(release='10.3.1',panel=False,setup=lambda t:None,expected='native',args=(),fails=False):
  t=m.TV(release=release,mapper=False)
  try:
   setup(t);bundle=t.p('/bundle');(bundle/'webos10').mkdir(parents=True);(bundle/'webos4').mkdir()
@@ -15,6 +15,9 @@ def run(release='10.3.1',panel=False,setup=lambda t:None,expected='native',args=
   (bundle/'webos10/install.sh').write_text('echo OVERLAY_ARGS:$*\n')
   (bundle/'webos4/install.sh').write_text('echo PANEL_INSTALL\n')
   result=subprocess.run(['sh',str(bundle/'install.sh'),*args],env=dict(t.env,HOMEBAR_WEBOS=release),text=True,capture_output=True,timeout=8)
+  if fails:
+   assert result.returncode!=0,result.stdout
+   return result.stderr
   assert result.returncode==0,(result.stdout,result.stderr)
   output=result.stdout
   if expected=='panel':assert 'PANEL_INSTALL' in output,output
@@ -38,5 +41,10 @@ run(setup=lambda t:t.put(m.KEYS,json.dumps({'773':{'action':'launch','id':'other
 run(setup=lambda t:t.put('/home/root/magic_mapper.py','unknown fork'),expected='overlay')
 run(setup=lambda t:t.put(m.BASE+'/VERSION','0.17.2'),expected='legacy')
 run('4.10.0',setup=lambda t:t.put('/var/lib/webosbrew/rawin-launcher/VERSION','0.17.2'),expected='panel')
+# The trial of the native Home: webOS 7 to 9 only, and it says so.
+for release in ('7.5.0','8.3.0','9.2.2'):
+ out=run(release,args=('--try-native-home',),expected='legacy');assert '--try-native' in out and '--keep-lg-home' not in out,out
+for release in ('10.3.1','11.0.0','6.5.0','4.10.0'):
+ assert '--try-native-home is for' in run(release,args=('--try-native-home',),fails=True)
 run(args=('--overlay',),expected='legacy');run(args=('--additional-overlay',),expected='overlay')
 print('PASS 15 install policies: fresh defaults, supported native, ribbon, compatibility, other Home, unknown mapper, existing installs and explicit choices')

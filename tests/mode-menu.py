@@ -1,9 +1,9 @@
 """Exercise the shared settings menu in Qt, without any TV transport."""
 import importlib.util, tempfile
 from pathlib import Path
-from PySide6.QtCore import QUrl, Qt, QPoint
+from PySide6.QtCore import QUrl, Qt, QPoint, QPointF
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtQuick import QQuickView
+from PySide6.QtQuick import QQuickView, QQuickItem
 from PySide6.QtTest import QTest
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('render',ROOT/'tools/render-panel.py');rp=importlib.util.module_from_spec(spec);spec.loader.exec_module(rp)
@@ -34,9 +34,14 @@ with tempfile.TemporaryDirectory() as tmp:
         shell.valueHover = 0;
         if (shell.notice !== "") throw Error("hover switched mode");
         shell.navigateMenu(Qt.Key_Return);
-        if (shell.notice !== "" || shell.modeConfirm !== "overlay") throw Error("first OK must preview");
-        shell.navigateMenu(Qt.Key_Return);
-        if (shell.notice !== "mode:overlay") throw Error("second OK did not apply");
+        if (shell.notice !== "" || shell.modeConfirm !== "overlay") throw Error("OK must open the popup");
+        if (shell.modeConfirmYes) throw Error("popup must open on No");
+        shell.answerMode(false);
+        if (shell.notice !== "" || shell.modeConfirm !== "") throw Error("No applied or kept the popup");
+        shell.navigateMenu(Qt.Key_Return); shell.answerMode(true);
+        if (shell.notice !== "mode:overlay") throw Error("Yes did not apply");
+        if (shell.modeDescription("native") === shell.modeDescription("overlay") || shell.modeDescription("native") === "") throw Error("descriptions");
+        if (shell.t("val_mode_native").indexOf("(") < 0) throw Error("native name lacks its qualifier");
         shell.notice = ""; shell.modeInfo = info("native",true,true);
         shell.chooseMode(); if (shell.notice !== "") throw Error("busy request");
         shell.modeInfo = info("native",true,false);
@@ -50,7 +55,12 @@ with tempfile.TemporaryDirectory() as tmp:
         shell.forceActiveFocus();
         result = "PASS";
     }
+    function showDone(ok) { shell.modeDoneOk = ok; shell.modeDoneAt = 123; shell.forceActiveFocus(); }
+    function doneState() { return shell.modeDoneAt + '|' + shell.settings.modeAck; }
+    function nativePopup() { shell.modeInfo = info('overlay',true,false); shell.modeInfo.inspection.cleanup = 2; shell.modeInfo.inspection.mapped = [{source:'Input Hook',key:'1'},{source:'Input Hook',key:'2'}]; shell.modeConfirm = 'native'; }
+    function popupText() { return shell.modePopupText('native'); }
     function resetNotice() { shell.notice = ""; }
+    function focusValues() { shell.menuHover = -1; shell.valueHover = -1; shell.pane = 1; shell.valueIndex = 1; shell.forceActiveFocus(); }
     function resultNotice() { return shell.notice; }
     function glow()''')
  (d/'main.qml').write_text(main)
@@ -63,11 +73,34 @@ with tempfile.TemporaryDirectory() as tmp:
  view.grabWindow().save(str(out/'settings-mode.png'))
  QTest.mouseMove(view,QPoint(1100,348));rp.wait(100);assert root.resultNotice()==''
  QTest.mouseClick(view,Qt.LeftButton,pos=QPoint(1100,348));rp.wait(100);assert root.resultNotice()==''
- view.grabWindow().save(str(out/'settings-mode-preview.png'))
+ view.grabWindow().save(str(out/'settings-mode-popup.png'))
+ def center(name):
+  def find(it):
+   if it.objectName()==name:return it
+   for c in it.childItems():
+    r=find(c)
+    if r is not None:return r
+  item=find(view.rootObject());assert item is not None and item.isVisible(),name
+  p=item.mapToScene(QPointF(item.width()/2,item.height()/2));return QPoint(int(p.x()),int(p.y()))
+ # No on the pointer cancels; the same popup answers Yes on a click.
+ QTest.mouseClick(view,Qt.LeftButton,pos=center('modeNo'));rp.wait(100);assert root.resultNotice()==''
  QTest.mouseClick(view,Qt.LeftButton,pos=QPoint(1100,348));rp.wait(100)
+ QTest.mouseClick(view,Qt.LeftButton,pos=center('modeYes'));rp.wait(100)
  assert root.resultNotice()=='mode:overlay'
- root.resetNotice()
+ root.resetNotice();root.focusValues()
+ # Keys: OK opens the popup, OK on its default (No) cancels, LEFT then OK applies, BACK cancels.
  QTest.keyClick(view,Qt.Key_Return);rp.wait(100);assert root.resultNotice()==''
+ QTest.keyClick(view,Qt.Key_Return);rp.wait(100);assert root.resultNotice()==''
+ QTest.keyClick(view,Qt.Key_Return);rp.wait(100);QTest.keyClick(view,Qt.Key_Escape);rp.wait(100);assert root.resultNotice()==''
  QTest.keyClick(view,Qt.Key_Return);rp.wait(100)
+ QTest.keyClick(view,Qt.Key_Left);rp.wait(100);QTest.keyClick(view,Qt.Key_Return);rp.wait(100)
  assert root.resultNotice()=='mode:overlay'
- print('PASS Qt menu: hidden on Home panel, current selection, hover/arrows inert, OK commits, cancel/busy/no-op, capability filtering')
+ # The popup of a native switch names the mappings that go; the note after a switch is shown once.
+ root.resetNotice();root.nativePopup();rp.wait(150);assert 'Input Hook' in root.popupText() and 'Magic Mapper' not in root.popupText(),root.popupText();view.grabWindow().save(str(out/'settings-mode-popup-native.png'))
+ QTest.keyClick(view,Qt.Key_Escape);rp.wait(100);assert root.resultNotice()==''
+ root.showDone(True);rp.wait(150);view.grabWindow().save(str(out/'settings-mode-done.png'))
+ assert root.doneState()=='123|0',root.doneState()
+ QTest.keyClick(view,Qt.Key_Return);rp.wait(100);assert root.doneState()=='0|123',root.doneState()
+ root.showDone(False);rp.wait(150);view.grabWindow().save(str(out/'settings-mode-failed.png'))
+ QTest.keyClick(view,Qt.Key_Escape);rp.wait(100);assert root.doneState()=='0|123',root.doneState()
+ print('PASS Qt menu: hidden on Home panel, current selection, hover/arrows inert, OK opens a Yes/No popup (No by default), Yes commits, cancel/busy/no-op, capability filtering')

@@ -1,11 +1,16 @@
 # How it works
 
-Both variants show the same panel, `ui/Launcher.qml`; they differ in how it
+Every method shows the same panel, `ui/Launcher.qml`; they differ in how it
 gets on screen and talks to the TV. Which one a TV gets is in
-[Compatibility](compatibility.md#which-variant-a-tv-gets).
+[Compatibility](compatibility.md#how-homebar-opens): the **Home panel**
+(inside LG's QML Home), **System HOME** (Homebar's QML host in LG Home's
+place) and the **overlay** (a separate app; additional overlay or HOME via
+mapper).
 
 - [The Home panel (webOS 4)](#the-home-panel-webos-4)
-- [The overlay (webOS 10)](#the-overlay-webos-10)
+- [The overlay (webOS 6 and later)](#the-overlay-webos-6-and-later)
+- [System HOME (webOS 10 and 11)](#system-home-webos-10-and-11)
+- [Additional overlay](#additional-overlay)
 - [The panel on any screen](#the-panel-on-any-screen)
 - [What it changes on the TV](#what-it-changes-on-the-tv)
 - [Names](#names)
@@ -26,7 +31,7 @@ firmware: the root element and its id, LG's UI controller and Home's
 foreground state must be there; the smaller pieces are patched where they
 match. Should the panel fail to load, LG's own UI shows as before.
 
-## The overlay (webOS 10)
+## The overlay (webOS 6 and later)
 
 LG's Home is a Flutter app that cannot be extended, so the launcher is its own
 app:
@@ -90,20 +95,41 @@ app:
   (`"enabled": true` in `/var/lib/tvweb/home.json`), Home is Glasshouse's:
   the stand-in is not mounted and the helper does not switch away from it.
 
-## System Home (webOS 10/11)
+## System HOME (webOS 10 and 11)
 
-On webOS 10/11 a fresh install (or `--native-home`) stages the same
-panel as `com.webos.app.home` on webOS 10/11. The firmware's QML runner is the
-native host and registers lifecycle v2 with SAM, which dispatches HOME directly.
-The window remains an overlay. This replaces the black stand-in and the
-Homebar Input Hook binding, rather than adding another native renderer.
-The helper still supplies services. Native after-exit redirection runs only when
-an app leaves no card, using the selected last input, TV or physical input; it
-does not redirect ordinary HOME. Its standard Home-triggered redirection and
-process preloader are disabled in this mode. Restart targets the Home host.
-`native-home.sh disable` copies Homebar's database back and restores the prior
-Homebar binding; it retains other user key bindings. See
+LG's Home on webOS 9 to 11 is a Flutter app, started by the app manager (SAM)
+as `com.webos.app.home`. A fresh install on webOS 10 or 11, or `--native-home`,
+stages Homebar's own QML app under that id: a manifest with the firmware's
+QML runner as its host and lifecycle v2, bind-mounted over LG Home's directory.
+SAM rereads the one app (block and release), stops LG's process, and from then
+on HOME, BACK out of an app and waking the TV all open Homebar directly, with
+no Input Hook binding. The window is still an overlay, so a playing card stays
+underneath. LG's files stay under the mount, which ends with a reboot (the boot
+hook applies it again); the stand-in's and the Home identity's `visible` is
+off, so they never get a tile of their own.
+
+The helper still supplies the services. After-exit redirection runs only when
+an app leaves no card (the last input, TV, a chosen input, or nothing: *After
+holding BACK*); ordinary HOME never switches input. Its process preloader is
+off in this mode and *Restart* targets the Home host. Changing the method
+(*Launch method*) is a journalled switch (`mode-switch.sh`): a failure or power
+loss rolls back, and afterwards the card that was in front is brought back and
+the panel opened above it. `native-home.sh disable` copies Homebar's database
+back and restores the earlier Homebar binding; other key bindings stay.
+
+On webOS 7 to 9 the same method is a trial (`--try-native-home`): the install
+checks that SAM reports a QML Home with a running host and gives LG's Home back
+otherwise, and writes a log for a report. See
 [the notes](experiments.md#direct-system-home).
+
+## Additional overlay
+
+The overlay app and helper are installed as above, but nothing takes HOME: the
+`additional-overlay` and `keep-lg-home` markers leave LG Home, Luma or
+Glasshouse alone, and the helper never redirects back to an input. Homebar
+opens from its app tile (`org.rawin.launcher`, always listed; the installer adds
+the tile if the TV did not) or from a button mapped in Input Hook or Magic
+Mapper to launch that app id.
 
 ## The panel on any screen
 
@@ -185,7 +211,7 @@ Overlay:
 | :--- | :--- |
 | App and helper (developer app) | `org.rawin.launcher`, `org.rawin.launcher.service` |
 | Helper runs as root | Homebrew `elevate-service` role files for the service |
-| LG Home stand-in, its script, the uninstaller, the scripts (`update.sh`, `diagnose.sh`, `probe.sh` with `patch-home.js`), `backup.json` and `weather.json` once made | `/var/lib/webosbrew/rawin-launcher-home/` |
+| Launch method markers (`native-home`, `additional-overlay`, `keep-lg-home`), the mode journal, the trial log, LG Home stand-in, its script, the uninstaller, the scripts (`update.sh`, `diagnose.sh`, `probe.sh` with `patch-home.js`), `backup.json` and `weather.json` once made | `/var/lib/webosbrew/rawin-launcher-home/` |
 | Boot hook (Input Hook started, stand-in mounted, helper started, panel preloaded) | `/var/lib/webosbrew/init.d/10-rawin-launcher` (`77-rawin-launcher` up to 0.14.0) |
 | HOME button → launcher | Input Hook `keybinds.json`: the key pressed when the installer asked, else `773` (first copy kept as `keybinds.json.before-rawin-launcher`) |
 | Last input, BACK-hold target | `/var/lib/webosbrew/rawin-launcher-last-input`, `rawin-launcher-settings.json` |

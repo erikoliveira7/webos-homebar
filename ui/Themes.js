@@ -10,6 +10,7 @@ var themes = [
     {id: "lime", accent: "#B6FF2E", base: "#1F2329"},
     {id: "lagoon", accent: "#D6FFCB", base: "#042F32"},
     {id: "midnight", accent: "#D7FFE0", base: "#050505"},
+    {id: "amber", accent: "#FFC21A", base: "#1E1B14"},
     {id: "terracotta", accent: "#E26F4A", base: "#FFFCF4"},
     {id: "cherry", accent: "#FF173D", base: "#F9DEDF"},
     {id: "cobalt", accent: "#1D61F3", base: "#F1F4F9"},

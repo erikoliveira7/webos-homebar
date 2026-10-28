@@ -31,6 +31,7 @@ if [ -f /var/lib/webosbrew/rawin-launcher-home/native-home ]; then
   log 'native Home: system HOME, Input Hook not needed'
 elif [ -f /var/lib/webosbrew/rawin-launcher-home/additional-overlay ]; then
   log 'additional overlay: button mapping is managed by the user'
+  /bin/sh /var/lib/webosbrew/rawin-launcher-home/mode-switch.sh tile >/dev/null 2>&1 &
 elif [ -f /var/lib/webosbrew/rawin-launcher-home/manual-home-mapping ]; then
   log 'compatibility overlay: existing Magic Mapper shortcut'
 elif [ -d "$INPUTHOOK" ]; then

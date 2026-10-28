@@ -108,7 +108,8 @@ Integration.prototype.inspect = function() {
         if (blocking) blockers.push(item);
     }
     var release=this.read('/etc/starfish-release');
-    var nativeSupported=release.state === 'read' && /release (10|11)\./.test(release.text) && this.fs.existsSync('/usr/bin/qml-runner');
+    var trial=release.state === 'read' && /release (7|8|9)\./.test(release.text) && this.fs.existsSync(BASE+'/native-trial');
+    var nativeSupported=release.state === 'read' && (/release (10|11)\./.test(release.text) || trial) && this.fs.existsSync('/usr/bin/qml-runner');
     var current=this.fs.existsSync(BASE+'/native-home') ? 'native' : this.fs.existsSync(BASE+'/additional-overlay') ? 'overlay' : 'legacy';
     var ownership=this.ownership(), owner=ownership.owner, homeMounts=ownership.homeMounts, glass=ownership.glass;
     if (owner === 'other') issue('launch_home_other','',true);
@@ -116,7 +117,12 @@ Integration.prototype.inspect = function() {
     try { processes=this.processList(); } catch (e) { processUnknown=true; issue('launch_scan_unknown','',true); }
     var ih=this.json(IH), inputInstalled=this.fs.existsSync('/media/developer/apps/usr/palm/applications/org.webosbrew.inputhook');
     if (ih.state==='read' && !inputSchema(ih.value))ih.state='unknown';
-    if (ih.state === 'unknown' || (ih.state === 'absent' && this.fs.existsSync('/tmp/inputhook'))) issue('launch_config_unknown','Input Hook',true);
+    // Input Hook leaves /tmp/inputhook behind when it starts. Without its config
+    // that is an unknown mapping, unless the app is gone too and no process of
+    // it runs: then only the stale lock is left (until the next boot).
+    var ihRunning=processUnknown || processes.some(function(argv) { return argv.some(function(arg) { return /org\.webosbrew\.inputhook|lginputhook/i.test(arg); }); });
+    var staleLock=ih.state === 'absent' && !inputInstalled && !ihRunning && this.fs.existsSync('/tmp/inputhook');
+    if (ih.state === 'unknown' || (ih.state === 'absent' && this.fs.existsSync('/tmp/inputhook') && !staleLock)) issue('launch_config_unknown','Input Hook',true);
     if (ih.state === 'read') files.push({kind:'input',file:this.fs.realpathSync ? this.fs.realpathSync(IH) : IH,data:ih,active:this.fs.existsSync('/tmp/inputhook')});
     var mmScripts=[MM], runningScripts=[];
     processes.forEach(function(argv) {
@@ -177,7 +183,7 @@ Integration.prototype.inspect = function() {
     if (result.state==='read' && result.value.restoreSkipped) { restoreSkipped=true; issue('launch_restore_skipped','',false); }
     var fingerprint=crypto.createHash('sha256').update(JSON.stringify([current,owner,homeMounts,glass.text || glass.state,signatures,
         ih.state,mmInstalled,processUnknown])).digest('hex');
-    return {nativeSupported:nativeSupported,current:current,owner:owner,issues:issues,blockers:blockers,cleanup:cleanup,mapped:mapped,
+    return {nativeSupported:nativeSupported,trial:trial,current:current,owner:owner,issues:issues,blockers:blockers,cleanup:cleanup,mapped:mapped,
         legacyMagicReady:files.some(function(f) {return f.kind==='magic' && (f.active || f.reloadable) && f.changes.some(function(c) {return c.key==='home';});}),
         homeMapped:homeOwn,companionMapped:companionMapped,magicInstalled:mmInstalled,inputInstalled:inputInstalled,restoreSkipped:restoreSkipped,
         migrationAvailable:current==='legacy' && nativeSupported && blockers.length===0,fingerprint:fingerprint,files:files};
@@ -323,7 +329,7 @@ var messages={
     launch_changed:'Configuration changed. Review and confirm again.',
     launch_scan_unknown:'A running mapper could not be inspected. Use --additional-overlay or inspect Diagnose.',
     launch_rollback_changed:'A concurrent mapper edit was preserved. The recovery journal was retained for inspection.',
-    launch_unsupported:'Direct system HOME requires webOS 10/11 and qml-runner.'
+    launch_unsupported:'Direct system HOME requires webOS 10/11 (or the trial on 7 to 9) and qml-runner.'
 };
 if(require.main===module) {
     var integration=new Integration(), cmd=process.argv[2];

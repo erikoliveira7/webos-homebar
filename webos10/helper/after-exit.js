@@ -21,8 +21,9 @@ function isInput(id) { return INPUT.test(id || ''); }
 function isApp(id) { return !!id && id !== HOME && !isInput(id); }
 
 class AfterExit {
-  constructor({ launch, now = Date.now, save = () => {}, lastInput = '', target = '', log = () => {}, homeTaken = () => false, nativeHome = () => false }) {
+  constructor({ launch, later = (fn, ms) => setTimeout(fn, ms), now = Date.now, save = () => {}, lastInput = '', target = '', log = () => {}, homeTaken = () => false, nativeHome = () => false }) {
     this.launch = launch;
+    this.later = later;
     this.homeTaken = homeTaken;
     this.nativeHome = nativeHome;
     this.now = now;
@@ -37,8 +38,9 @@ class AfterExit {
 
   noteHomeRequest() { this.homeRequestedAt = this.now(); }
 
-  // A fixed input from the launcher settings, or '' for the last input.
-  setTarget(id) { this.target = isInput(id) ? id : ''; }
+  // A fixed input from the launcher settings, '' for the last input, or
+  // "none": leave the TV to LG (no return at all).
+  setTarget(id) { this.none = id === 'none'; this.target = isInput(id) ? id : ''; }
 
   // card: appId of the full-screen card in front, or '' when there is none.
   onForeground(card) {
@@ -59,6 +61,13 @@ class AfterExit {
     if (native ? !exitToNothing : !exitToNothing && card !== HOME) return;
     if (this.homeTaken()) { this.log('Home belongs to another launcher; not returning'); return; }
     if (!native && t - this.homeRequestedAt < HOME_REQUEST_MS) { this.log('LG Home was requested; not returning'); return; }
+    if (this.none) {
+      this.log('return to an input is off');
+      // With system HOME there is no LG Home to fall back to: if nothing came up
+      // meanwhile, open Homebar rather than leave the screen black.
+      if (native) this.later(() => { if (this.card === '' && !this.homeTaken()) this.launch(HOME); }, 4000);
+      return;
+    }
     if (t - this.lastLaunchAt < RETRY_GAP_MS) return;
     this.lastLaunchAt = t;
     const to = this.target || this.lastInput;

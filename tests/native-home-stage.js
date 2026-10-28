@@ -21,6 +21,7 @@ try {
     assert.strictEqual(info.type,'qml');
     assert.strictEqual(info.defaultWindowType,'overlay');
     assert.strictEqual(info.closeOnBackground,false);
+    assert.strictEqual(info.visible,false); // Home must have no launch point of its own
     assert(fs.readFileSync(path.join(target,'Config.js'),'utf8').includes('var exitTarget = true;'));
     assert.strictEqual(fs.readlinkSync(path.join(target,'Panel.qml')),path.join(app,'Panel.qml'));
     assert(fs.readFileSync(path.join(target,'Config.js'),'utf8').includes('var nativeHome = true;'));

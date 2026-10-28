@@ -38,10 +38,12 @@ WAS_ADDITIONAL=
 HOME_KEY_OPT=
 HOME_KEY_EXEC=
 MANUAL_MAPPER=
+TRY=
 for a in "$@"; do
     case "$a" in
         --keep-lg-home) KEEP_LG_HOME=1 ;;
         --native-home) NATIVE_HOME=1 ;;
+        --try-native) NATIVE_HOME=1; TRY=1 ;;
         --additional-overlay) ADDITIONAL_OVERLAY=1; KEEP_LG_HOME=1 ;;
         --replace-lg-home) KEEP_LG_HOME= ;;
         --home-key=*) HOME_KEY_OPT=${a#--home-key=} ;;
@@ -58,7 +60,12 @@ luna() { luna-send -n 1 "$1" "$2" </dev/null 2>/dev/null; }
 [ -x "$HBC/elevate-service" ] || fail "the Homebrew Channel (root) is not set up on this TV"
 if [ -n "$NATIVE_HOME" ]; then
     [ -z "$KEEP_LG_HOME$HOME_KEY_OPT$HOME_KEY_EXEC" ] || fail "--native-home cannot be combined with keep-lg-home or key mapping options"
-    grep -qE 'release (10|11)\.' /etc/starfish-release || fail "--native-home currently supports webOS 10/11 only"
+    if [ -n "$TRY" ]; then
+        grep -qE 'release (7|8|9)\.' /etc/starfish-release || fail "--try-native-home is for webOS 7 to 9; on 10/11 use --native-home"
+        mkdir -p "$BASE"; touch "$BASE/native-trial"
+    elif ! { grep -qE 'release (10|11)\.' /etc/starfish-release || [ -f "$BASE/native-trial" ]; }; then
+        fail "--native-home currently supports webOS 10/11 only (webOS 7 to 9: --try-native-home, experimental)"
+    fi
 elif [ -z "$ADDITIONAL_OVERLAY" ]; then
     if [ -f "$HERE/integration.js" ] && node "$HERE/integration.js" legacy-mapper >/dev/null 2>&1; then MANUAL_MAPPER=magic; fi
     [ -n "$MANUAL_MAPPER" ] || [ -d /media/developer/apps/usr/palm/applications/org.webosbrew.inputhook ] ||
@@ -115,7 +122,7 @@ mkdir -p "$BASE/app"
 cp "$HERE"/home-stub/* "$BASE/app/"
 cp "$UI/icon.png" "$BASE/app/icon.png"
 cp "$HERE/home-takeover.sh" "$BASE/takeover.sh"
-cp "$HERE/native-home.sh" "$HERE/native-stage.js" "$HERE/mode-switch.sh" "$HERE/integration.js" "$BASE/"
+cp "$HERE/native-home.sh" "$HERE/native-stage.js" "$HERE/native-trial.sh" "$HERE/mode-switch.sh" "$HERE/integration.js" "$BASE/"
 cp "$HERE/uninstall.sh" "$BASE/uninstall.sh"
 cp "$HERE/../update.sh" "$HERE/../diagnose.sh" "$HERE/../VERSION" "$BASE/"
 # The probe (which variant fits) next to diagnose.sh, with the patch it checks with.
@@ -127,7 +134,19 @@ if [ -n "$ADDITIONAL_OVERLAY" ] && [ -z "$NATIVE_HOME" ]; then
 fi
 if [ -n "$NATIVE_HOME" ]; then
     rm -f "$BASE/keep-lg-home"
-    if [ -n "$WAS_NATIVE" ]; then sh "$BASE/native-home.sh" activate; else sh "$BASE/mode-switch.sh" native; fi || fail "native Home activation failed; see $BASE/native-home.sh status"
+    if [ -n "$WAS_NATIVE" ]; then sh "$BASE/native-home.sh" activate; else sh "$BASE/mode-switch.sh" native; fi || {
+        # A failed trial leaves LG Home in place, and no trial option behind.
+        if [ -n "$TRY" ]; then
+            rm -f "$BASE/native-trial"
+            say "trial log: $(sh "$BASE/native-trial.sh" end)"
+            say "the native Home did not work on this TV; LG Home is back. Please attach that file to a GitHub issue (docs/install.md)."
+        fi
+        fail "native Home activation failed; see $BASE/native-home.sh status"
+    }
+    if [ -n "$TRY" ]; then
+        say "trial log: $(sh "$BASE/native-trial.sh" end)"
+        say "native Home is running on this TV. Press HOME and note what you see; then attach the log to a GitHub issue (docs/install.md)."
+    fi
 elif [ -n "$KEEP_LG_HOME" ]; then
     touch "$BASE/keep-lg-home"
     sh "$BASE/takeover.sh" restore >/dev/null 2>&1 || true
@@ -195,5 +214,6 @@ until wget -q -O - http://127.0.0.1:8899/ping >/dev/null 2>&1; do
     n=$((n + 1)); [ $n -lt 30 ] || fail "the helper did not start (see: luna-send -n 1 luna://$SERVICE/ping '{}')"
     sleep 2
 done
+if [ -n "$ADDITIONAL_OVERLAY" ] && [ -z "$NATIVE_HOME" ]; then sh "$BASE/mode-switch.sh" tile || true; fi
 if [ -n "$ADDITIONAL_OVERLAY" ] && [ -z "$NATIVE_HOME" ]; then say "done. Open Homebar with your configured button or app tile."; else say "done. Press HOME on the remote."; fi
 say "uninstall: sh $BASE/uninstall.sh"

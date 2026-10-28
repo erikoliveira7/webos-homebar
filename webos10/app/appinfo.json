@@ -9,5 +9,5 @@
   "largeIcon": "icon.png",
   "noSplashOnLaunch": true,
   "defaultWindowType": "overlay",
-  "visible": false
+  "visible": true
 }

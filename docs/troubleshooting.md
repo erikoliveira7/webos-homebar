@@ -1,6 +1,7 @@
 # Troubleshooting
 
 - [Diagnose](#diagnose)
+- [HOME does nothing (System HOME)](#home-does-nothing-system-home)
 - [HOME does nothing (overlay)](#home-does-nothing-overlay)
 - [HOME right after a boot opens LG's Home (overlay)](#home-right-after-a-boot-opens-lgs-home-overlay)
 - [An update fails](#an-update-fails)
@@ -62,7 +63,27 @@ flashed and went to HDMI 1). HOME opens Homebar only while Input Hook has
 it; if HOME opens Glasshouse instead, `diagnose.sh` shows what Input Hook
 does with the key (*HOME button (Input Hook)*).
 
+## HOME does nothing (System HOME)
+
+On webOS 10 and 11 (and the trial on 7 to 9) HOME is Homebar's own Home. If it
+shows LG's Home, nothing, or a black screen:
+
+- `sh /var/lib/webosbrew/rawin-launcher-home/takeover.sh status` says whether
+  the Homebar host is mounted ("stand-in mounted") or LG's Home is. The same
+  folder's `diagnose.sh` shows the mode, the Home owner and the boot log.
+- **Restart the TV.** The app manager keeps what it read about Home until it
+  restarts; if a switch between methods went wrong, a restart clears it.
+- Another launcher owning HOME (Glasshouse's or Luma's Home switched on)
+  blocks System HOME; *Launcher settings → Launch method* says so. Use the
+  additional overlay, or switch their takeover off first.
+- Switch back in *Launcher settings → Launch method*, or run the
+  [uninstaller](install.md#uninstall); both give LG's Home back.
+
 ## HOME does nothing (overlay)
+
+In the additional overlay HOME stays with LG on purpose: open Homebar from its
+app tile, or from the button you mapped in Input Hook or Magic Mapper to
+launch `org.rawin.launcher`. The rest of this section is for HOME via Input Hook.
 
 Run from a terminal, the installer asks for a press of HOME and binds the
 key Input Hook logs for it; without a press, or from the panel's updater, it
@@ -108,8 +129,10 @@ works for any version.
 ## An untested webOS
 
 `sh install.sh --probe` (or `probe.sh`, see [Diagnose](#diagnose)) says
-which variant fits the TV and why, before anything is changed;
-`--home-panel` and `--overlay` force one. What can happen on a webOS that
+which method fits the TV and why, before anything is changed;
+`--home-panel`, `--native-home`, `--additional-overlay` and `--overlay` force one;
+`--try-native-home` tries System HOME on webOS 7 to 9 and writes
+`/tmp/homebar-native-trial.txt` to attach to an issue. What can happen on a webOS that
 was never tested:
 
 - **The installer finds no variant.** It says what is missing for each: a
@@ -140,6 +163,9 @@ Whatever happens, `uninstall.sh` gives LG's Home and the HOME button back.
   back at once.
 - Home panel: deleting `/var/lib/webosbrew/init.d/76-rawin-launcher` and
   rebooting gives LG's Home back, since the bind mounts end with a reboot.
+- System HOME: *Launcher settings → Launch method → Additional overlay*, or
+  `sh /var/lib/webosbrew/rawin-launcher-home/native-home.sh disable`; then
+  restart the TV if Home still looks wrong.
 - Overlay: `sh /var/lib/webosbrew/rawin-launcher-home/takeover.sh restore`
   gives LG's Home back until the next boot; `takeover.sh status` shows which
   Home the TV has. If the app manager does not accept the stand-in, the script

@@ -204,6 +204,11 @@ FocusScope {
     property var modeInfo: ({available: false, nativeSupported: false, current: "legacy", busy: false})
     property string modeConfirm: ""
     property string modeConfirmFingerprint: ""
+    // The Yes/No popup of a mode change opens on No. modeDoneAt is the stamp of a
+    // finished switch the user has not yet been told about (settings.modeAck).
+    property bool modeConfirmYes: false
+    property real modeDoneAt: 0
+    property bool modeDoneOk: true
     property string modeError: ""
     property string launchLastWarning: ""
     property real modeDetailsOffset: 0
@@ -242,7 +247,7 @@ FocusScope {
                 list.push({id: allSources[i].id, title: allSources[i].title + (allSources[i].detail ? " · " + allSources[i].detail : ""),
                            on: !allSources[i].hidden});
         } else if (key === "homeShortcuts") {
-            list.push({id: "closeApps", title: t("close_apps_title"), on: settings.homeCloseApps !== false});
+            list.push({id: "closeApps", title: t("close_apps_title"), on: settings.homeCloseApps === true});
             list.push({id: "apps", title: t("apps_title"), on: settings.homeApps !== false});
         } else if (key === "topBar") {
             list.push({id: "clock", title: t("set_clock"), on: settings.clock !== false});
@@ -256,7 +261,7 @@ FocusScope {
             if (id === "tv") setSetting("tv", settings.tv !== true);
             else toggleHiddenInput(id);
         } else if (key === "homeShortcuts") {
-            if (id === "closeApps") setSetting("homeCloseApps", settings.homeCloseApps === false);
+            if (id === "closeApps") setSetting("homeCloseApps", settings.homeCloseApps !== true);
             else setSetting("homeApps", settings.homeApps === false);
         } else if (key === "topBar") {
             setSetting(id, settings[id] === false);
@@ -478,7 +483,7 @@ FocusScope {
         for (var i=0; i<order.length; i++) {
             if (order[i] === "apps" && s.homeApps !== false)
                 list.push({title: t("apps_title"), action: "apps", symbol: "apps"});
-            else if (order[i] === "closeApps" && s.homeCloseApps !== false)
+            else if (order[i] === "closeApps" && s.homeCloseApps === true)
                 list.push({title: t(memoryOptimizerAvailable && s.closeAppsMode === "memory" ? "val_close_memory" : "val_close_apps"), action: "closeApps", symbol: "clean"});
             else if (order[i] === "system")
                 list.push({title: t("system_title"), action: "system", symbol: "settings"});
@@ -581,6 +586,7 @@ FocusScope {
             list.push({id: "last", title: t("val_last_input")});
             list.push({id: "com.webos.app.livetv", title: t("live_tv")});
             for (i=0; i<inputList.length; i++) list.push({id: inputList[i].id, title: inputList[i].title});
+            list.push({id: "none", title: t("val_exit_none")});
         } else if (key === "hints") {
             list = [{id: true, title: t("val_chip_on")}, {id: false, title: t("val_chip_off")}];
         } else if (key === "inputText") {
@@ -746,7 +752,9 @@ FocusScope {
             inputOverflow: s.inputOverflow === "scroll" ? "scroll" : "ellipsis",
             inputIcons: DeviceIcons.assignments(s.inputIcons),
             tvIcon: DeviceIcons.tvIcon(s.tvIcon).id,
-            homeCloseApps: s.homeCloseApps !== false,
+            homeCloseApps: s.homeCloseApps === true,
+            // The stamp of the last finished mode switch the user was told about.
+            modeAck: typeof s.modeAck === "number" && s.modeAck > 0 ? s.modeAck : 0,
             // Older TVs may lack LG's optimiser screen. Keep a saved memory
             // action from opening unrelated Settings there; old combined mode
             // also falls back to closing background apps.
@@ -754,7 +762,7 @@ FocusScope {
             homeApps: s.homeApps !== false,
             homeActionOrder: homeActionOrderFor(s.homeActionOrder),
             showHidden: s.showHidden === true,
-            exitTo: /^(last|com\.webos\.app\.(livetv|(hdmi|dp|usbc)\d))$/.test(s.exitTo) ? s.exitTo : "last",
+            exitTo: /^(last|none|com\.webos\.app\.(livetv|(hdmi|dp|usbc)\d))$/.test(s.exitTo) ? s.exitTo : "last",
             clock: s.clock !== false,
             // Up to 0.14 "clock" showed or hid the whole chip: what is on
             // screen and the weather follow it until they are set themselves.
@@ -882,6 +890,8 @@ FocusScope {
     function hintsFor(currentPage, index, keys, editing, language, upd, currentPane) {
         var ok = hintKey("OK"), back = hintKey(t("hint_back")), hold = hintKey(t("hint_hold_ok"));
         var red = hintKey(t("key_red"), "red"), yellow = hintKey(t("key_yellow"), "yellow");
+        if (modeConfirm !== "") return [hint([hintKey("◀ ▶")], t("hint_choose")), hint([ok], t("hint_confirm")), hint([back], t("mode_no"))];
+        if (modeDoneAt > 0) return [hint([ok], t("mode_ok"))];
         if (currentPage === "apps") {
             var app = apps[index];
             var fav = app && keys.indexOf(app.id) >= 0, hid = app && hiddenIds.indexOf(app.id) >= 0;
@@ -894,7 +904,7 @@ FocusScope {
                 var o = valueOptions[valueIndex], on = o && valueOn(o.id);
                 return [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], on ? t("hint_hide") : t("hint_unhide")), hint([back], t("hint_done"))];
             }
-            if (currentPane === 1 && valueKey === "mode") return modeInfo.busy ? [hint([back], t("hint_done"))] : [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], t(modeConfirm ? "hint_confirm" : "hint_choose")), hint([back], t("hint_done"))];
+            if (currentPane === 1 && valueKey === "mode") return modeInfo.busy ? [hint([back], t("hint_done"))] : [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], t("hint_choose")), hint([back], t("hint_done"))];
             if (currentPane === 1) return [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], t("hint_done"))];
             var key = settingKeys[index], verb = actionVerb(key);
             if (key === "backup" || key === "restore" || key === "update" || key === "place" || key === "about" || key === "restart")
@@ -1110,11 +1120,28 @@ FocusScope {
         var o = valueOptions[valueIndex];
         if (page === "settings" && pane === 1 && o && !valueToggles && valueKey !== "mode") setSetting(valueKey, o.id);
     }
-    function launchDetails(info, confirmation, failure, language) {
+    // What the focused launch method does, then where things stand now.
+    function modeDescription(id) { return id === "native" || id === "overlay" ? t("mode_desc_" + id) : ""; }
+    function modePopupText(id) {
+        var r = modeInfo.inspection, text = t("mode_do_" + id);
+        if (id === "native" && r && r.cleanup) {
+            // Only the mappers that really hold a Homebar mapping are named.
+            var names = [], magic = false, m = r.mapped || [];
+            for (var i=0; i<m.length; i++) {
+                if (names.indexOf(m[i].source) < 0) names.push(m[i].source);
+                if (m[i].source === "Magic Mapper") magic = true;
+            }
+            text += "\n\n" + Strings.format(t("launch_cleanup"), {count: r.cleanup, sources: names.length ? names.join(", ") : "Input Hook / Magic Mapper"});
+            if (magic) text += " " + t("launch_cleanup_restart");
+        }
+        return text;
+    }
+    function launchDetails(info, failure, language) {
         var r = info.inspection, lines = [];
         if (failure) lines.push(t(failure));
         if (!r) return lines.length ? lines.join("\n\n") : t("launch_checking");
         lines.push(t("set_mode") + ": " + t("val_mode_" + info.current));
+        if (r.trial) lines.push(t("launch_trial"));
         if (info.recoveryNeeded) lines.push(t("launch_failed"));
         else if (info.busy) lines.push(t("mode_switching"));
         if (r.migrationAvailable) lines.push(t("launch_migrate"));
@@ -1124,25 +1151,27 @@ FocusScope {
             if (lines.indexOf(line) < 0) lines.push(line);
         }
         if (!failure && !info.busy && !r.issues.length && !r.migrationAvailable) lines.push(t("launch_ready"));
-        if (confirmation) {
-            lines.push(t("launch_confirm_" + confirmation));
-            if (confirmation === "native" && r.cleanup)
-                lines.push(Strings.format(t("launch_cleanup"), {count: r.cleanup}));
-            lines.push(t("launch_confirm_apply"));
-        }
         return lines.join("\n\n");
     }
+    // OK or a click on a method opens the popup that says what will happen;
+    // nothing changes until Yes. A changed configuration cancels it (loadMode).
     function chooseMode() {
         var o = valueOptions[valueIndex], r = modeInfo.inspection;
         if (!o || !r || modeInfo.busy) return;
         modeError = "";
         if (o.id === "native" && r.blockers.length) { modeError = r.blockers[0].code; return; }
         if (o.id === modeInfo.current && !(o.id === "native" && (r.cleanup || r.owner === "lg"))) return;
-        if (modeConfirm !== o.id || modeConfirmFingerprint !== r.fingerprint) {
-            modeConfirm = o.id; modeConfirmFingerprint = r.fingerprint; return;
-        }
-        modeRun(o.id, modeConfirmFingerprint);
-        modeConfirm = "";
+        modeConfirm = o.id; modeConfirmFingerprint = r.fingerprint; modeConfirmYes = false;
+    }
+    function answerMode(yes) {
+        var id = modeConfirm;
+        modeConfirm = ""; modeConfirmYes = false;
+        if (yes && id) modeRun(id, modeConfirmFingerprint);
+    }
+    // The "switch finished" popup: acknowledged once, per switch.
+    function ackModeDone() {
+        if (modeDoneAt > 0) setSetting("modeAck", modeDoneAt);
+        modeDoneAt = 0;
     }
     function toggleValue() {
         var o = valueOptions[valueIndex];
@@ -1335,6 +1364,18 @@ FocusScope {
             if (!event.isAutoRepeat && editIndex < 0 && Date.now() - foregroundSince > 600) closeHome();
             return;
         }
+        // The mode popups take every key while they are up; BACK answers No.
+        if (modeConfirm !== "" || modeDoneAt > 0) {
+            event.accepted = true;
+            if (event.isAutoRepeat) return;
+            modeKeyHeld = event.key;
+            if (modeConfirm === "") { if (isOk(event.key) || isBack(event.key)) ackModeDone(); return; }
+            if (isBack(event.key)) answerMode(false);
+            else if (isOk(event.key)) answerMode(modeConfirmYes);
+            else if (event.key === Qt.Key_Left || event.key === Qt.Key_Right || event.key === Qt.Key_Up || event.key === Qt.Key_Down)
+                modeConfirmYes = event.key === Qt.Key_Left || event.key === Qt.Key_Up;
+            return;
+        }
         if (page === "settings" && menuHover >= 0 && isOk(event.key) && !event.isAutoRepeat) {
             pane = 0; selected = menuHover;
         }
@@ -1357,7 +1398,10 @@ FocusScope {
         }
         else if (navigate(event.key)) event.accepted=true;
     }
+    // The key a popup answered: its release must not act on the page beneath.
+    property int modeKeyHeld: 0
     Keys.onReleased: {
+        if (modeKeyHeld === event.key) { event.accepted = true; if (!event.isAutoRepeat) modeKeyHeld = 0; return; }
         if (isHomeKey(event.key)) { event.accepted = true; return; }
         if (isYellow(event.key)) { event.accepted=true; if (!event.isAutoRepeat) secondaryAction(); return; }
         if (isRed(event.key)) { event.accepted=true; if (!event.isAutoRepeat) hideAction(); return; }
@@ -1397,7 +1441,7 @@ FocusScope {
         menuHover = -1; valueHover = -1;
         pointerAt = Qt.point(-1, -1);
         pressing = false; okHeld = false; longFired = false; holdTimer.stop(); okRelease.stop();
-        editIndex = -1; editSourceIndex = -1; editActionIndex = -1; notice = "";
+        editIndex = -1; editSourceIndex = -1; editActionIndex = -1; notice = ""; modeConfirm = "";
         if (foreground) {
             foregroundSince = Date.now();
             launching = false; message = ""; page="home"; selected=0; pane=0; forceActiveFocus();
@@ -2906,17 +2950,28 @@ FocusScope {
                     Flickable {
                         id: modeHelp
                         visible: shell.valueKey === "mode"
-                        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
-                        height: Math.min(modeDetailsText.implicitHeight, Math.max(shell.px(100), parent.height - shell.px(210)))
+                        anchors.left: parent.left; anchors.right: parent.right
+                        y: valueList.y + valueList.height + shell.px(22)
+                        height: Math.min(modeDetailsColumn.height, Math.max(shell.px(100), parent.height - y))
                         clip: true; interactive: true
-                        contentWidth: width; contentHeight: modeDetailsText.implicitHeight
+                        contentWidth: width; contentHeight: modeDetailsColumn.height
                         onContentYChanged: shell.modeDetailsOffset = Math.max(0, contentY)
-                        Text {
-                            id: modeDetailsText; width: parent.width
-                            text: shell.launchDetails(shell.modeInfo, shell.modeConfirm, shell.modeError, shell.lang) + "\n\n" + shell.t("mode_help")
-                            textFormat: Text.PlainText
-                            wrapMode: Text.WordWrap; font.family: shell.fontName; font.pixelSize: shell.pt(18); color: shell.ink2
-                            onTextChanged: modeHelp.contentY = 0
+                        // What the focused method does, then where things stand now.
+                        Column {
+                            id: modeDetailsColumn; width: parent.width; spacing: shell.px(18)
+                            Text {
+                                id: modeDescriptionText; width: parent.width
+                                text: shell.modeDescription(shell.valueOptions[shell.valueIndex] ? shell.valueOptions[shell.valueIndex].id : "")
+                                textFormat: Text.PlainText
+                                wrapMode: Text.WordWrap; font.family: shell.fontName; font.pixelSize: shell.pt(19); color: shell.ink
+                            }
+                            Text {
+                                id: modeDetailsText; width: parent.width
+                                text: shell.launchDetails(shell.modeInfo, shell.modeError, shell.lang)
+                                textFormat: Text.PlainText
+                                wrapMode: Text.WordWrap; font.family: shell.fontName; font.pixelSize: shell.pt(17); color: shell.ink3
+                                onTextChanged: modeHelp.contentY = 0
+                            }
                         }
                         MouseArea {
                             anchors.fill: parent; acceptedButtons: Qt.NoButton
@@ -2997,7 +3052,8 @@ FocusScope {
                         onContentHeightChanged: follow()
                         visible: !valuesPane.actionRow
                         x: 0; y: valuesTitle.y + valuesTitle.height + shell.px(14); width: parent.width
-                        height: parent.height - y - (inputPreview.visible ? inputPreview.height + shell.px(18) : modeHelp.visible ? modeHelp.height + shell.px(18) : 0)
+                        // The launch methods are only a few rows: the text about them sits right under.
+                        height: modeHelp.visible ? Math.min(valueColumn.height, parent.height - y - shell.px(160)) : parent.height - y - (inputPreview.visible ? inputPreview.height + shell.px(18) : 0)
                         clip: true; interactive: false
                         contentWidth: width; contentHeight: Math.max(height, valueColumn.height)
                         Behavior on contentY { NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
@@ -3067,4 +3123,62 @@ FocusScope {
             }
         }
     } // panel
+
+    // Mode change: what is about to happen, with Yes / No (opens on No); and,
+    // after a switch, one note that it finished. Above everything, it takes every key.
+    Rectangle {
+        id: modePopup
+        objectName: "modePopup"
+        visible: shell.modeConfirm !== "" || shell.modeDoneAt > 0
+        z: 60; x: 0; y: 0; width: shell.width; height: shell.height
+        color: Qt.rgba(0, 0, 0, 0.62)
+        MouseArea {
+            anchors.fill: parent
+            onClicked: { shell.noteActivity(); if (shell.modeConfirm !== "") shell.answerMode(false); else shell.ackModeDone(); }
+        }
+        Rectangle {
+            id: modeCard
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 2*shell.margin, shell.px(860)); height: modeColumn.implicitHeight + shell.px(60)
+            radius: shell.px(22); color: shell.chip; border.color: shell.warning; border.width: Math.max(1, 2*shell.u)
+            MouseArea { anchors.fill: parent; onClicked: {} }
+            Column {
+                id: modeColumn
+                x: shell.px(34); y: shell.px(30); width: parent.width - 2*x; spacing: shell.px(20)
+                Text {
+                    width: parent.width; wrapMode: Text.WordWrap
+                    text: shell.modeConfirm !== "" ? shell.t("mode_popup_" + shell.modeConfirm) : shell.t("set_mode")
+                    font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(26); color: shell.ink
+                }
+                Text {
+                    width: parent.width; wrapMode: Text.WordWrap; textFormat: Text.PlainText
+                    text: shell.modeConfirm !== "" ? shell.modePopupText(shell.modeConfirm) : shell.t(shell.modeDoneOk ? "mode_done" : "mode_failed")
+                    font.family: shell.fontName; font.pixelSize: shell.pt(20); color: shell.ink2
+                }
+                Row {
+                    spacing: shell.px(16)
+                    Repeater {
+                        model: shell.modeConfirm !== "" ? [true, false] : [true]
+                        Rectangle {
+                            readonly property bool yes: modelData
+                            readonly property bool lit: shell.modeConfirm === "" || shell.modeConfirmYes === yes
+                            objectName: shell.modeConfirm === "" ? "modeOk" : yes ? "modeYes" : "modeNo"
+                            width: shell.px(150); height: shell.px(52); radius: shell.px(12)
+                            color: lit ? shell.theme.focus : shell.theme.track
+                            Text {
+                                anchors.centerIn: parent
+                                text: shell.modeConfirm === "" ? shell.t("mode_ok") : shell.t(parent.yes ? "mode_yes" : "mode_no")
+                                font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(21)
+                                color: parent.lit ? shell.theme.onFocus : shell.ink
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: { shell.noteActivity(); if (shell.modeConfirm !== "") shell.answerMode(parent.yes); else shell.ackModeDone(); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

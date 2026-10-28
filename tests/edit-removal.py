@@ -24,10 +24,15 @@ for width,height in [(1920,1080),(1280,720)]:
    QCoreApplication.sendEvent(v,QKeyEvent(QEvent.KeyPress,code,Qt.NoModifier,'',repeat,1))
    QCoreApplication.sendEvent(v,QKeyEvent(QEvent.KeyRelease,code,Qt.NoModifier,'',repeat,1));rp.wait(60)
   def scene(kind,index=0,size='normal'):
-   data=dict(page='home',favs=[x[0] for x in rp.APPS[:7]],inputs=rp.inputs(rp.INPUTS),settings={'lang':'pl','tv':True,'inputText':'icon','size':size,'motion':False})
+   data=dict(page='home',favs=[x[0] for x in rp.APPS[:7]],inputs=rp.inputs(rp.INPUTS),settings={'lang':'pl','tv':True,'inputText':'icon','size':size,'motion':False,'homeCloseApps':True})
    data[{'fav':'editFav','source':'editSource','action':'editAction'}[kind]]=index
    root.scene(json.dumps(data));js('shell.ready=true;shell.forceActiveFocus()');rp.wait(100)
   def state():return js('({f:shell.favouriteKeys,s:shell.sources.map(function(x){return x.id;}),a:shell.homeActions.map(function(x){return x.action;})})')
+  # Close background apps is off until the user turns it on.
+  root.scene(json.dumps(dict(page='home',favs=[],inputs=rp.inputs(rp.INPUTS),settings={'lang':'pl','motion':False})));rp.wait(100)
+  assert js('shell.homeActions.map(function(x){return x.action;})')==['apps','system']
+  root.scene(json.dumps(dict(page='home',favs=[],inputs=rp.inputs(rp.INPUTS),settings={'lang':'pl','motion':False,'homeCloseApps':True})));rp.wait(100)
+  assert js('shell.homeActions.map(function(x){return x.action;})')==['closeApps','apps','system']
   for kind,index in [('fav',0),('fav',6),('source',0),('source',1),('action',0),('action',1)]:
    scene(kind,index,size='larger');before=state();key(Qt.Key_Down)
    assert state()==before and js('shell.pendingRemoval')

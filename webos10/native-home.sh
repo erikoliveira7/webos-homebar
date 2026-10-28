@@ -1,5 +1,5 @@
 #!/bin/sh
-# Experimental direct Home on webOS 10/11. No Input Hook, no native UI rewrite:
+# Experimental direct Home on webOS 10/11 (and a trial on 7 to 9). No Input Hook, no native UI rewrite:
 # SAM starts the TV's QML runner under the Home identity. Restore is explicit.
 set -eu
 BASE=/var/lib/webosbrew/rawin-launcher-home
@@ -10,20 +10,26 @@ HOME_ID=com.webos.app.home
 DB=9969c85c6e1c20a73a4ac456d46e31f7
 STORE=/home/root/.local/share
 luna() { luna-send -n 1 "luna://com.webos.applicationManager/$1" "$2" </dev/null; }
+# webOS 10/11, or 7 to 9 where the owner started the trial (install.sh --try-native-home).
+native_ok() { grep -qE 'release (10|11)\.' /etc/starfish-release || { [ -f "$BASE/native-trial" ] && grep -qE 'release (7|8|9)\.' /etc/starfish-release; }; }
 stop_panels() {
+    mode=${1:-all}
     # Directory identity alone misses another launcher's nested/binary mount.
-    if [ "${1:-all}" != overlay ]; then
-      case "$(node "$INTEGRATION" owner)" in lg|native|legacy) ;; *) set -- overlay ;; esac
+    if [ "$mode" = all ]; then
+      case "$(node "$INTEGRATION" owner)" in lg|native|legacy) ;; *) mode=overlay ;; esac
     fi
-    luna closeByAppId '{"id":"org.rawin.launcher"}' >/dev/null 2>&1 || true
-    if [ "${1:-all}" != overlay ]; then luna closeByAppId '{"id":"com.webos.app.home"}' >/dev/null 2>&1 || true; fi
+    # "home" is the sweep after LG's Home was given back: only a QML host that
+    # SAM preloaded from the stand-in just before the unmount may still run.
+    if [ "$mode" != home ]; then luna closeByAppId '{"id":"org.rawin.launcher"}' >/dev/null 2>&1 || true; fi
+    if [ "$mode" = all ]; then luna closeByAppId '{"id":"com.webos.app.home"}' >/dev/null 2>&1 || true; fi
     # System Home can survive closeByAppId. Match only our two QML hosts,
     # never another application or the firmware's native/Flutter launcher.
     for cmd in /proc/[0-9]*/cmdline; do
         args=$({ tr '\000' ' ' <"$cmd"; } 2>/dev/null) || continue
         case "$args" in /usr/bin/qml-runner\ *) ;; *) continue ;; esac
         if printf '%s' "$args" | grep -qE '"appId"[[:space:]]*:[[:space:]]*"(com\.webos\.app\.home|org\.rawin\.launcher)"'; then
-            if [ "${1:-all}" = overlay ] && ! printf '%s' "$args" | grep -q '"org.rawin.launcher"'; then continue; fi
+            if [ "$mode" = overlay ] && ! printf '%s' "$args" | grep -q '"org.rawin.launcher"'; then continue; fi
+            if [ "$mode" = home ] && ! printf '%s' "$args" | grep -q 'com.webos.app.home'; then continue; fi
             pid=${cmd#/proc/}; pid=${pid%/cmdline}
             kill "$pid" 2>/dev/null || true
             sleep 1
@@ -51,8 +57,11 @@ case "${1:-status}" in
   check-owner) node "$INTEGRATION" check ;;
   enable) exec sh "$BASE/mode-switch.sh" native ;;
   activate)
-    grep -qE 'release (10|11)\.' /etc/starfish-release || { echo 'Native Home currently supports webOS 10/11 only' >&2; exit 1; }
+    native_ok || { echo 'Native Home currently supports webOS 10/11 only' >&2; exit 1; }
     [ ! -f "$BASE/keep-lg-home" ] || { echo 'Disable keep-lg-home before enabling native Home' >&2; exit 1; }
+    trial=
+    grep -qE 'release (10|11)\.' /etc/starfish-release || trial=1
+    [ -z "$trial" ] || sh "$BASE/native-trial.sh" begin
     was_native=
     [ ! -f "$BASE/native-home" ] || was_native=1
     # Check ownership before stopping any system Home host.
@@ -71,6 +80,16 @@ case "${1:-status}" in
       exit 1
     fi
     luna launch '{"id":"com.webos.app.home"}' | grep -q '"returnValue": *true'
+    launched=$?
+    # On a webOS where this is only a trial, SAM has to report a QML Home with
+    # a running qml-runner, or LG Home is given back at once.
+    if [ -n "$trial" ] && ! sh "$BASE/native-trial.sh" verify; then
+      sh "$BASE/takeover.sh" restore || true
+      rm -f "$BASE/native-home"
+      echo 'The native Home did not come up on this webOS; LG Home restored.' >&2
+      exit 1
+    fi
+    exit "$launched"
     ;;
   release)
     if [ -f "$BASE/native-home" ]; then
@@ -105,6 +124,7 @@ case "${1:-status}" in
     echo 'Standard overlay restored. Check your mapper configuration before using HOME.'
     ;;
   stop-overlay) stop_panels overlay ;;
+  stop-home) stop_panels home ;;
   copy-back) copy_store "$HOME_ID" org.rawin.launcher ;;
   stop) stop_panels ;;
   status) sh "$BASE/takeover.sh" status ;;

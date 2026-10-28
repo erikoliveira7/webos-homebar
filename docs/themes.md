@@ -5,8 +5,8 @@ values are a list; moving along it repaints the panel at once, so the list
 itself is the preview. The choice is saved with the other settings and kept
 by updates.
 
-There are eight: **Default**, the launcher's original grey look, and seven
-two-colour themes, three on a dark base and four on a light one. (Meadow,
+There are nine: **Default**, the launcher's original grey look, and eight
+two-colour themes, four on a dark base and four on a light one. (Meadow,
 Sky and Violet were taken out in 0.14.0; a TV that had one of them saved
 falls back to Default.)
 
@@ -21,7 +21,7 @@ Every theme other than Default is an **accent** and a **base**:
 | **Shade** | Not chosen: always dark, a near-black of the base, under the name and the rail and behind the clock bar. The big name, the hints and the version over it stay white or light grey in every theme |
 
 Text on the accent is white, or near-black when the accent is a light colour
-(Lime, Lagoon, Midnight). Warnings and the favourite you are moving use
+(Lime, Lagoon, Midnight, Amber). Warnings and the favourite you are moving use
 amber in every theme.
 
 The pictures below are the real panel, drawn on a computer with an HDMI input
@@ -34,6 +34,7 @@ stand-ins.
 | [Lime](#lime) | <img src="themes/lime-colors.svg" width="56" alt="Lime: accent #B6FF2E, base #1F2329"> | `#B6FF2E` | `#1F2329` |
 | [Lagoon](#lagoon) | <img src="themes/lagoon-colors.svg" width="56" alt="Lagoon: accent #D6FFCB, base #042F32"> | `#D6FFCB` | `#042F32` |
 | [Midnight](#midnight) | <img src="themes/midnight-colors.svg" width="56" alt="Midnight: accent #D7FFE0, base #050505"> | `#D7FFE0` | `#050505` |
+| [Amber](#amber) | <img src="themes/amber-colors.svg" width="56" alt="Amber: accent #FFC21A, base #1E1B14"> | `#FFC21A` | `#1E1B14` |
 | [Terracotta](#terracotta) | <img src="themes/terracotta-colors.svg" width="56" alt="Terracotta: accent #E26F4A, base #FFFCF4"> | `#E26F4A` | `#FFFCF4` |
 | [Cherry](#cherry) | <img src="themes/cherry-colors.svg" width="56" alt="Cherry: accent #FF173D, base #F9DEDF"> | `#FF173D` | `#F9DEDF` |
 | [Cobalt](#cobalt) | <img src="themes/cobalt-colors.svg" width="56" alt="Cobalt: accent #1D61F3, base #F1F4F9"> | `#1D61F3` | `#F1F4F9` |
@@ -70,6 +71,12 @@ focused.
 <img src="themes/midnight-colors.svg" width="56" alt=""> Accent `#D7FFE0` on black `#050505`.
 
 <img src="themes/midnight.png" width="100%" alt="Midnight theme: near-black tiles, pale mint focused HDMI 2 pill">
+
+### Amber
+
+<img src="themes/amber-colors.svg" width="56" alt=""> Accent `#FFC21A` on warm black `#1E1B14`.
+
+<img src="themes/amber.png" width="100%" alt="Amber theme: warm black tiles, yellow focused HDMI 2 pill">
 
 ## Light themes
 

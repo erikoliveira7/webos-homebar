@@ -126,6 +126,11 @@
             if (r.busy) modePoll.restart();
             if (r.result && r.result.ok === false)
                 modeError = r.result.error || "launch_failed";
+            // One note per finished switch, until the user has seen it (or ten minutes passed).
+            if (!r.busy && r.result && r.result.at > settings.modeAck && Date.now() - r.result.at < 600000 && modeConfirm === "") {
+                modeDoneOk = r.result.ok === true;
+                modeDoneAt = r.result.at;
+            }
         });
     }
     onLaunchCheckRequested: loadMode()

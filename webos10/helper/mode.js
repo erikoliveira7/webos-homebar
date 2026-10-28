@@ -42,7 +42,7 @@ class ModeControl {
       const codes = detail.match(/launch_[a-z_]+/g);
       let restored = {};
       try { restored = JSON.parse(String(stdout || '').trim().split('\n').pop()); } catch (e) {}
-      const result = { ok: !err, error: err ? (codes ? codes[codes.length-1] : 'launch_failed') : '', detail: detail, restoreSkipped: !!restored.restoreSkipped };
+      const result = { ok: !err, error: err ? (codes ? codes[codes.length-1] : 'launch_failed') : '', detail: detail, restoreSkipped: !!restored.restoreSkipped, at: Date.now() };
       try { this.fs.writeFileSync(BASE + '/mode-result.json', JSON.stringify(result)); } catch (e) {}
       this.busy = false;
       this.finished();

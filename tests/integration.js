@@ -14,7 +14,7 @@ function fixture(){
  const integration=new Integration({fs:mapped,processes:()=>processes,execFileSync:(bin,args)=>{if(args[1]==='restart'){restarts++;if(failReload)throw Error('reload failed');put('/tmp/magic_mapper_python.pid',String(100+restarts));put('/proc/'+(100+restarts)+'/cmdline','python\u0000'+MM+'\u0000');}}});
  return {dir,put,real,integration,json:p=>JSON.parse(fs.readFileSync(real(p),'utf8')),
   mm(config,active=false){put(MM,'VERSION = "1.1.0"\ndef get_button_map():\n magic_mapper_config.json\ndef launch_app(inputs): pass');put(CFG,config);put('/var/lib/webosbrew/init.d/start_magic_mapper','SCRIPT=/home/root/magic_mapper.py\nPYTHON_PIDFILE=/tmp/magic_mapper_python.pid\nrestart)');if(active)processes=[['python',MM]];},
-  fail:()=>failReload=true,restarts:()=>restarts,cleanup:()=>fs.rmSync(dir,{recursive:true,force:true})};
+  fail:()=>failReload=true,setProcesses:p=>processes=p,restarts:()=>restarts,cleanup:()=>fs.rmSync(dir,{recursive:true,force:true})};
 }
 let count=0;
 function check(fn){const f=fixture();try{fn(f);count++;}finally{f.cleanup();}}
@@ -52,4 +52,16 @@ check(f=>{f.put('/shared/keys.json',{'773':{action:'launch',id:'org.rawin.launch
 check(f=>{f.mm({home:own});f.put('/shared/magic.json',f.json(CFG));fs.unlinkSync(f.real(CFG));fs.symlinkSync(f.real('/shared/magic.json'),f.real(CFG));f.integration.clean('native',BASE+'/journal');assert(fs.lstatSync(f.real(CFG)).isSymbolicLink());assert(!f.json(CFG).home);});
 check(f=>{f.put(IH,{'773':{action:'unknown_action'}});assert(f.integration.inspect().blockers.some(i=>i.code==='launch_config_unknown'));});
 check(f=>{f.mm({magic_mapper_settings:{exclusive_mode:'false'},home:{function:'press_button',inputs:{button:'home'}}});assert(f.integration.inspect().blockers.length);});
+// Input Hook removed (app, service, config) but its /tmp/inputhook lock is still
+// there: only a stale file, so uninstall may go on; while the app is installed or
+// a process of it runs, a missing config stays unknown.
+check(f=>{f.put('/tmp/inputhook','');assert.strictEqual(f.integration.inspect().blockers.length,0);});
+check(f=>{f.put('/tmp/inputhook','');f.put('/media/developer/apps/usr/palm/applications/org.webosbrew.inputhook/appinfo.json','{}');assert(f.integration.inspect().blockers.some(i=>i.code==='launch_config_unknown'));});
+check(f=>{f.put('/tmp/inputhook','');f.setProcesses([['node','/media/developer/apps/usr/palm/services/org.webosbrew.inputhook.service/service.js']]);assert(f.integration.inspect().blockers.some(i=>i.code==='launch_config_unknown'));});
+check(f=>{f.put('/tmp/inputhook','');f.setProcesses([['sh','-c','touch /tmp/inputhook; grep inputhook /proc/mounts']]);assert.strictEqual(f.integration.inspect().blockers.length,0);});
+check(f=>{f.put('/etc/starfish-release','release 9.2.2');const r=f.integration.inspect();assert(!r.nativeSupported&&!r.trial,'webOS 9 without the trial');});
+check(f=>{f.put('/etc/starfish-release','release 9.2.2');f.put(BASE+'/native-trial','');const r=f.integration.inspect();assert(r.nativeSupported&&r.trial,'webOS 9 with the trial');});
+check(f=>{f.put('/etc/starfish-release','release 7.5.0');f.put(BASE+'/native-trial','');assert(f.integration.inspect().nativeSupported);});
+check(f=>{f.put('/etc/starfish-release','release 6.3.2');f.put(BASE+'/native-trial','');assert(!f.integration.inspect().nativeSupported,'webOS 6 stays out');});
+check(f=>{f.put(BASE+'/native-trial','');const r=f.integration.inspect();assert(r.nativeSupported&&!r.trial,'webOS 10 is not a trial');});
 console.log('PASS',count,'integration cases: schema-aware cleanup, preservation, conditional lists, reload, rollback, changed config');

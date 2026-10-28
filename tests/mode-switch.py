@@ -21,7 +21,7 @@ class TV:
   for id,value in [('org.rawin.launcher','app-data'),('com.webos.app.home','old-home-data')]:
    for suffix in ['sqlite','ini','sqlite-wal','sqlite-shm']:self.put(STORE+'/'+id+'/QML/OfflineStorage/Databases/'+DB+'.'+suffix,value+'-'+suffix)
   if mapper:self.put(KEYS,json.dumps({'773':{'action':'launch','id':'org.rawin.launcher'},'1042':{'action':'launch','id':'other.app'},'500':{'action':'launch','id':'org.rawin.launcher'}}))
-  for src,dst in [('mode-switch.sh','mode-switch.sh'),('native-home.sh','native-home.sh'),('home-takeover.sh','takeover.sh'),('integration.js','integration.js'),('uninstall.sh','uninstall.sh')]:
+  for src,dst in [('mode-switch.sh','mode-switch.sh'),('native-home.sh','native-home.sh'),('native-trial.sh','native-trial.sh'),('home-takeover.sh','takeover.sh'),('integration.js','integration.js'),('uninstall.sh','uninstall.sh')]:
    s=(ROOT/'webos10'/src).read_text()
    s=re.sub(r'(?<![\w/])(?:/var/lib/|/media/developer/|/usr/palm/|/usr/bin/qml-runner|/usr/bin/com.webos.app.home|/home/root/|/etc/starfish-release|/proc/|/tmp/)',lambda m:str(self.root)+m[0],s)
    s=s.replace("readdirSync('/proc')", "readdirSync('"+str(self.root)+"/proc')")
@@ -118,6 +118,14 @@ def test():
    before=t.p(KEYS).read_bytes();t.switch('native',False);assert t.p(KEYS).read_bytes()==before
    assert not t.p(BASE+'/mode-switch-lock').exists();count+=1
   finally:t.clean()
+ # The trial on webOS 9: allowed once the owner asked for it, undone at once when SAM never reports a running QML Home.
+ t=TV(release='9.0')
+ try:
+  t.put(BASE+'/native-trial','');t.put(BASE+'/keep-lg-home','');before=t.p(KEYS).read_bytes();linked=t.p(HOME).is_symlink()
+  t.switch('native',False)
+  assert not t.p(BASE+'/native-home').exists() and t.p(HOME).is_symlink()==linked and t.p(KEYS).read_bytes()==before
+  assert 'Home after' in t.p(BASE+'/native-trial.log').read_text();count+=1
+ finally:t.clean()
  t=TV(mapper=False)
  try:
   t.switch('native');t.switch('overlay');assert not t.p(KEYS).exists();count+=1
@@ -176,7 +184,7 @@ def test():
    (bundle/'ui/icon.png').write_text('icon')
    for name in ['update.sh','diagnose.sh','VERSION','probe.sh']:(bundle/name).write_text('test')
    (bundle/'webos4').mkdir();(bundle/'webos4/patch-home.js').write_text('test')
-   for name in ['native-home.sh','native-stage.js','mode-switch.sh','integration.js','uninstall.sh']:
+   for name in ['native-home.sh','native-stage.js','native-trial.sh','mode-switch.sh','integration.js','uninstall.sh']:
     source=t.p(BASE+'/'+name)
     if source.exists():shutil.copyfile(source,bundle/'webos10'/name)
     else:(bundle/'webos10'/name).write_text('exit 0')

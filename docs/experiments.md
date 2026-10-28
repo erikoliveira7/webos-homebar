@@ -62,57 +62,33 @@ that tried it keeps the copy until `home-override.sh remove` and a reboot.
 
 ## Direct system Home
 
-`--native-home` uses the TV's existing native QML host directly as
-`com.webos.app.home`, with the same Homebar overlay UI. System HOME reaches
-that instance without an Input Hook binding. The host registers lifecycle v2
-with the application manager; this does not replace Qt or rewrite the panel.
-It accepts webOS 10/11 only; B4 on 10.3.1 was tested, including startup after
-a system reboot. webOS 11 has not been tested. It does not change the Home
-panel used on older TVs. This is what a fresh install on webOS 10/11 uses.
+Now part of the release (see [How it works](how-it-works.md#system-home-webos-10-and-11)
+and [Launch method](using.md#launch-method-overlay-builds)). Notes from the
+test TVs:
 
-From the unpacked release:
+- **Tested:** an LG B4 on webOS 10.3.1: install, update, switching between
+  System HOME and the additional overlay in both directions, reboots in each
+  method, uninstall and a clean install. webOS 11 and other TVs are untested;
+  webOS 7 to 9 have the opt-in trial (`--try-native-home`,
+  [install](install.md#trying-system-home-on-webos-7-to-9)).
+- **It is not a new renderer.** The firmware's QML runner hosts the same panel
+  under LG Home's id with lifecycle v2; a shorter HOME path may help startup and
+  keeping the process, but not the QML rendering cost. Compare physical HOME,
+  arrow animation, pointer use, app switching and a cold boot before calling it
+  faster.
+- **Switching is a journalled change** (`mode-switch.sh`): a failure or a power
+  loss rolls back, Homebar's databases are copied between the two hosts, and the
+  card that was in front is brought back, because the Home host first opens as a
+  card of its own and LG would otherwise fall back to Live TV.
+- **The app manager keeps what it read about Home.** A Home identity with a
+  launch point of its own (`visible: true`) cannot be blocked and reread, so the
+  staged manifest keeps `visible: false`; a restart of the TV clears a wrong
+  state.
+- **Magic Mapper and Input Hook:** recognised Homebar rules are backed up and
+  removed when switching to System HOME and restored for the additional
+  overlay only where you did not change them since; other actions stay.
 
-```sh
-sh rawin-launcher/install.sh --native-home
-```
-
-Do not combine this with another Home replacement or `--keep-lg-home`.
-The installer removes only recognised Input Hook and Magic Mapper bindings targeting Homebar, leaving other
-button mappings alone. Files are bind-mounted over Home; original system files
-remain underneath. Saved Homebar data is copied to the Home host's storage;
-the reverse copy is made when disabling. Updates retain an enabled native mode. Disable it before installing an older
-release whose installer does not support native Home. System HOME offers “After holding BACK”: choose the last input, TV or a physical
-input. The helper redirects only when an application leaves no full-screen card,
-before LG starts its repeated Home/Live TV fallback. Normal HOME over a playing
-app still toggles the panel without switching inputs.
-
-To return to the ordinary overlay and its previous Homebar key binding:
-
-```sh
-sh /var/lib/webosbrew/rawin-launcher-home/native-home.sh disable
-```
-
-Status is available with the same script's `status` command. Uninstall disables
-native mode before removing the package. The boot hook reapplies the mount and
-starts Home hidden, without starting Input Hook for Homebar. Other tools may
-still start Input Hook for their own mappings.
-
-A shorter HOME dispatch path and the system Home identity may improve startup
-and process retention. They do not by themselves change the QML rendering cost.
-Compare physical HOME, arrow animation, pointer use, app switching and cold boot
-before treating this as a performance improvement.
-
-**Launcher settings → Help → Launch method**, allowing
-later changes between direct Home and a companion overlay. The companion keeps
-another launcher's HOME and does not redirect app exits to HDMI. Its button is
-configured separately by the user. A journal restores the previous configuration
-and Homebar databases if changing modes fails, and is checked on the next boot
-if a change was interrupted. Settings-based switching is locally tested only;
-it has not been deployed to a TV.
-
-Fresh automatic installs select a launch method after checking
-Home ownership and mapper configuration. Updates preserve the existing choice.
-The settings preview shows cleanup and conflicts, with confirmation and a stale
-configuration check. Input Hook configuration is saved in place like its own API
-(for older watchers), with a recovery journal; Magic Mapper uses an atomic file
-replacement and supervised reload when active. Details: [Launch method](using.md#launch-method-overlay-builds).
+From the unpacked release: `sh rawin-launcher/install.sh --native-home`. To
+return to the overlay: *Launcher settings → Launch method*, or
+`sh /var/lib/webosbrew/rawin-launcher-home/native-home.sh disable`; `status`
+shows the state.

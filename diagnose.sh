@@ -94,6 +94,10 @@ or_note() { out=$("$@" 2>/dev/null); if [ -n "$out" ]; then echo "$out"; else ec
     if [ -f "$OVERLAY_BASE/native-home" ]; then
         echo "native Home: system HOME dispatch; no Input Hook binding required"
     fi
+    if [ -f "$OVERLAY_BASE/native-trial.log" ]; then
+        section "Native Home trial (webOS 7 to 9)"
+        cat "$OVERLAY_BASE/native-trial.log"
+    fi
     show /home/root/.config/lginputhook/keybinds.json
     echo
     for f in /tmp/lginput-hook-*.log; do [ -f "$f" ] && { echo "-- $f"; grep -v 'Keybinds reloaded' "$f" | tail -n 8; }; done

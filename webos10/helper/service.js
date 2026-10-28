@@ -251,8 +251,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/exit-target') {
       const id = String(query.id || 'last');
       returner.setTarget(id);
-      saveSettings({ exitTo: returner.target || 'last' });
-      return send(res, 200, { returnValue: true, exitTo: returner.target || 'last' });
+      const saved = returner.none ? 'none' : returner.target || 'last';
+      saveSettings({ exitTo: saved });
+      return send(res, 200, { returnValue: true, exitTo: saved });
     }
     // Updates: update.sh next to the installed launcher (check, download, install, status).
     if (url.pathname === '/update') {

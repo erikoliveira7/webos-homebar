@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/rawinek/webos-homebar/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/rawinek/webos-homebar?label=release"></a>
-  <img alt="webOS 4, 5, 6 and 10 tested" src="https://img.shields.io/badge/webOS-4%20%7C%205%20%7C%206%20%7C%2010%20tested-a50034">
+  <img alt="webOS 4, 5, 6, 7 and 10 tested" src="https://img.shields.io/badge/webOS-4%20%7C%205%20%7C%206%20%7C%207%20%7C%2010%20tested-a50034">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/rawinek/webos-homebar"></a>
 </p>
 
@@ -46,7 +46,7 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
     <td><img src="docs/screenshots/home-larger.jpg" alt="The Home row with the larger text size and a 12-hour clock"></td>
   </tr>
   <tr>
-    <td><b>Eight colour themes.</b> The original grey and seven two-colour themes, dark and light. <a href="docs/themes.md">See them all</a>.</td>
+    <td><b>Nine colour themes.</b> The original grey and eight two-colour themes, dark and light. <a href="docs/themes.md">See them all</a>.</td>
     <td><b>Readable from the sofa.</b> Three text sizes, a 24- or 12-hour clock, and a layout that fits HD as well as FHD and UHD screens.</td>
   </tr>
 </table>
@@ -66,46 +66,51 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
   → Updates*, with what is new in each; a dot on *System* says when one is
   there.
 - **Backup and restore** of favourites and settings in one file.
-- **webOS 10:** LG's own Home stays out of the way. A black stand-in takes
-  its place, and the TV goes back to the last input (or a chosen one) when
-  an app exits or BACK is held. Only a HOME in the first 40 s after a cold
-  boot, before the Homebrew Channel's hooks run, opens LG's Home once.
+- **After an app exits or BACK is held** (System HOME and the older overlay):
+  the TV goes back to the last input, a chosen one, or does nothing; choose
+  in *Launcher settings → After holding BACK*.
 - Nothing of LG's is uninstalled, and the TV's system partition is not
   written to. The uninstaller gives LG's Home back at once.
 
+## How Homebar opens
+
+Homebar is one panel, put on the screen in the way the TV allows. The
+installer picks the method from what the TV has; *Launcher settings → Help →
+Launch method* changes it where more than one fits.
+
+| Method | What it is | Needs | Typical TV |
+| :--- | :--- | :--- | :--- |
+| **Home panel** | The panel runs *inside* LG's own QML Home, which keeps HOME, its window and its lifecycle | Root only | webOS 4 and 5 (e.g. LG C9) |
+| **System HOME (native)** | Homebar replaces LG's Home: HOME opens it directly. On webOS 9 to 11 LG's own Home is a Flutter app; Homebar puts its own QML host in its place | Root only; no Input Hook, no mapper | webOS 10 and 11 (e.g. LG B4); a trial on 7 to 9 |
+| **Additional overlay** | A separate app and root helper next to your Home. LG Home (or Luma, Glasshouse) keeps HOME; Homebar opens from its **app tile** or from a button you map | Input Hook or Magic Mapper for a button (not for the tile) | webOS 6 or newer (checked on 10) |
+
+The overlay can also take HOME itself, through a binding in Input Hook
+(*HOME via mapper*): that is what webOS 6 to 9 get by default, and what earlier
+installs use. An update never changes the method.
+
 ## Compatibility
 
-| webOS (LG's name) | How Homebar runs | Status |
+| webOS (LG's name) | Method | Status |
 | :--- | :--- | :--- |
-| 4.x (webOS 4.0 / 4.5, 2018–2019) | Inside LG's own Home, which keeps its HOME handling (the *Basic* Home screen, where a TV has two) | Tested on 4.10 (LG C9, and LG UM7100, B9 and E9 by users) |
-| 5.x (webOS 5.0, 2020) | Inside LG's own Home, as on 4.x | Tested on 5.6 (LG NANO80, LG UN73 and LG UN90, by users) |
-| 6.x (webOS 6.0, 2021) | The overlay, with LG's Home kept | Tested on 6.3 and 6.5 (LG C1 and LG UP78, by users) |
-| 10.x (webOS 25, 2025) | The system Home (or an overlay app with a root helper) | Tested on 10.3 (LG B4, system HOME; LG UR78 by a user, overlay) |
-| 7.x (webOS 22, 2022) | The overlay, with LG's Home kept | Tested on 7.5 (a 2022 TV, by a user) |
-| 3.x, 8.x–9.x, 11.x (webOS 3, 23–24, 26) | Whichever of the two the TV has the makings for | Untested |
+| 3.x (2016–2017) | Home panel, if the patch fits | Untested |
+| 4.x (webOS 4.0 / 4.5, 2018–2019) | Home panel (on a TV with two Home screens, set to *Basic*) | Tested on 4.10 (LG C9, and UM7100, B9 and E9 by users) |
+| 5.x (webOS 5.0, 2020) | Home panel | Tested on 5.6 (LG NANO80, UN73 and UN90, by users) |
+| 6.x (webOS 6.0, 2021) | Overlay, HOME via Input Hook (or the additional overlay) | Tested on 6.3 and 6.5 (LG C1 and UP78, by users) |
+| 7.x (webOS 22, 2022) | Overlay, HOME via Input Hook; System HOME as a trial | Overlay tested on 7.5 (by a user); System HOME untested |
+| 8.x, 9.x (webOS 23, 24) | Overlay, HOME via Input Hook; System HOME as a trial | Untested |
+| 10.x (webOS 25, 2025) | **System HOME (native)**, or the additional overlay | Tested on 10.3: LG B4 (System HOME), LG UR78 (overlay, by a user) |
+| 11.x (webOS 26, 2026) | System HOME | Untested |
 
-LG names webOS after the year since 2022 (webOS 25 is version 10.x, webOS 22
-is 7.x), and an older TV can be updated to a newer webOS, so go by the
-version the TV reports. `sh install.sh --probe` shows it, says which variant
-fits, and changes nothing. Details in [Compatibility](docs/compatibility.md#webos-versions).
+LG names webOS after the year since 2022 (webOS 25 is version 10.x), and an
+older TV can be updated to a newer webOS, so go by the version the TV reports.
+`sh install.sh --probe` shows it, says which method fits, and changes nothing.
+More in [Compatibility](docs/compatibility.md).
 
 ## Install
 
 You need a rooted TV with the
 [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel) and a
-root shell (SSH or telnet).
-
-**How Homebar gets the HOME button.** On webOS 4 and 5 it lives inside LG's own
-Home. On webOS 10 and 11 a fresh install becomes the system's Home itself
-(*system HOME*): no Input Hook and no button mapping are needed. If another
-launcher already owns HOME, or a mapper setup cannot be checked, the installer
-adds Homebar as an *additional overlay* and leaves that HOME alone. Existing
-installs keep their launch method, and it can be changed in *Launcher settings →
-Help → Launch method*. On webOS 6 to 9 the overlay needs Input Hook: install
-and open it from the Homebrew Channel first. See
-[Launch method](docs/using.md#launch-method-overlay-builds).
-
-Log in to the TV as root, then:
+root shell (SSH or telnet). Log in to the TV as root, then:
 
 ```sh
 cd /tmp
@@ -114,12 +119,41 @@ rm -rf rawin-launcher && tar xzf rawin-launcher.tar.gz
 sh rawin-launcher/install.sh
 ```
 
-Press HOME on the remote when it is done. Options, installing without internet
-on the TV, updating and uninstalling: [Install, update, uninstall](docs/install.md).
+The installer prints the webOS it found and the method it picked, then each
+step. **Press HOME on the remote when it is done** (additional overlay: open
+the Homebar app tile, or press the button you mapped).
+
+- **webOS 10 and 11:** a fresh install becomes System HOME. If another
+  launcher owns HOME or a mapper cannot be checked, it installs the additional
+  overlay instead and says why; nothing is overwritten.
+- **webOS 6 to 9:** the overlay, with HOME bound through *Input Hook*:
+  install and open it from the Homebrew Channel first (a supported Magic
+  Mapper HOME shortcut works too). `--additional-overlay` leaves HOME to LG
+  and opens Homebar from its app tile or a button you map.
+- **webOS 4 and 5:** the Home panel; nothing else is needed.
+- Choose by hand: `--native-home`, `--additional-overlay`, `--home-panel`,
+  `--overlay`. All options, installing without internet on the TV, updating
+  and uninstalling: [Install, update, uninstall](docs/install.md).
 
 **Update:** *System → Launcher settings → Updates* (from 0.10.0 on).
 **Uninstall:** `sh /var/lib/webosbrew/rawin-launcher/uninstall.sh` (Home panel)
-or `sh /var/lib/webosbrew/rawin-launcher-home/uninstall.sh` (overlay).
+or `sh /var/lib/webosbrew/rawin-launcher-home/uninstall.sh` (overlay and
+System HOME); LG's Home comes back at once.
+
+### Trying a TV that is not on the list
+
+```sh
+sh rawin-launcher/install.sh --probe             # what would be installed, and why; changes nothing
+sh rawin-launcher/install.sh                      # the method that fits
+sh rawin-launcher/install.sh --try-native-home    # webOS 7, 8 or 9: a trial of System HOME
+```
+
+The trial gives LG's Home back at once if the app manager does not take
+Homebar's, and writes `/tmp/homebar-native-trial.txt`. Whether it worked or
+not, open an [issue](https://github.com/rawinek/webos-homebar/issues) with the
+TV model, the webOS version, what HOME did, and that file (for an ordinary
+install, the file from `diagnose.sh`). That is how new TVs get on the list. See
+[Trying System HOME on webOS 7 to 9](docs/install.md#trying-system-home-on-webos-7-to-9).
 
 Homebar was called **rawin-launcher** until 0.12.0. The release file and the
 folders on the TV keep that name, so earlier installs update in place, and the
@@ -148,10 +182,16 @@ projects, you can support my work by
 ## Credits
 
 - [webOS Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel)
-  for root, `elevate-service` and the boot hooks, and Input Hook for the HOME
-  button.
+  for root, `elevate-service` and the boot hooks.
 - [Glasshouse](https://github.com/rorygallagher2024/glasshouse) showed how the
-  app manager re-reads LG's Home on webOS 10 (block and release of one app).
+  app manager re-reads LG's Home on webOS 10 (block and release of one app);
+  [Luma](https://github.com/ecklf/lg-luma) is the other launcher that takes
+  over HOME, on webOS 5, 6, 10 and 11.
+- [Magic Mapper](https://github.com/andrewfraley/magic_mapper) and Input Hook
+  are the two button mappers Homebar can work with.
+- Device icons: [Custom Brand Icons](https://github.com/elax46/custom-brand-icons)
+  (MIT) and [Material Design Icons](https://github.com/Templarian/MaterialDesign)
+  (Apache 2.0); see `ui/input-icons/`.
 - [Inter](https://github.com/rsms/inter) typeface, SIL Open Font License 1.1.
 - Video in the screenshots: *Big Buck Bunny* © Blender Foundation,
   [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).

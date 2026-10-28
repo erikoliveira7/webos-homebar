@@ -11,6 +11,10 @@ function stage(app, target) {
     info.nativeLifeCycleInterfaceVersion = 2;
     info.appCategory = ['home'];
     info.defaultWindowType = 'overlay';
+    // The Home identity must stay out of the launch point list: SAM refuses to
+    // block (and so to reread) an app that has a tile, and LG Home could not
+    // be given back. The app tile belongs to org.rawin.launcher only.
+    info.visible = false;
     info.closeOnBackground = false;
     fs.writeFileSync(path.join(target, 'appinfo.json'), JSON.stringify(info, null, 2));
     ['main.qml', 'Panel.qml', 'FavouriteStore.qml', 'Strings.js', 'Themes.js', 'About.js', 'DeviceIcons.js', 'DeviceIcon.qml', 'input-icons', 'fonts', 'icon.png'].forEach(function (name) {

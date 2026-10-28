@@ -2,16 +2,19 @@
 # Homebar: install the variant for this TV. Run on the TV as root from the
 # unpacked release: sh install.sh [options]
 #
-# Two variants, and the TV gets the one it has the makings for, not the one
+# Three methods, and the TV gets the one it has the makings for, not the one
 # its version number says (probe.sh decides; see docs/compatibility.md):
-#   Home panel  the panel inside LG's own Home: where Home is a QML app and
-#               the patch fits it (webOS 4 and 5 tested; webOS 3 to 8 have a QML Home)
-#   overlay     an overlay app with a root helper: where Home cannot be
-#               patched (webOS 10 tested; webOS 9 and 11 have that Home)
+#   Home panel  the panel inside LG's own QML Home (webOS 3 to 5, e.g. an LG C9;
+#               webOS 4 and 5 tested)
+#   system HOME Homebar replaces LG's Home: no Input Hook, no mapper (webOS 10
+#               and 11; a trial on 7 to 9 with --try-native-home)
+#   overlay     an overlay app with a root helper next to LG's Home: HOME bound
+#               in Input Hook, or an app tile / a mapped button (--additional-overlay)
 # Options:
 #   --home-panel       the Home panel, or fail (no overlay instead)
 #   --overlay          the overlay, or fail (needs Input Hook and node 8+)
-#   --native-home      experimental direct system Home on webOS 10/11
+#   --native-home      system HOME on webOS 10/11 (the default there on a fresh install)
+#   --try-native-home  a trial of that on webOS 7, 8 or 9: it writes a log to report
 #   --additional-overlay  keep the main Home; configure a button in your mapper
 #   --probe            only say which variant fits and why; change nothing
 #   --keep-lg-home     overlay: leave LG's Home in place (no black stand-in)
@@ -34,12 +37,14 @@ keep=
 replace=
 native=
 additional=
+trial=
 pass=
 for a in "$@"; do
     case "$a" in
         --home-panel) force=panel ;;
         --overlay|--try-webos10) force=overlay ;;
         --native-home) native=1; force=overlay; pass="$pass --native-home" ;;
+        --try-native-home) native=1; trial=1; force=overlay; pass="$pass --try-native" ;;
         --additional-overlay) additional=1; force=overlay; keep=1; pass="$pass --additional-overlay" ;;
         --probe) probe=1 ;;
         --keep-lg-home) keep=1 ;;
@@ -60,6 +65,13 @@ case "$major" in
     *) tested="untested; 4.x, 5.x, 6.x and 10.x are the tested ones" ;;
 esac
 say "webOS ${version:-unknown}$name ($tested)"
+if [ -n "$trial" ]; then
+    case "$major" in
+        7|8|9) say "trial of the native System HOME (experimental): LG Home is given back at once if it does not come up" ;;
+        10|11) fail "--try-native-home is for webOS 7 to 9; use --native-home here" ;;
+        *) fail "--try-native-home is for webOS 7 to 9 only (this is ${version:-unknown})" ;;
+    esac
+fi
 
 if [ -n "$probe" ]; then
     if [ -n "$native" ]; then sh "$PROBE" native-home

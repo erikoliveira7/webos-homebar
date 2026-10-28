@@ -10,6 +10,7 @@
 - [Backup](#backup)
 - [Restarting Homebar](#restarting-homebar)
 - [Languages](#languages)
+- [Launch method](#launch-method-overlay-builds)
 
 ## Home
 
@@ -52,8 +53,9 @@ stays visible above it. One row, from the left:
   CEC, a missing CEC name to the label, and finally to the port name.
   Existing text arrangements stay available and remain the default (see
   [Hiding apps and inputs](#hiding-apps-and-inputs)).
-- **Shortcuts** after the inputs: *Close background apps* first by default,
-  then *Apps*, then *System*. *Memory freeing action* chooses between closing apps
+- **Shortcuts** after the inputs: *Apps* and *System*; *Close background apps*
+  is off by default (turn it on in *Launcher settings → Shortcuts*) and sits
+  first when on. *Memory freeing action* chooses between closing apps
   immediately (`closeAllApps`) and opening LG's Memory Optimizer.
   Closing apps may also close Homebar; press HOME to open it again. The tile's
   name follows that choice. Opening LG's screen does not press *Start*;
@@ -179,16 +181,16 @@ at *Larger* and the 12-hour clock:
 | :--- | :--- | :--- |
 | About | About Homebar | The version, a code to [buy me a coffee](https://buymeacoffee.com/rawin) and where the source is. The menu opens here |
 | Look | Language | *System language* (the TV's menu language, when it is one of the [languages](#languages)), or one of them by hand |
-| | Theme | Default or one of seven two-colour themes, see [Themes](themes.md) |
+| | Theme | Default or one of eight two-colour themes, see [Themes](themes.md) |
 | | Text size | Normal, Large or Larger: the names, hints, labels and the menu grow; the tiles and pills keep their size, so the row still fits |
 | | Animations | On or off |
 | Home row | Inputs and TV | A box for *TV* and each input the TV has, in their row order: OK takes the chosen one off the Home row or puts it back |
 | | Input appearance | *Icon only*, *Icon + HDMI*, *Icon + label*, *Icon + CEC*, or the existing text arrangements: *Label only*, *HDMI only*, *CEC only*, *Label, then HDMI*, *HDMI, then label*, and the same pairs for the device's HDMI-CEC name (*CEC, then HDMI*, *HDMI, then CEC*): what a pill shows of the port, the name set on the TV for that input and the CEC name. The label modes fall back to the CEC name when no label is set, and the other way round. A pill drawn with the choice appears below the values. Missing label/CEC names fall back as before. Icons are chosen per input in its edit mode |
 | | Input name above favourites | HDMI (default), Label or CEC; independent of the tile appearance, with the same fallback for missing names |
 | | Long input names | *Ellipsis* (default) or *Scroll*: a name wider than the 200 px a pill can take either ends in "…", or, while that tile is focused, scrolls slowly to its end and back |
-| | Shortcuts | A box for *Free up memory* and for the *Apps* shortcut: the same, for the tiles after the inputs |
+| | Shortcuts | A box for *Free up memory* (off by default) and for the *Apps* shortcut: the same, for the tiles after the inputs |
 | | Memory freeing action | *Close background apps* (default) or *Open LG Memory Optimizer*. The first closes apps immediately; the second opens LG's optimiser screen and leaves *Start* to you. The shortcut's title follows the chosen action. The optimiser option is offered only when the TV's LG Settings includes that screen |
-| | After holding BACK | Compatibility overlay and System HOME: the last input, TV, or any physical input, including hidden ones. In System HOME this applies when an app leaves no full-screen card; ordinary HOME over a playing app does not switch inputs. Additional overlay and the older Home panel leave returns to LG |
+| | After holding BACK | Compatibility overlay and System HOME: the last input, TV, any physical input (including hidden ones), or *Do nothing* (Homebar leaves the TV to LG). In System HOME this applies when an app leaves no full-screen card; ordinary HOME over a playing app does not switch inputs. Additional overlay and the older Home panel leave returns to LG |
 | Apps | Apps order | The TV's order, A to Z, or the most used first |
 | | Hidden apps | Hidden, or shown dimmed in *Apps* (to bring one back with RED) |
 | Top bar | Items | A box for the clock, the app on screen and the weather: OK shows the chosen one in the chip or hides it |
@@ -203,7 +205,8 @@ at *Larger* and the 12-hour clock:
 | | Restore from the backup | OK brings that file back |
 | Updates | Updates | The installed version; OK checks, downloads and installs a new release, see [Update](install.md#update). The launcher also looks once a day, the first time Home opens, and shows a dot on *System* and *Launcher settings* when a new version is there |
 | | Test builds | Also offer pre-releases as updates |
-| Help | Restart Homebar | Restarts the Homebar process and opens it again. Use it when the panel stops responding; favourites and settings stay saved |
+| Help | Launch method | *System HOME (native)* or *Additional overlay*, with what the focused one does, the launch checks and a Yes/No popup before anything changes; shown on overlay builds, see [Launch method](#launch-method-overlay-builds) |
+| | Restart Homebar | Restarts the Homebar process and opens it again. Use it when the panel stops responding; favourites and settings stay saved |
 
 Up to 0.14 one setting, *Clock bar*, showed or hid the whole chip. When it
 was hidden, the clock, the app and the weather start hidden too.
@@ -290,17 +293,26 @@ The launcher follows the TV's menu language when it is one of these, and falls
 back to English otherwise. Corrections and new languages are welcome, see
 [Development → Adding a language](development.md#adding-a-language).
 
-### Launch method (overlay builds)
+## Launch method (overlay builds)
 
-**Launcher settings → Help → Launch method** shows **System HOME** or
-**Additional overlay**, the current launch checks, and an offer to migrate a
-previous overlay where supported. System HOME is currently limited to webOS
-10/11. The older Home-panel integration has no mode switch.
+**Launcher settings → Help → Launch method** lists the two ways to open Homebar,
+with what the focused one does under the list, and the current launch checks:
 
-Hover and arrows only move focus. **OK or a click opens a preview; confirm the
-same option again to apply.** BACK cancels. The preview explains the restart and
-any old Homebar mappings to remove. If configuration changes before applying,
-review and confirm again. Favourites and settings stay.
+- **System HOME (native)** makes Homebar the TV's HOME screen. HOME opens it
+  directly, with no Input Hook or mapper; LG's Home screen is replaced. webOS 10
+  and 11 only.
+- **Additional overlay** keeps LG Home (or Luma, Glasshouse) on HOME and adds
+  Homebar as an extra bar, opened from a button you assign in Input Hook or
+  Magic Mapper, or from its app tile (it is always in LG's app list in this mode).
+
+The older Home-panel integration has no mode switch.
+
+Hover and arrows only move focus. **OK or a click on a method opens a popup that
+says what will happen; Yes applies it, No (the default) or BACK cancels.** The
+popup lists the restart and any old Homebar mappings to remove. If configuration
+changes meanwhile, the popup closes and you review again. Favourites and
+settings stay. When the switch is done, Homebar says so once and advises
+restarting the TV if anything misbehaves.
 
 System HOME takes the main launcher role. Recognised Homebar `launch`/single
 `luna-send` rules in Input Hook and `launch_app` rules in Magic Mapper are backed

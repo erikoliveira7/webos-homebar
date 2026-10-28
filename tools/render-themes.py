@@ -10,6 +10,7 @@ The webOS-only parts of the panel (Luna services, webOS keys) are stubbed out,
 apps get plain coloured icons, and a gradient stands in for the picture.
 """
 import json
+import shutil
 import re
 import sys
 import tempfile
@@ -39,15 +40,18 @@ def panel(app_dir):
     """The panel as a desktop Qt 6 can load it, plus Config.js and app icons."""
     q = (ROOT / "ui/Launcher.qml").read_text()
     q = q.replace("import QtGraphicalEffects 1.0\n", "import Qt5Compat.GraphicalEffects\n")
-    q = q.replace("import WebOSServices 1.0\n", "").replace("import WebOS.Global 1.0\n", "")
+    q = q.replace("import WebOSServices 1.0\n", "").replace("import WebOS.Global 1.0\n", 'import "WebOS.js" as WebOS\n')
     q = q.replace(FONTS, (ROOT / "ui/fonts").as_uri() + "/")
     start = q.index("    Service {\n        id: launchService")
     end = q.index("    Timer { id: launchTimeout;")
     stubs = "".join("    QtObject { id: %s; function callService(a) {} }\n" % name for name in
-                    ("launchService", "catalog", "foregroundInfo", "localeService", "inputService", "updateService"))
+                    ("launchService", "catalog", "foregroundInfo", "localeService", "inputService", "updateService", "backupService", "closeAppsService"))
+    stubs += "    function loadInputs() {}\n    function updateRun(step, channel) {}\n    function backupRun(step, data) {}\n    function restartHomebar() {}\n    function modeRun(mode) {}\n"
     (app_dir / "Launcher.qml").write_text(q[:start] + stubs + q[end:])
-    for name in ("FavouriteStore.qml", "Strings.js", "Themes.js"):
+    (app_dir / "WebOS.js").write_text(".pragma library\nvar Key_webOS_Back = 461;\nvar Key_webOS_Yellow = 405;\nvar Key_webOS_Red = 403;\n")
+    for name in ("FavouriteStore.qml", "Strings.js", "Themes.js", "About.js", "DeviceIcons.js", "DeviceIcon.qml"):
         (app_dir / name).write_bytes((ROOT / "ui" / name).read_bytes())
+    shutil.copytree(ROOT / "ui/input-icons", app_dir / "input-icons")
     apps = []
     for app_id, title, color in APPS:
         icon = QImage(240, 240, QImage.Format_RGB32)
@@ -59,7 +63,7 @@ def panel(app_dir):
         p.end()
         icon.save(str(app_dir / (app_id + ".png")))
         apps.append({"id": app_id, "title": title, "icon": (app_dir / (app_id + ".png")).as_uri()})
-    inputs = [{"id": "com.webos.app.hdmi%d" % (i + 1), "title": "HDMI %d" % (i + 1), "detail": d, "present": p}
+    inputs = [{"id": "com.webos.app.hdmi%d" % (i + 1), "title": "HDMI %d" % (i + 1), "label": "", "cec": d, "name": d, "present": p}
               for i, (d, p) in enumerate(INPUTS)]
     styles = json.loads((ROOT / "config/launcher.json").read_text()).get("styles", {})
     config = {"version": "", "platform": "", "apps": apps, "favourites": [a["id"] for a in apps],
@@ -80,7 +84,7 @@ Item {
         Launcher { id: shell; anchors.fill: parent; foreground: true }
     }
     function show(theme, selected) {
-        shell.settings = {lang: "en", theme: theme, exitTo: "last", clock: true, title: true, beta: false};
+        shell.settings = shell.validSettings({lang: "en", theme: theme, exitTo: "last", clock: true, title: true, beta: false});
         shell.page = "home"; shell.selected = selected;
     }
 }
@@ -112,11 +116,11 @@ def main():
         if view.status() != QQuickView.Ready:
             raise SystemExit("\n".join(e.toString() for e in view.errors()))
         view.show()
-        wait(800)
+        wait(2500)
         root = view.rootObject()
         for theme_id, accent, base in themes():
             root.show(theme_id, len(APPS) + 1)   # HDMI 2: a focused pill, the theme's own glow
-            wait(900)
+            wait(1500)
             shot = view.grabWindow().scaled(1920, 1080, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
             shot.copy(QRect(0, 700, 1920, 380)).scaled(1280, 253, Qt.IgnoreAspectRatio, Qt.SmoothTransformation) \
                 .save(str(OUT / (theme_id + ".png")))

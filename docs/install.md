@@ -4,24 +4,28 @@
 - [Install](#install)
 - [Update](#update)
 - [Uninstall](#uninstall)
+- [Launch method](#launch-method)
+- [Trying System HOME on webOS 7 to 9](#trying-system-home-on-webos-7-to-9)
 
 ## Requirements
 
 - A rooted TV with the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel)
   and a root shell (SSH or telnet, enabled in the Homebrew Channel settings).
-- Overlay builds need node 8 or newer. The Home-panel variant uses the TV's
-  older node runtime and does not need a mapper.
-- System HOME (webOS 10/11) and the additional overlay need no Input Hook.
-  The compatibility overlay (webOS 6 to 9, or by choice) requires Input Hook
-  or an existing supported Magic Mapper HOME shortcut to Homebar: install and
-  open Input Hook from the Homebrew Channel if you do not already have one.
+- **Home panel** (webOS 4 and 5): nothing more; it uses the TV's own node.
+- **System HOME** (webOS 10 and 11): node 8 or newer (the TVs have it); no
+  Input Hook and no mapper.
+- **Additional overlay** (webOS 6 or newer): node 8 or newer. It opens from its
+  app tile with nothing else; for a button, Input Hook or Magic Mapper.
+- **Overlay with HOME via mapper** (the default on webOS 6 to 9): Input Hook, or
+  an existing supported Magic Mapper HOME shortcut to Homebar. Install and open
+  Input Hook from the Homebrew Channel first if you do not have it.
 - The TV's own `node`, `tar` and `curl`/`wget` (present on the tested TVs).
 - For the Home panel on a TV with LG's two Home screens (some 2019 models):
   the TV's *Home screen* setting on *Basic*, see
   [Compatibility](compatibility.md#webos-versions).
 
-Which webOS versions work, and which variant a TV gets, is in
-[Compatibility](compatibility.md).
+Which webOS versions work, and which method a TV gets, is in
+[Compatibility](compatibility.md#how-homebar-opens).
 
 ## Install
 
@@ -38,8 +42,9 @@ With wget instead of curl: `wget -O rawin-launcher.tar.gz <the same URL>`.
 This always takes the latest release; for another one, download
 `rawin-launcher.tar.gz` from its page under
 [Releases](https://github.com/rawinek/webos-homebar/releases). The installer
-says which webOS it found, picks the variant the TV has the makings for,
-prints each step and ends with "Press HOME on the remote". The file and the
+says which webOS it found, picks the method the TV has the makings for,
+prints each step and ends with "Press HOME on the remote" (additional overlay:
+"Open Homebar with your configured button or app tile"). The file and the
 folder keep the project's first name, `rawin-launcher`, as do the installed
 files (see [How it works → Names](how-it-works.md#names)).
 
@@ -53,6 +58,7 @@ Installer options:
 | `--keep-lg-home` | Overlay: leave LG's Home in place; *System → Original Home* opens it |
 | `--replace-lg-home` | Overlay on an untested webOS: put the black stand-in in LG Home's place anyway (on webOS 10 it always is) |
 | `--native-home` | System HOME on webOS 10/11, without an Input Hook binding. See [Launch method](#launch-method) |
+| `--try-native-home` | A trial of System HOME on **webOS 7, 8 or 9** (not 10/11, not 6 or older): it writes a log to report. See [Trying System HOME on webOS 7 to 9](#trying-system-home-on-webos-7-to-9) |
 | `--additional-overlay` | Keep the main Home (LG's, Luma's or Glasshouse's); Homebar is added and you map a button to it |
 | `--home-key=CODE` | Overlay: bind this key code as HOME (the number Input Hook logs for it) |
 | `--home-key=ask` | Overlay: ask for a press of HOME, also when a key is already bound |
@@ -65,7 +71,7 @@ Magic Remote's `773`). An install that finds the launcher already bound to a
 key keeps that key; an update from the panel never asks. The panel is started
 hidden at boot and kept across HOMEs, and the helper starts it again if the
 system closed it, so a HOME is normally a show rather than a start (see
-[How it works](how-it-works.md#the-overlay-webos-10)).
+[How it works](how-it-works.md#the-overlay-webos-6-and-later)).
 
 ### Without internet on the TV
 
@@ -134,12 +140,16 @@ What the uninstaller removes is listed in
 
 ## Launch method
 
-A fresh automatic install prefers the compatible LG ribbon Home integration,
-then direct system HOME on webOS 10/11 when launch checks pass. Another Home
-replacement or unverifiable mapper configuration selects an additional overlay,
-with an explanation; no foreign HOME mapping is overwritten. Where direct HOME
-is unsupported, the previous mapper-based overlay remains a compatibility option.
-A recognised Magic Mapper HOME shortcut is kept without creating a second Input Hook binding.
+What a fresh install picks, in this order:
+
+1. **Home panel** where LG's QML Home fits the patch (webOS 3 to 5).
+2. **System HOME (native)** on webOS 10 and 11 when the launch checks pass.
+3. **Additional overlay**, with an explanation, when another launcher owns HOME
+   or a mapper configuration cannot be checked: no foreign HOME mapping is ever
+   overwritten.
+4. Otherwise the **overlay with HOME via Input Hook** (webOS 6 to 9). A
+   recognised Magic Mapper HOME shortcut to Homebar is kept without a second
+   Input Hook binding.
 
 Choose explicitly from the unpacked release:
 
@@ -166,6 +176,38 @@ Uninstall removes only recognised Homebar rules from both mappers. If an
 unsupported mapper cannot be updated safely, it stops with instructions to inspect
 and fix the unsupported configuration first. It does not uninstall either mapper.
 
-System HOME has been checked on an LG B4 (webOS 10.3). Changing the launch
-method in the settings, webOS 11 and the full matrix of mapper versions and
-other launchers have been tested locally only so far; reports are welcome.
+System HOME has been checked on an LG B4 (webOS 10.3): install, switching both
+ways in the settings, restarts. webOS 11, other launchers and the full matrix
+of mapper versions are tested locally only so far; reports are welcome.
+
+### Trying System HOME on webOS 7 to 9
+
+System HOME is tested on webOS 10 only. Other launchers replace LG's Home on
+webOS 7 and 9 as well (Glasshouse), so it may work there, but nobody has tried
+Homebar's version. If you would like to find out on your TV (Homebrew Channel
+and a root shell as for any install):
+
+```sh
+sh install.sh --try-native-home
+```
+
+What it does: it allows System HOME on this TV, switches to it, and checks
+within 25 seconds that the app manager reports a QML Home and that a
+`qml-runner` runs it. **If that check fails, LG Home is given back at once** and
+the trial option is removed again. If it passes, press HOME and see what
+happens. In either case it writes the log to `/tmp/homebar-native-trial.txt`;
+the same text is in `sh /var/lib/webosbrew/rawin-launcher-home/diagnose.sh`
+output. Copy it off the TV with
+
+```sh
+ssh root@<tv-ip> cat /tmp/homebar-native-trial.txt > homebar-native-trial.txt
+```
+
+and attach it to a [GitHub issue](https://github.com/rawinek/webos-homebar/issues)
+together with the TV model, the webOS version (*Settings → General → About*)
+and what you saw when pressing HOME (Homebar, LG Home, a black screen, nothing).
+While the trial is on, *Launcher settings → Launch method* shows that it is
+experimental and offers both modes, so you can switch back to *Additional
+overlay* there. Uninstalling (`sh /var/lib/webosbrew/rawin-launcher-home/uninstall.sh`)
+gives LG Home back. webOS 6 and older are not covered: there the app manager
+cannot reread a replaced Home, and other launchers use a different method.
