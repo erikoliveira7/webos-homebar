@@ -17,6 +17,9 @@
         };
         var post = body !== undefined && body !== null;
         xhr.open(post ? "POST" : "GET", helper + pathname);
+        // The helper refuses requests that change something without this: a web
+        // page in the TV's browser cannot add it to a cross-origin request.
+        xhr.setRequestHeader("X-Homebar", "1");
         if (post) { xhr.setRequestHeader("Content-Type", "application/json"); xhr.send(JSON.stringify(body)); }
         else xhr.send();
     }

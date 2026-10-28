@@ -16,6 +16,10 @@ const urlModule = require('url');
 const { AfterExit, cardOf } = require('./after-exit');
 const { Preloader, panelRunning, foregroundSafe } = require('./preload');
 const setup = require('./setup');
+// One copy of the request guard, shared/guard.js: tools/build.py puts it next to
+// this file in the package, in the source tree it is two folders up.
+let guard;
+try { guard = require('./guard'); } catch (e) { guard = require('../../shared/guard'); }
 const ModeControl = require('./mode');
 const modeControl = new ModeControl(fs, execFile, () => preloader.pause(0));
 let restarting = false, updateBusy = false;
@@ -125,10 +129,22 @@ function send(res, code, body, type) {
   res.end(data);
 }
 
+// What changes something on the TV (or on its disk): only the panel asks for
+// these, with the X-Homebar header. status, check-free reads stay plain.
+function changesState(url, req) {
+  const p = url.pathname;
+  if (['/launch', '/close-apps', '/exit-target', '/restart', '/backup'].includes(p)) return true;
+  if (p === '/update') return String((url.query || {}).step || '') !== 'status';
+  if (p === '/mode') return req.method !== 'GET';
+  return false;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = urlModule.parse(req.url || '/', true);
   const query = url.query || {};
   try {
+    if (!guard.hostOk(req, HTTP_PORT)) return send(res, 403, { returnValue: false, errorText: 'host' });
+    if (changesState(url, req) && !guard.marked(req)) return send(res, 403, { returnValue: false, errorText: 'header' });
     if (url.pathname === '/ping') {
       return send(res, 200, { ok: true, pid: process.pid, rss: process.memoryUsage().rss, node: process.versions.node });
     }

@@ -20,6 +20,7 @@ var path = require('path');
 var crypto = require('crypto');
 var urlModule = require('url');
 var qr = require('./qr');
+var guard = require('./guard');
 
 var PORT = 8898;
 var WEATHER_TTL = 15 * 60 * 1000;
@@ -140,13 +141,13 @@ function start(base) {
   var server = http.createServer(function (req, res) {
     var url = urlModule.parse(req.url || '/', true), query = url.query || {};
     try {
-      if (url.pathname === '/info' && isLocal(req)) {
+      if (url.pathname === '/info' && isLocal(req) && guard.hostOk(req, PORT)) {
         var ip = lanAddress(), link = ip ? 'http://' + ip + ':' + PORT + '/?t=' + token : '';
         return currentPlace(function (p) {
           send(res, 200, {ok: true, url: link, qr: link ? qr.encode(link) : null, place: placeInfo(p), rev: rev});
         });
       }
-      if (url.pathname === '/weather' && isLocal(req)) {
+      if (url.pathname === '/weather' && isLocal(req) && guard.hostOk(req, PORT)) {
         return weather(query.units === 'f' ? 'f' : 'c', function (w) { send(res, 200, w); });
       }
       if (url.pathname === '/' && req.method === 'GET') return send(res, 200, page, 'text/html; charset=utf-8');
@@ -159,7 +160,10 @@ function start(base) {
           if (p && p.auto === true) {
             try { fs.unlinkSync(placeFile); } catch (e) {}
           } else if (p && validPlace(p)) {
-            fs.writeFileSync(placeFile, JSON.stringify({name: p.name, lat: p.lat, lon: p.lon}));
+            // Here, not in the handler's try: this runs after the request was
+            // read, and an error nobody catches ends the whole process.
+            try { fs.writeFileSync(placeFile, JSON.stringify({name: p.name, lat: p.lat, lon: p.lon})); }
+            catch (e) { return send(res, 500, {ok: false, error: 'not saved'}); }
           } else return send(res, 400, {ok: false, error: 'not a place'});
           rev++;
           currentPlace(function (now) { send(res, 200, {ok: true, place: placeInfo(now)}); });

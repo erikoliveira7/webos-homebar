@@ -54,7 +54,12 @@ log 'panel applied to LG Home'
 # The setup server: the weather in the status chip and the page to choose its
 # place (shared/setup.js) on port 8898. One at a time: an older one goes first.
 if [ -f "$base/setup/setup.js" ]; then
-    [ -f "$base/setup.pid" ] && kill "$(cat "$base/setup.pid")" 2>/dev/null || true
+    # The pid file survives a reboot, and a number from before it can belong to
+    # anything now: only a node running our setup.js is stopped.
+    pid=$(cat "$base/setup.pid" 2>/dev/null || true)
+    case "$pid" in ''|*[!0-9]*) ;; *)
+        case "$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)" in *setup/setup.js*) kill "$pid" 2>/dev/null || true ;; esac ;;
+    esac
     setsid node "$base/setup/setup.js" "$base" </dev/null >/dev/null 2>&1 &
     log 'setup server started'
 fi

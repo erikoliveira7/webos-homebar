@@ -66,7 +66,12 @@ download() {
     sum=$(cat "$WORK/sha256")
     rm -rf "$WORK/pkg" "$WORK/$ASSET" "$WORK/state" "$WORK/install.log"
     get "$(cat "$WORK/url")" >"$WORK/$ASSET" 2>/dev/null || fail "download failed"
-    if [ -n "$sum" ] && [ "$(sha256sum "$WORK/$ASSET" | cut -d ' ' -f 1)" != "$sum" ]; then
+    # No checksum, no install: GitHub lists one for every asset it holds.
+    if [ -z "$sum" ]; then
+        rm -f "$WORK/$ASSET"
+        fail "the release has no checksum to verify"
+    fi
+    if [ "$(sha256sum "$WORK/$ASSET" | cut -d ' ' -f 1)" != "$sum" ]; then
         rm -f "$WORK/$ASSET"
         fail "checksum mismatch"
     fi
