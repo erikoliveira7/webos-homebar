@@ -285,12 +285,15 @@ process, so reopening the bar can take a few seconds.
 | Polish (Polski) | `pl` |
 | French (Français) | `fr` |
 | Italian (Italiano) | `it` |
-| Portuguese (Português) | `pt` |
+| Portuguese, Portugal (Português) | `pt` |
+| Portuguese, Brazil (Português do Brasil) | `pt_br` |
 | Dutch (Nederlands) | `nl` |
 | Czech (Čeština) | `cs` |
 
-The launcher follows the TV's menu language when it is one of these, and falls
-back to English otherwise. Corrections and new languages are welcome, see
+The launcher follows the TV's menu language when it is one of these (a TV set
+to Portuguese (Brazil) gets `pt_br`, any other Portuguese gets `pt`), and falls
+back to English otherwise. A text a language lacks reads in English; Brazilian
+Portuguese falls back to Portuguese first. Corrections and new languages are welcome, see
 [Development → Adding a language](development.md#adding-a-language).
 
 ## Launch method (overlay builds)

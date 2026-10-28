@@ -1986,15 +1986,23 @@ FocusScope {
                         spacing: shell.px(6); anchors.verticalCenter: parent.verticalCenter
                         Repeater {
                             model: modelData.keys
-                            Rectangle {
-                                readonly property string colour: modelData.colour
-                                width: keyLabel.implicitWidth+shell.px(14); height: shell.pt(24); radius: shell.px(7)
-                                color: colour === "red" ? shell.keyRed : colour === "yellow" ? shell.keyYellow : "transparent"
-                                border.width: colour ? 0 : Math.max(1, 1.5*shell.u); border.color: shell.theme.keyEdge
+                            // Two keys that do the same thing read "hold OK or YELLOW".
+                            Row {
+                                spacing: shell.px(6); anchors.verticalCenter: parent.verticalCenter
                                 Text {
-                                    id: keyLabel; anchors.centerIn: parent; text: modelData.label
-                                    font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(12)
-                                    color: parent.colour === "red" ? "#ffffff" : parent.colour === "yellow" ? "#1d1a12" : shell.theme.keyLabel
+                                    visible: index > 0; text: shell.t("hint_or"); anchors.verticalCenter: parent.verticalCenter
+                                    font.family: shell.fontName; font.pixelSize: shell.pt(15); color: shell.theme.hint
+                                }
+                                Rectangle {
+                                    readonly property string colour: modelData.colour
+                                    width: keyLabel.implicitWidth+shell.px(14); height: shell.pt(24); radius: shell.px(7)
+                                    color: colour === "red" ? shell.keyRed : colour === "yellow" ? shell.keyYellow : "transparent"
+                                    border.width: colour ? 0 : Math.max(1, 1.5*shell.u); border.color: shell.theme.keyEdge
+                                    Text {
+                                        id: keyLabel; anchors.centerIn: parent; text: modelData.label
+                                        font.family: shell.fontName; font.bold: true; font.pixelSize: shell.pt(12)
+                                        color: parent.colour === "red" ? "#ffffff" : parent.colour === "yellow" ? "#1d1a12" : shell.theme.keyLabel
+                                    }
                                 }
                             }
                         }

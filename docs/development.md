@@ -99,7 +99,7 @@ and wheel events use the panel's normal handlers. TV services are stubbed.
 
 The input and TV catalogues in `ui/DeviceIcons.js` use stable ids: saved choices
 belong to a physical input, so changing an icon title or sort order must not
-change its id. Generic device names are translated in all nine languages;
+change its id. Generic device names are translated in all ten languages;
 brand names stay as supplied. The TV picker has a separate restricted list.
 
 `ui/input-icons/manifest.json` records each original SVG URL, pinned revision,
@@ -151,7 +151,8 @@ None of this replaces trying a method on a real TV.
 ## Adding a language
 
 Copy the `en` table in `ui/Strings.js`, translate it and add the code to
-`languages` and `names`. The Inter font covers Latin, Greek and Cyrillic
+`languages` and `names` (a regional variant such as `pt_br` also needs a case
+in `supported()` and a fallback in `get()`). The Inter font covers Latin, Greek and Cyrillic
 scripts; others would need a font with their glyphs. Corrections to the
 translations are welcome.
 

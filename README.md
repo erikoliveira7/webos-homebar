@@ -58,8 +58,8 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
   choose the input heading separately. [How to edit them](docs/using.md#device-icons).
 - **Safer editing**: a red warning appears before a second DOWN press removes
   a favourite, input or optional shortcut from the Home row.
-- **Nine languages**, the TV's own by default: English, Spanish, German,
-  Polish, French, Italian, Portuguese, Dutch and Czech.
+- **Ten languages**, the TV's own by default: English, Spanish, German,
+  Polish, French, Italian, Portuguese (Portugal and Brazil), Dutch and Czech.
 - **The weather** in the corner, next to the clock, from Open-Meteo with no
   account or key. The place is chosen on a phone, from a code on the TV.
 - **Updates itself** from this repository's releases, in *Launcher settings
