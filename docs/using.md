@@ -70,7 +70,7 @@ stays visible above it. One row, from the left:
 The focused item's name shows above the row, and the hints under it say what
 OK and the other keys do, the remote's colour keys in their own colour
 (YELLOW does what holding OK does, RED hides an app in *Apps*). The chip in the top-right corner shows what is on
-screen, the [weather](#weather) and the time; each of the three can be hidden. BACK closes the panel; from *Apps* or *System* it goes
+screen, the [weather](#weather) and the time; each of the three can be hidden. HOME pressed again closes the panel too (on the Home panel the remote sends it to Homebar as a key; on the overlay HOME toggles it). BACK closes the panel; from *Apps* or *System* it goes
 back to Home. The panel fits the TV's screen, HD or FHD/UHD, at the same
 proportions. Each input fits its own label or CEC name and optional second
 line, with padding, up to 200 px at FHD. Short names keep their pills narrow.

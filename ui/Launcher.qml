@@ -1322,8 +1322,19 @@ FocusScope {
         if (selected < favCount) return true;
         return selected >= favSlots && selected < favSlots + sourceCount + homeActions.length;
     }
+    // The HOME button, pressed again while the panel is up, reaches it as
+    // Qt.Key_Super_L (the first press only opens it: LG's Home is launched, no
+    // key arrives). Like BACK it closes the panel; the moment after the panel
+    // opened is ignored, in case the opening press is still being released.
+    property real foregroundSince: 0
+    function isHomeKey(key) { return key === Qt.Key_Super_L; }
     Keys.onPressed: {
         noteActivity();
+        if (isHomeKey(event.key)) {
+            event.accepted = true;
+            if (!event.isAutoRepeat && editIndex < 0 && Date.now() - foregroundSince > 600) closeHome();
+            return;
+        }
         if (page === "settings" && menuHover >= 0 && isOk(event.key) && !event.isAutoRepeat) {
             pane = 0; selected = menuHover;
         }
@@ -1347,6 +1358,7 @@ FocusScope {
         else if (navigate(event.key)) event.accepted=true;
     }
     Keys.onReleased: {
+        if (isHomeKey(event.key)) { event.accepted = true; return; }
         if (isYellow(event.key)) { event.accepted=true; if (!event.isAutoRepeat) secondaryAction(); return; }
         if (isRed(event.key)) { event.accepted=true; if (!event.isAutoRepeat) hideAction(); return; }
         if (!actionKey(event.key)) return;
@@ -1387,6 +1399,7 @@ FocusScope {
         pressing = false; okHeld = false; longFired = false; holdTimer.stop(); okRelease.stop();
         editIndex = -1; editSourceIndex = -1; editActionIndex = -1; notice = "";
         if (foreground) {
+            foregroundSince = Date.now();
             launching = false; message = ""; page="home"; selected=0; pane=0; forceActiveFocus();
             tick();
             if (ready) { launchCheckRequested(); catalog.callService({}); foregroundInfo.callService({extraInfo: true}); loadInputs(); dailyUpdateCheck(); }
