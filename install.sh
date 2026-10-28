@@ -11,6 +11,7 @@
 # Options:
 #   --home-panel       the Home panel, or fail (no overlay instead)
 #   --overlay          the overlay, or fail (needs Input Hook and node 8+)
+#   --native-home      experimental direct system Home on webOS 10/11
 #   --probe            only say which variant fits and why; change nothing
 #   --keep-lg-home     overlay: leave LG's Home in place (no black stand-in)
 #   --replace-lg-home  overlay on an untested webOS: put the black stand-in in
@@ -30,11 +31,15 @@ force=
 probe=
 keep=
 replace=
+native=
+explicit=
 pass=
 for a in "$@"; do
     case "$a" in
         --home-panel) force=panel ;;
         --overlay|--try-webos10) force=overlay ;;
+        --native-home) native=1; explicit=1; force=overlay; pass="$pass --native-home" ;;
+        --additional-overlay) fail "additional overlay and runtime mode switching are not included in this build" ;;
         --probe) probe=1 ;;
         --keep-lg-home) keep=1 ;;
         --replace-lg-home) replace=1 ;;
@@ -56,11 +61,41 @@ esac
 say "webOS ${version:-unknown}$name ($tested)"
 
 if [ -n "$probe" ]; then
-    sh "$PROBE"
+    if [ -n "$native" ]; then sh "$PROBE" native-home
+    else sh "$PROBE"; fi
     say "probe only; nothing was changed"
     exit 0
 fi
 
+if [ -d /var/lib/webosbrew/rawin-launcher-home/mode-switch-lock ]; then
+    sh /var/lib/webosbrew/rawin-launcher-home/mode-switch.sh recover || fail "mode recovery failed"
+fi
+# The ribbon Home remains unchanged. Supported newer TVs use system HOME for
+# both fresh installs and updates, with migration checks before any installation.
+if [ -f /var/lib/webosbrew/rawin-launcher-home/additional-overlay ]; then
+    fail "this experimental additional-overlay install belongs to the mode-switching branch; restore its previous configuration before installing this build"
+fi
+# Whoever chose to keep LG's Home (--keep-lg-home, or an install made with it)
+# stays on the compatibility overlay: system HOME replaces that Home.
+if [ "$force" != panel ] && [ -z "$keep" ] && [ ! -f /var/lib/webosbrew/rawin-launcher-home/keep-lg-home ]; then
+    case "$major" in
+        10|11) force=overlay; native=1 ;;
+    esac
+fi
+if [ -n "$native" ]; then
+    [ -z "$keep" ] || fail "system HOME cannot be combined with --keep-lg-home"
+    # The panel's updater always passes --replace-lg-home on webOS 10: it only
+    # means "keep the setup", so it is dropped when system HOME is picked for
+    # the TV; asked for with --native-home it is a conflict.
+    [ -z "$explicit" ] || [ -z "$replace" ] || fail "system HOME cannot be combined with replace-lg-home"
+    replace=
+    sh "$PROBE" native-home || fail "system HOME checks failed; nothing installed"
+    pass="$pass --native-home"
+elif [ -f /var/lib/webosbrew/rawin-launcher-home/native-home ]; then
+    fail "an existing native Home requires a supported webOS; inspect Diagnose before updating"
+fi
+if [ -z "$force" ] && [ -f /var/lib/webosbrew/rawin-launcher-home/VERSION ]; then force=overlay; fi
+if [ -z "$force" ] && [ -f /var/lib/webosbrew/rawin-launcher/VERSION ]; then force=panel; fi
 variant=$force
 if [ -z "$variant" ]; then
     if panel_why=$(sh "$PROBE" panel 2>&1); then variant=panel
@@ -82,7 +117,7 @@ case "$variant" in
         # LG's Home is replaced by the black stand-in on webOS 10, where that is
         # tested; elsewhere it stays unless asked otherwise.
         if [ -n "$keep" ]; then pass="$pass --keep-lg-home"
-        elif [ "$major" != 10 ] && [ -z "$replace" ]; then
+        elif [ "$major" != 10 ] && [ -z "$replace$native" ]; then
             say "LG's Home stays in place on this webOS (--replace-lg-home puts the black stand-in there too)"
             pass="$pass --keep-lg-home"
         fi

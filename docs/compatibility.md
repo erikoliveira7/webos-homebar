@@ -51,8 +51,8 @@ name next to it.
 | 7.x | webOS 22 | 2022 | QML, as far as known; the full-screen Home | Overlay, LG's Home kept unless `--replace-lg-home` | **Tested on 7.5** (a 2022 TV, by a user) |
 | 8.x | webOS 23 | 2023 | QML, as far as known; the full-screen Home | Most likely the overlay, as on 6.x | Untested |
 | 9.x | webOS 24 | 2024 | Flutter, like 10.x | Overlay, LG's Home kept unless `--replace-lg-home` | Untested |
-| 10.x | webOS 25 | 2025 | Flutter | Overlay, LG's Home replaced by the black stand-in | **Tested on 10.3** |
-| 11.x | webOS 26 | 2026 | Flutter, like 10.x | Overlay, LG's Home kept unless `--replace-lg-home` | Untested |
+| 10.x | webOS 25 | 2025 | Flutter | System Home takeover in this branch; black stand-in overlay in published 0.18.0 | **Takeover tested on B4 10.3** |
+| 11.x | webOS 26 | 2026 | Flutter, like 10.x | System Home takeover in this branch | Untested on hardware |
 
 What the untested rows rest on: LG's Home was a QML app
 (`/usr/palm/applications/com.webos.app.home/qml`) from webOS 3 to the last

@@ -80,7 +80,7 @@ The picture stays where it is. Press HOME again, or BACK, and it is gone.
 | 4.x (webOS 4.0 / 4.5, 2018–2019) | Inside LG's own Home, which keeps its HOME handling (the *Basic* Home screen, where a TV has two) | Tested on 4.10 (LG C9, and LG UM7100, B9 and E9 by users) |
 | 5.x (webOS 5.0, 2020) | Inside LG's own Home, as on 4.x | Tested on 5.6 (LG NANO80, LG UN73 and LG UN90, by users) |
 | 6.x (webOS 6.0, 2021) | The overlay, with LG's Home kept | Tested on 6.3 and 6.5 (LG C1 and LG UP78, by users) |
-| 10.x (webOS 25, 2025) | A separate overlay app with a root helper | Tested on 10.3 (LG B4, and LG UR78 by a user) |
+| 10.x (webOS 25, 2025) | System Home takeover in this branch | Takeover tested on B4 (10.3); published overlay also tested on UR78 |
 | 7.x (webOS 22, 2022) | The overlay, with LG's Home kept | Tested on 7.5 (a 2022 TV, by a user) |
 | 3.x, 8.x–9.x, 11.x (webOS 3, 23–24, 26) | Whichever of the two the TV has the makings for | Untested |
 
@@ -95,10 +95,17 @@ You need a rooted TV with the
 [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel) and a
 root shell (SSH or telnet).
 
-**Before installing the overlay (webOS 6 and newer on the tested TVs), install
-and open the “Input Hook” app from the Homebrew Channel.** It sends the HOME
-button to Homebar. Installation is blocked if Input Hook is missing. The Home
-panel on older TVs (tested on webOS 4 and 5) does not need Input Hook.
+**This development branch:** webOS 10/11 installs and updates use Homebar as
+system HOME through a native QML host (takeover), without an Input Hook HOME
+binding. Conflicts with another launcher or unverifiable mapper rules stop the
+installation with instructions. The older Home panel is unchanged; other webOS
+versions retain the compatibility overlay. Runtime mode switching is deferred
+to a separate development branch. See [installation details](docs/install.md#system-home-on-this-development-branch).
+
+**The published 0.18.0 release uses the previous overlay on newer TVs.** Its
+installer requires Input Hook. The commands below download that published
+release, not this branch; do not downgrade an experimental native installation
+without first restoring LG Home.
 
 Log in to the TV as root, then:
 

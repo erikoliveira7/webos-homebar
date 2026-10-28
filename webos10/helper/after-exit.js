@@ -21,9 +21,10 @@ function isInput(id) { return INPUT.test(id || ''); }
 function isApp(id) { return !!id && id !== HOME && !isInput(id); }
 
 class AfterExit {
-  constructor({ launch, now = Date.now, save = () => {}, lastInput = '', target = '', log = () => {}, homeTaken = () => false }) {
+  constructor({ launch, now = Date.now, save = () => {}, lastInput = '', target = '', log = () => {}, homeTaken = () => false, nativeHome = () => false }) {
     this.launch = launch;
     this.homeTaken = homeTaken;
+    this.nativeHome = nativeHome;
     this.now = now;
     this.save = save;
     this.log = log;
@@ -51,9 +52,13 @@ class AfterExit {
     this.card = card;
 
     const exitToNothing = isApp(prev) && card === '';
-    if (!exitToNothing && card !== HOME) return;
+    // Native HOME is also a real user action over a playing card. Only an
+    // app leaving no card is a return request; redirect before LG's last-input
+    // handler opens Home twice and then falls back to Live TV.
+    const native = this.nativeHome();
+    if (native ? !exitToNothing : !exitToNothing && card !== HOME) return;
     if (this.homeTaken()) { this.log('Home belongs to another launcher; not returning'); return; }
-    if (t - this.homeRequestedAt < HOME_REQUEST_MS) { this.log('LG Home was requested; not returning'); return; }
+    if (!native && t - this.homeRequestedAt < HOME_REQUEST_MS) { this.log('LG Home was requested; not returning'); return; }
     if (t - this.lastLaunchAt < RETRY_GAP_MS) return;
     this.lastLaunchAt = t;
     const to = this.target || this.lastInput;
@@ -66,7 +71,8 @@ class AfterExit {
 function cardOf(payload) {
   const list = (payload && payload.foregroundAppInfo) || [];
   const card = list.find((a) => a.windowType === '_WEBOS_WINDOW_TYPE_CARD');
-  return card ? card.appId : '';
+  // Live Dmost is a child card of Live TV, not an application that exited.
+  return card ? (card.windowGroupOwnerId || card.appId) : '';
 }
 
 module.exports = { AfterExit, cardOf, isInput, isApp };

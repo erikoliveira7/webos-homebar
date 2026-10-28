@@ -5,6 +5,13 @@
 # the Home process. The read-only rootfs is not changed; a reboot without this
 # hook gives LG's Home back. Then it starts the setup server for the weather.
 set -eu
+# Finish the caller's exec request before ending the Home process that sent it.
+# SAM also needs time to retire that process before a launch can start a new one.
+if [ "${1:-}" = --restart ]; then
+    setsid sh "$0" --reopen </dev/null >/tmp/rawin-launcher-restart.log 2>&1 &
+    exit 0
+fi
+[ "${1:-}" != --reopen ] || sleep 1
 base=/var/lib/webosbrew/rawin-launcher
 # The system log and, with the seconds since boot, the launcher's boot log
 # (cleared with /tmp at every boot; diagnose.sh shows it).
@@ -50,4 +57,21 @@ if [ -f "$base/setup/setup.js" ]; then
     [ -f "$base/setup.pid" ] && kill "$(cat "$base/setup.pid")" 2>/dev/null || true
     setsid node "$base/setup/setup.js" "$base" </dev/null >/dev/null 2>&1 &
     log 'setup server started'
+fi
+
+if [ "${1:-}" = --reopen ]; then
+    for attempt in 1 2 3 4 5; do
+        sleep 1
+        luna-send -n 1 luna://com.webos.applicationManager/launch '{"id":"com.webos.app.home","params":{"activateType":"home","launchType":"homeKey"}}' </dev/null
+        sleep 1
+        if pidof com.webos.app.home >/dev/null; then
+            # LG may treat the cold launch as preload. Once the host is running,
+            # a warm launch shows its window without synthesising a HOME toggle.
+            luna-send -n 1 luna://com.webos.applicationManager/launch '{"id":"com.webos.app.home","params":{"activateType":"home","launchType":"homeKey"}}' </dev/null
+            log 'Homebar reopened after restart'
+            exit 0
+        fi
+    done
+    log 'Homebar restart: launch failed; press HOME to retry'
+    exit 1
 fi

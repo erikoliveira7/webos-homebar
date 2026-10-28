@@ -15,13 +15,19 @@
 HOMEAPP=/usr/palm/applications/com.webos.app.home
 BASE=/var/lib/webosbrew/rawin-launcher-home
 STAGE=$BASE/app
+HOME_TYPE=web
+if [ -f "$BASE/native-home" ]; then STAGE=$BASE/native-app; HOME_TYPE=qml; fi
 TAG=rawin-launcher
 # The system log and, with the seconds since boot, the launcher's boot log
 # (cleared with /tmp at every boot; diagnose.sh shows it).
 log() { logger -t $TAG "$1"; echo "$(cut -d' ' -f1 /proc/uptime)s $1" >>/tmp/rawin-launcher-boot.log; }
 
 inode() { ls -di "$1" 2>/dev/null | awk '{print $1}'; }
-mounted() { [ -n "$(inode "$STAGE")" ] && [ "$(inode "$HOMEAPP")" = "$(inode "$STAGE")" ]; }
+mounted() {
+  [ -n "$(inode "$STAGE")" ] && [ "$(inode "$HOMEAPP")" = "$(inode "$STAGE")" ] || return 1
+  # A later nested/binary mount can replace Home while its directory stays ours.
+  [ ! -f "$BASE/integration.js" ] || case "$(node "$BASE/integration.js" owner)" in native|legacy) return 0 ;; *) return 1 ;; esac
+}
 
 luna() { luna-send -n 1 "luna://com.webos.applicationManager/$1" "$2" 2>/dev/null; }
 ok() { grep -q '"returnValue": *true'; }
@@ -61,19 +67,28 @@ lg_home_pids() {
 case "$1" in
   apply)
     [ -f "$STAGE/appinfo.json" ] || exit 0
+    if [ -f "$BASE/native-home" ]; then node "$BASE/integration.js" check || exit 1; fi
     # Installed with --keep-lg-home: LG's Home stays.
     [ -e "$BASE/keep-lg-home" ] && exit 0
     if grep -q '"enabled"[[:space:]]*:[[:space:]]*true' /var/lib/tvweb/home.json 2>/dev/null; then
       log 'Glasshouse Home is on: LG Home left to it'
       exit 0
     fi
+    if [ -f "$BASE/integration.js" ]; then
+      case "$(node "$BASE/integration.js" owner)" in lg|native|legacy) ;; *) log 'another or unknown Home owner; refusing takeover'; exit 1 ;; esac
+    fi
     # sam answers only once it is up (at boot this hook runs early).
     for _ in $(seq 60); do luna getAppInfo '{"id":"com.webos.app.home"}' | ok && break; sleep 2; done
     log 'stand-in: app manager up'
+    # Never stack a takeover over an unrelated launcher or a different mode.
+    if ! mounted && grep -qF " $HOMEAPP " /proc/mounts; then
+      log 'another Home mount is present; refusing takeover'
+      exit 1
+    fi
     mounted || mount --bind "$STAGE" "$HOMEAPP" || { log 'mount failed: LG Home kept'; exit 1; }
-    if reread && home_type_is web; then
+    if reread && home_type_is "$HOME_TYPE"; then
       for pid in $(lg_home_pids); do kill "$pid" 2>/dev/null; done
-      log 'black stand-in in LG Home place'
+      log "$HOME_TYPE Homebar in LG Home place"
     else
       umount "$HOMEAPP" 2>/dev/null
       reread
@@ -82,8 +97,15 @@ case "$1" in
     fi
     ;;
   restore)
-    if mounted; then umount "$HOMEAPP"; fi
-    reread
+    # Never close or reread a Home instance owned by a different launcher.
+    mounted || exit 0
+    # SAM's preload manager can respawn the QML host between stopping it and
+    # unmounting its files. Block Home first, then stop again under that block.
+    # Releasing below happens only after the original manifest is visible.
+    luna blockSystemApp '{"id":"com.webos.app.home"}' >/dev/null
+    [ ! -f "$BASE/native-home" ] || sh "$BASE/native-home.sh" stop
+    if mounted && ! umount "$HOMEAPP"; then reread; exit 1; fi
+    reread || exit 1
     home_type_is flutter
     # The black page may still run in the web app manager; sam then takes it for
     # the running Home and every launch of Home waits on it. Close it there.

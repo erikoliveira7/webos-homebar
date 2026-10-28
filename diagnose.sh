@@ -74,6 +74,7 @@ or_note() { out=$("$@" 2>/dev/null); if [ -n "$out" ]; then echo "$out"; else ec
         helper /ping
         helper /home
         helper /state
+        helper /mode
         echo "apps listed: $(wget -q -T 20 -O - "$HELPER/apps" 2>/dev/null | grep -o '"id":' | wc -l)"
         helper /foreground
         helper /inputs
@@ -89,7 +90,10 @@ or_note() { out=$("$@" 2>/dev/null); if [ -n "$out" ]; then echo "$out"; else ec
     echo
     echo "place chosen on a phone: $( [ -f "$PANEL_BASE/weather.json" ] || [ -f "$OVERLAY_BASE/weather.json" ] && echo yes || echo no)"
 
-    section "HOME button (Input Hook)"
+    section "HOME button"
+    if [ -f "$OVERLAY_BASE/native-home" ]; then
+        echo "native Home: system HOME dispatch; no Input Hook binding required"
+    fi
     show /home/root/.config/lginputhook/keybinds.json
     echo
     for f in /tmp/lginput-hook-*.log; do [ -f "$f" ] && { echo "-- $f"; grep -v 'Keybinds reloaded' "$f" | tail -n 8; }; done
@@ -109,6 +113,9 @@ or_note() { out=$("$@" 2>/dev/null); if [ -n "$out" ]; then echo "$out"; else ec
     # the helper runs from org.rawin.launcher.service; LG's own QML apps use
     # qml-runner too, so only "rawin" tells ours apart.
     section "Processes"
+    if [ -f "$OVERLAY_BASE/native-home" ]; then
+        ps -ef | grep -F 'qml-runner' | grep -F 'com.webos.app.home' | grep -v grep
+    fi
     NOTE="(none of the launcher's own; the Home panel runs inside LG Home's process)"
     or_note sh -c "ps -ef 2>/dev/null | grep -F rawin | grep -v -E 'grep|diagnose'"
 

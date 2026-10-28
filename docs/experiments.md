@@ -59,3 +59,45 @@ boot, which a TV woken from standby never sees, and it would need its own
 uninstall (the copy has to be removed, and the TV rebooted, before LG's
 Home is back) and watching over LG's store and firmware updates. A TV
 that tried it keeps the copy until `home-override.sh remove` and a reboot.
+
+## Direct system Home (experimental branch)
+
+`--native-home` uses the TV's existing native QML host directly as
+`com.webos.app.home`, with the same Homebar overlay UI. System HOME reaches
+that instance without an Input Hook binding. The host registers lifecycle v2
+with the application manager; this does not replace Qt or rewrite the panel.
+The experiment currently accepts webOS 10/11 only; B4 on 10.3.1 was tested,
+including startup after a system reboot. webOS 11 has not been tested. It does
+not change the Home panel used on older TVs. It is not included in the published stable release.
+
+From an unpacked build of this branch:
+
+```sh
+sh rawin-launcher/install.sh --native-home
+```
+
+Do not combine this with another Home replacement or `--keep-lg-home`.
+The installer removes only recognised Input Hook and Magic Mapper bindings targeting Homebar, leaving other
+button mappings alone. Files are bind-mounted over Home; original system files
+remain underneath. Saved Homebar data is copied to the Home host's storage;
+uninstall copies it back before restoring LG Home. Updates built from this branch retain native ownership. Disable it before
+installing a stable/older release whose installer does not support native Home. System HOME offers “After holding BACK”: choose the last input, TV or a physical
+input. The helper redirects only when an application leaves no full-screen card,
+before LG starts its repeated Home/Live TV fallback. Normal HOME over a playing
+app still toggles the panel without switching inputs.
+
+Status is available through `native-home.sh status`. Uninstall restores LG Home
+and removes the package. The boot hook reapplies the mount and starts Home
+hidden without starting Input Hook for Homebar. Other tools may still use Input
+Hook for their own mappings.
+
+On the tested B4 the owner observed noticeably faster opening and better
+responsiveness after takeover. The panel remains QML; takeover changes HOME
+dispatch and the host identity rather than rewriting its renderer. No measured
+FPS or universal performance improvement is claimed.
+
+This release-preparation branch automatically migrates supported newer TVs to
+system HOME, with ownership checks, recognised mapper cleanup and rollback.
+Runtime switching and the companion overlay live on `codex/native-home-modes`
+for future work. They are not available through this build's settings or HTTP
+API. webOS 11 remains untested on hardware; see [installation](install.md#system-home-on-this-development-branch).

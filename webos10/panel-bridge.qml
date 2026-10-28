@@ -92,6 +92,7 @@
         function callService(p) {
             shell.http("/locale", function(r) { if (r.locale) systemLang = r.locale; });
             shell.http("/home", function(r) { stockHomeAvailable = !!r.lgHome; });
+            shell.loadLaunchStatus();
         }
     }
     onExitTargetChosen: http("/exit-target?id=" + encodeURIComponent(target))
@@ -106,6 +107,18 @@
         if (step === "save") http("/backup", function(r) { backupResult("save", r); }, function() { backupResult("save", null); }, data);
         else http("/restore", function(r) { backupResult(step, r.saved ? r : null); }, function() { backupResult(step, null); });
     }
+    property string launchWarningFingerprint: ""
+    property string launchWarningLanguage: ""
+    function loadLaunchStatus() {
+        http("/launch-status", function(r) {
+            if (r.inspection && (r.inspection.fingerprint !== launchWarningFingerprint || launchWarningLanguage !== lang)) {
+                launchWarningFingerprint = r.inspection.fingerprint;
+                launchWarningLanguage = lang;
+                if (r.inspection.issues.length) message = t("launch_diagnose");
+            }
+        });
+    }
+    onLaunchCheckRequested: loadLaunchStatus()
     // The helper closes and launches the overlay process after replying, so
     // this QML instance never has to restart itself while handling a click.
     function restartHomebar() {
@@ -120,7 +133,7 @@
                 var list = r.foregroundAppInfo || [];
                 for (var i=0; i<list.length; i++) {
                     if (list[i].appId.indexOf("org.rawin.launcher") === 0 || list[i].windowType === "_WEBOS_WINDOW_TYPE_OVERLAY") continue;
-                    if (describe(list[i].appId)) return;
+                    if (describe(list[i].windowGroupOwnerId || list[i].appId)) return;
                 }
             });
         }

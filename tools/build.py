@@ -125,6 +125,8 @@ def webos10_ipk(spec, version):
     files += [(app_dir + "input-icons/" + p.name, p.read_bytes()) for p in input_icon_files()]
     files += [(app_dir + "fonts/" + p.name, p.read_bytes()) for p in sorted((ROOT / "ui/fonts").iterdir())]
     files += [(svc_dir + p.name, p.read_bytes()) for p in sorted((ROOT / "webos10/helper").glob("*.js"))]
+    # One copy of the launch-ownership module: the installer's, also the helper's.
+    files.append((svc_dir + "integration.js", (ROOT / "webos10/integration.js").read_bytes()))
     files += [(svc_dir + p.name, p.read_bytes()) for p in shared_files()]
     files += [
         (svc_dir + "package.json", json.dumps({"name": SERVICE, "version": package_version, "main": "service.js"}, indent=1).encode()),
@@ -164,8 +166,10 @@ def release_files(spec, version):
     files.append(("webos4/patch-home.js", (ROOT / "webos4/patch-home.js").read_bytes()))
     files += [("shared/" + p.name, p.read_bytes()) for p in shared_files()]
     files.append(("webos4/Config.js", config_js(spec, version, "Home panel")))
-    for name in ("install.sh", "uninstall.sh", "home-takeover.sh", "boot-hook.sh"):
+    for name in ("install.sh", "uninstall.sh", "home-takeover.sh", "boot-hook.sh", "native-home.sh", "mode-switch.sh"):
         files.append(("webos10/" + name, (ROOT / "webos10" / name).read_bytes(), exe))
+    files.append(("webos10/native-stage.js", (ROOT / "webos10/native-stage.js").read_bytes()))
+    files.append(("webos10/integration.js", (ROOT / "webos10/integration.js").read_bytes()))
     files += [("webos10/home-stub/" + p.name, p.read_bytes()) for p in sorted((ROOT / "webos10/home-stub").iterdir())]
     files.append(("webos10/%s_%s_all.ipk" % (APP, version), webos10_ipk(spec, version)))
     return files

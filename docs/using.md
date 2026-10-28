@@ -8,6 +8,7 @@
 - [Launcher settings](#launcher-settings)
 - [Device icons](#device-icons)
 - [Backup](#backup)
+- [Restarting Homebar](#restarting-homebar)
 - [Languages](#languages)
 
 ## Home
@@ -187,7 +188,7 @@ at *Larger* and the 12-hour clock:
 | | Long input names | *Ellipsis* (default) or *Scroll*: a name wider than the 200 px a pill can take either ends in "…", or, while that tile is focused, scrolls slowly to its end and back |
 | | Shortcuts | A box for *Free up memory* and for the *Apps* shortcut: the same, for the tiles after the inputs |
 | | Memory freeing action | *Close background apps* (default) or *Open LG Memory Optimizer*. The first closes apps immediately; the second opens LG's optimiser screen and leaves *Start* to you. The shortcut's title follows the chosen action. The optimiser option is offered only when the TV's LG Settings includes that screen |
-| | After holding BACK | Overlay only: the last input, or any of the TV's inputs, including those hidden on the Home row. Also where the TV goes when an app exits |
+| | After holding BACK | Compatibility overlay and System HOME: the last input, TV, or any physical input, including hidden ones. In System HOME this applies when an app leaves no full-screen card; ordinary HOME over a playing app does not switch inputs. Additional overlay and the older Home panel leave returns to LG |
 | Apps | Apps order | The TV's order, A to Z, or the most used first |
 | | Hidden apps | Hidden, or shown dimmed in *Apps* (to bring one back with RED) |
 | Top bar | Items | A box for the clock, the app on screen and the weather: OK shows the chosen one in the chip or hides it |
@@ -265,6 +266,12 @@ uninstaller removes it with the rest. From a computer,
 `tools/deploy.py --host <tv-ip> --backup file.json` copies it over, and
 `--restore file.json` puts a file on the TV for *Restore*.
 
+## Restarting Homebar
+
+*System → Launcher settings → Restart Homebar* restarts Homebar and opens it
+again. Favourites and settings stay. On the Home panel this restarts LG Home's
+process, so reopening the bar can take a few seconds.
+
 ## Languages
 
 | Language | Code |
@@ -282,3 +289,13 @@ uninstaller removes it with the rest. From a computer,
 The launcher follows the TV's menu language when it is one of these, and falls
 back to English otherwise. Corrections and new languages are welcome, see
 [Development → Adding a language](development.md#adding-a-language).
+
+### System HOME on newer TVs
+
+This development branch uses takeover on webOS 10/11: HOME reaches Homebar's
+native QML host directly, without a mapper shortcut. Older ribbon-Home TVs keep
+their existing integration. Launch method switching and a companion overlay are
+reserved for a separate development branch and do not appear in settings here.
+If Homebar reports a HOME configuration problem, run
+[Diagnose](troubleshooting.md#diagnose) and resolve the reported conflict before
+changing launcher ownership or mapper rules.

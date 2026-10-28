@@ -16,10 +16,27 @@ const urlModule = require('url');
 const { AfterExit, cardOf } = require('./after-exit');
 const { Preloader, panelRunning, foregroundSafe } = require('./preload');
 const setup = require('./setup');
+const ModeControl = require('./mode');
+const modeControl = new ModeControl(fs);
+let restarting = false, updateBusy = false;
+function installingUpdate() {
+  try { return fs.readFileSync('/tmp/rawin-launcher-update/state', 'utf8').trim() === 'running'; } catch (e) { return false; }
+}
 
 const APP = 'org.rawin.launcher';
 const APP_DIR = '/media/developer/apps/usr/palm/applications/' + APP;
 const CACHE = APP_DIR + '/cache';
+const NATIVE_HOME = '/var/lib/webosbrew/rawin-launcher-home/native-home';
+function nativeHome() { return fs.existsSync(NATIVE_HOME); }
+function nativeHomeMounted() {
+  if (!nativeHome()) return false;
+  try {
+    const home = fs.statSync('/usr/palm/applications/com.webos.app.home');
+    const stage = fs.statSync('/var/lib/webosbrew/rawin-launcher-home/native-app');
+    return home.ino === stage.ino && home.dev === stage.dev && !modeControl.foreignHome();
+  } catch (e) { return false; }
+}
+function panelId() { return nativeHomeMounted() ? 'com.webos.app.home' : APP; }
 const ICON_ROOTS = ['/usr/palm/', '/media/cryptofs/apps/', '/media/developer/apps/', '/mnt/lg/'];
 const HTTP_PORT = 8899;
 // What the panel may open besides the apps it listed: the inputs, LG's Home
@@ -130,10 +147,10 @@ const server = http.createServer(async (req, res) => {
       let mounted = false;
       try {
         const home = fs.statSync('/usr/palm/applications/com.webos.app.home');
-        const stage = fs.statSync('/var/lib/webosbrew/rawin-launcher-home/app');
+        const stage = fs.statSync('/var/lib/webosbrew/rawin-launcher-home/' + (nativeHome() ? 'native-app' : 'app'));
         mounted = home.ino === stage.ino && home.dev === stage.dev;
       } catch (e) {}
-      return send(res, 200, { returnValue: true, lgHome: !mounted });
+      return send(res, 200, { returnValue: true, lgHome: !mounted, nativeHome: nativeHomeMounted(), configuredNativeHome: nativeHome() });
     }
     if (url.pathname === '/foreground') {
       return send(res, 200, await luna('luna://com.webos.applicationManager/getForegroundAppInfo', { extraInfo: true }));
@@ -158,21 +175,39 @@ const server = http.createServer(async (req, res) => {
       // LG also closes our overlay; the watchdog preloads it again afterward.
       return send(res, 200, await luna('luna://com.webos.applicationManager/closeAllApps', {}));
     }
+    if (url.pathname === '/launch-status') {
+      if (req.method !== 'GET') return send(res, 405, { ok: false, error: 'method' });
+      return send(res, 200, modeControl.status());
+    }
     if (url.pathname === '/restart' && req.method === 'POST') {
+      if (modeControl.isBusy() || restarting || updateBusy || installingUpdate()) return send(res, 409, { ok: false, error: 'busy' });
       // Reply first: closing the overlay tears down the QML request that asked
       // for it. The helper is a separate resident service, so it can launch a
       // clean process once applicationManager has removed the old one.
       send(res, 200, { ok: true });
+      restarting = true;
       preloader.pause(15000);   // this closes and starts the app itself
       setTimeout(() => {
-        luna('luna://com.webos.applicationManager/closeByAppId', { id: APP });
-        setTimeout(() => luna('luna://com.webos.applicationManager/launch', { id: APP, params: { restart: true }, keepAlive: true }), 400);
+        const id = panelId();
+        const launch = () => setTimeout(() => {
+          luna('luna://com.webos.applicationManager/launch', { id: id, params: { restart: true }, keepAlive: true });
+          restarting = false;
+        }, 400);
+        if (nativeHomeMounted()) {
+          execFile('/bin/sh', ['/var/lib/webosbrew/rawin-launcher-home/native-home.sh', 'stop'], (err) => {
+            if (err) { restarting = false; note('native Home restart failed: ' + err.message); }
+            else launch();
+          });
+        } else {
+          luna('luna://com.webos.applicationManager/closeByAppId', { id: id });
+          launch();
+        }
       }, 50);
       return;
     }
     if (url.pathname === '/state') {
       return send(res, 200, { lastInput: returner.lastInput, target: returner.target, card: returner.card,
-                             subscribed: subscribed, preload: preloader.state(), events: events });
+                             subscribed: subscribed, preload: nativeHome() ? { mode: 'system Home', running: nativeHomeMounted() && panelRunning(fs, '/usr/palm/applications/com.webos.app.home') } : preloader.state(), nativeHome: nativeHome(), events: events });
     }
     // The TV's UI language ("pl-PL"), for the launcher's "system language".
     if (url.pathname === '/locale') {
@@ -189,10 +224,14 @@ const server = http.createServer(async (req, res) => {
     }
     // Updates: update.sh next to the installed launcher (check, download, install, status).
     if (url.pathname === '/update') {
+      if (modeControl.isBusy() || restarting || updateBusy) return send(res, 409, { ok: false, error: 'busy' });
       const step = String(query.step || '');
       if (!['check', 'download', 'install', 'status'].includes(step)) return send(res, 400, { ok: false, error: 'unknown step' });
+      if (step !== 'status' && installingUpdate()) return send(res, 409, { ok: false, error: 'busy' });
       const channel = query.channel === 'test' ? 'test' : 'stable';
-      return send(res, 200, await updateStep(step, channel));
+      updateBusy = true;
+      try { return send(res, 200, await updateStep(step, channel)); }
+      finally { updateBusy = false; }
     }
     // The backup file: written from the panel, read back for info and restore.
     if (url.pathname === '/backup' && req.method === 'POST') {
@@ -246,7 +285,8 @@ function glasshouseHome() {
 }
 const returner = new AfterExit({
   lastInput: savedInput,
-  homeTaken: glasshouseHome,
+  nativeHome: () => nativeHomeMounted(),
+  homeTaken: () => (nativeHome() && !nativeHomeMounted()) || fs.existsSync(BASE + '/additional-overlay') || modeControl.isBusy() || modeControl.foreignHome() || glasshouseHome(),
   target: readSettings().exitTo,
   save: (id) => { try { fs.writeFileSync(LAST_INPUT_FILE, id); } catch (e) {} },
   launch: (id) => luna('luna://com.webos.applicationManager/launch', { id }).then((r) => note('launch ' + id + ': ' + r.returnValue)),
@@ -272,7 +312,7 @@ function onForeground(payload) {
   // panel. The wait is small on purpose: every app launch closes the panel,
   // and a HOME pressed just after wants it back.
   clearTimeout(preloadSoon);
-  preloadSoon = setTimeout(() => { preloader.tick(frontState).catch(() => {}); },
+  preloadSoon = setTimeout(() => { if (!nativeHome()) preloader.tick(frontState).catch(() => {}); },
                            state === 'app' ? 2500 : 3000);
 }
 let preloadSoon = null;
@@ -294,7 +334,7 @@ const preloader = new Preloader({
   },
   log: note
 });
-setInterval(() => { preloader.tick(frontState).catch(() => {}); }, 10000);
+setInterval(() => { if (!nativeHome()) preloader.tick(frontState).catch(() => {}); }, 10000);
 try {
   const sub = service.subscribe('luna://com.webos.applicationManager/getForegroundAppInfo', { extraInfo: true, subscribe: true });
   sub.on('response', (m) => { subscribed = true; onForeground(m.payload); });

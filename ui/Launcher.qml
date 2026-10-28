@@ -201,6 +201,7 @@ FocusScope {
     // values. pane 0 is the list of settings, pane 1 their values. The
     // keys and the values do not depend on the settings themselves, so
     // choosing a value does not rebuild the menu around it.
+    signal launchCheckRequested()
     readonly property var settingGroups: groupsFor(Config.exitTarget)
     readonly property var settingKeys: keysOf(settingGroups)
     readonly property var menuRows: rowsOf(settingGroups, lang)
@@ -567,6 +568,7 @@ FocusScope {
             if (memoryOptimizerAvailable) list.push({id: "memory", title: t("val_close_memory")});
         } else if (key === "exitTo") {
             list.push({id: "last", title: t("val_last_input")});
+            list.push({id: "com.webos.app.livetv", title: t("live_tv")});
             for (i=0; i<inputList.length; i++) list.push({id: inputList[i].id, title: inputList[i].title});
         } else if (key === "hints") {
             list = [{id: true, title: t("val_chip_on")}, {id: false, title: t("val_chip_off")}];
@@ -740,7 +742,7 @@ FocusScope {
             homeApps: s.homeApps !== false,
             homeActionOrder: homeActionOrderFor(s.homeActionOrder),
             showHidden: s.showHidden === true,
-            exitTo: /^(last|com\.webos\.app\.(hdmi|dp|usbc)\d)$/.test(s.exitTo) ? s.exitTo : "last",
+            exitTo: /^(last|com\.webos\.app\.(livetv|(hdmi|dp|usbc)\d))$/.test(s.exitTo) ? s.exitTo : "last",
             clock: s.clock !== false,
             // Up to 0.14 "clock" showed or hid the whole chip: what is on
             // screen and the weather follow it until they are set themselves.
@@ -1334,10 +1336,11 @@ FocusScope {
         if (foreground) {
             launching = false; message = ""; page="home"; selected=0; pane=0; forceActiveFocus();
             tick();
-            if (ready) { catalog.callService({}); foregroundInfo.callService({extraInfo: true}); loadInputs(); dailyUpdateCheck(); }
+            if (ready) { launchCheckRequested(); catalog.callService({}); foregroundInfo.callService({extraInfo: true}); loadInputs(); dailyUpdateCheck(); }
             loadWeather();
         }
     }
+    onLangChanged: if (ready) launchCheckRequested()
     onReadyChanged: {
         if (!ready) return;
         loadWeather();
@@ -1688,7 +1691,7 @@ FocusScope {
     // Home-panel variant: apply.sh restarts only LG Home, which hosts the
     // panel. The launch after it brings the freshly loaded Homebar back.
     function restartHomebar() {
-        restartService.callService({command: "sh /var/lib/webosbrew/rawin-launcher/apply.sh; luna-send -n 1 luna://com.webos.applicationManager/launch '{\"id\":\"com.webos.app.home\"}'"});
+        restartService.callService({command: "sh /var/lib/webosbrew/rawin-launcher/apply.sh --restart"});
     }
     Service {
         id: restartService

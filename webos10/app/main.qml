@@ -10,6 +10,7 @@
 import QtQuick 2.4
 import QtQuick.Window 2.2
 import Eos.Window 0.1
+import "Config.js" as Config
 
 WebOSWindow {
     id: win
@@ -26,7 +27,24 @@ WebOSWindow {
     // started it, then a plain value. The boot hook's preload can land after
     // a HOME already started the app (right after a boot), and must not hide
     // a panel that is up.
-    property bool preloaded: isPreload(launchParams)
+    property bool preloaded: isPreload(startupParams())
+    property bool initialized: false
+    function startupParams() {
+        // SAM's native lifecycle passes cold-launch arguments as "parameters";
+        // developer QML apps use the params context property. Read argv only at
+        // startup: later HOME events must follow the live params context.
+        if (nativeHome) {
+            var args = Qt.application.arguments;
+            for (var i=1; i<args.length; i++) {
+                try {
+                    var meta = JSON.parse(args[i]);
+                    if (meta.appId === "com.webos.app.home" && meta.parameters)
+                        return meta.parameters;
+                } catch (e) {}
+            }
+        }
+        return launchParams;
+    }
     function isPreload(p) { return p !== null && p !== undefined && p.preload === true; }
     // A quiet start is the helper preloading the panel while another app is
     // in front: then the window is not mapped at all, so nothing can flash
@@ -37,17 +55,26 @@ WebOSWindow {
     // app shows a window: a preloaded start maps the window for a moment,
     // with the panel faded out (nothing is drawn), and hides it again.
     Component.onCompleted: {
-        preloaded = isPreload(launchParams);   // ends the binding
-        if (preloaded && !isQuiet(launchParams)) { win.visible = true; mapTimer.start(); }
+        var startup = startupParams();
+        preloaded = isPreload(startup);   // ends the binding
+        if (preloaded && !isQuiet(startup)) { win.visible = true; mapTimer.start(); }
+        // Launching the regular app tile while takeover is enabled must bring
+        // the Home instance forward, not leave two independent panels running.
+        initialized = true;
+        if (!nativeHome) home.http("/home", function(r) {
+            if (r.nativeHome) home.http("/launch?id=com.webos.app.home", function() { win.hide(); Qt.quit(); });
+        });
     }
     Timer { id: mapTimer; interval: 500; onTriggered: if (!home.foreground) win.visible = false }
     color: "transparent"
-    appId: "org.rawin.launcher"
+    readonly property bool nativeHome: Config.nativeHome === true
+    appId: nativeHome ? "com.webos.app.home" : "org.rawin.launcher"
     title: "Homebar"
 
     // Each launch: HOME while the panel is up hides it, otherwise shows it;
     // the boot hook's preload only makes sure the process is there.
     onLaunchParamsChanged: {
+        if (!initialized) return;
         if (isPreload(launchParams)) return;
         if (win.visible && home.foreground) hide(); else show();
     }
