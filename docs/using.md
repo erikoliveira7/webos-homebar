@@ -323,7 +323,7 @@ process checked; old or custom setups that cannot be verified require manual
 attention rather than a guessed rewrite.
 
 Additional overlay keeps LG Home, Luma or Glasshouse and does not force HDMI when
-an app closes. Set another button to `org.rawin.launcher` in your mapper, or open
+an app closes. Set another button to `org.rawin.launcher` in your mapper ([how](install.md#mapping-a-button-to-homebar)), or open
 the Homebar app tile. Earlier non-HOME shortcuts are restored only if their current
 values match the previous cleanup; your later edits are never overwritten.
 Homebar does not choose a spare button or uninstall either mapper for you.

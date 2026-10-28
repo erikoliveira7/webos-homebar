@@ -134,6 +134,10 @@ the Homebar app tile, or press the button you mapped).
 - Choose by hand: `--native-home`, `--additional-overlay`, `--home-panel`,
   `--overlay`. All options, installing without internet on the TV, updating
   and uninstalling: [Install, update, uninstall](docs/install.md).
+- **Additional overlay: a button** is a mapper rule that launches the app id
+  `org.rawin.launcher` (examples for Input Hook and Magic Mapper:
+  [Mapping a button to Homebar](docs/install.md#mapping-a-button-to-homebar)).
+  The app tile works without one.
 
 **Update:** *System → Launcher settings → Updates* (from 0.10.0 on).
 **Uninstall:** `sh /var/lib/webosbrew/rawin-launcher/uninstall.sh` (Home panel)

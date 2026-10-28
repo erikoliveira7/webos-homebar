@@ -170,7 +170,8 @@ are backed up and removed during a system-HOME transition. Other actions,
 conditions and mapper settings stay. Active supported Magic Mapper is restarted;
 a failed reload rolls back the change. Additional overlay restores earlier
 non-HOME shortcuts only where the current rule has not been changed by the user.
-Assign its button to `org.rawin.launcher` in your mapper, or use the app tile.
+Assign its button to `org.rawin.launcher` in your mapper, or use the app tile
+([how](#mapping-a-button-to-homebar)).
 
 Uninstall removes only recognised Homebar rules from both mappers. If an
 unsupported mapper cannot be updated safely, it stops with instructions to inspect
@@ -179,6 +180,30 @@ and fix the unsupported configuration first. It does not uninstall either mapper
 System HOME has been checked on an LG B4 (webOS 10.3): install, switching both
 ways in the settings, restarts. webOS 11, other launchers and the full matrix
 of mapper versions are tested locally only so far; reports are welcome.
+
+### Mapping a button to Homebar
+
+In the additional overlay Homebar opens from its **app tile** with nothing
+set up. For a button, make the mapper *launch the app* `org.rawin.launcher`
+(the name Homebar's app has; not "Homebar"):
+
+- **Input Hook** (`/home/root/.config/lginputhook/keybinds.json`, or its app):
+  the key is the button's **uinput code**, not its key id. Press the button
+  once and read the code from `/tmp/lginput-hook-*.log`
+  (`uinput_code=1086` for the Alexa button of an LG B4).
+  ```json
+  { "1086": { "action": "launch", "id": "org.rawin.launcher" } }
+  ```
+- **Magic Mapper** (`/home/root/magic_mapper_config.json`): a button from its
+  list, with the `launch_app` function. Its list has no SOURCE/INPUT entry, so
+  use one it has or add the code to its script (see its README).
+  ```json
+  { "green": { "function": "launch_app", "inputs": { "app_id": "org.rawin.launcher" } } }
+  ```
+
+Do not map HOME this way in the additional overlay: HOME stays with LG Home,
+Luma or Glasshouse. Homebar does not choose a button for you; switching
+methods only backs up and restores its own earlier rules, as described above.
 
 ### Trying System HOME on webOS 7 to 9
 
