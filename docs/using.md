@@ -290,12 +290,52 @@ The launcher follows the TV's menu language when it is one of these, and falls
 back to English otherwise. Corrections and new languages are welcome, see
 [Development → Adding a language](development.md#adding-a-language).
 
-### System HOME on newer TVs
+### Launch method (overlay builds)
 
-This development branch uses takeover on webOS 10/11: HOME reaches Homebar's
-native QML host directly, without a mapper shortcut. Older ribbon-Home TVs keep
-their existing integration. Launch method switching and a companion overlay are
-reserved for a separate development branch and do not appear in settings here.
-If Homebar reports a HOME configuration problem, run
-[Diagnose](troubleshooting.md#diagnose) and resolve the reported conflict before
-changing launcher ownership or mapper rules.
+**Launcher settings → Help → Launch method** shows **System HOME** or
+**Additional overlay**, the current launch checks, and an offer to migrate a
+previous overlay where supported. System HOME is currently limited to webOS
+10/11. The older Home-panel integration has no mode switch.
+
+Hover and arrows only move focus. **OK or a click opens a preview; confirm the
+same option again to apply.** BACK cancels. The preview explains the restart and
+any old Homebar mappings to remove. If configuration changes before applying,
+review and confirm again. Favourites and settings stay.
+
+System HOME takes the main launcher role. Recognised Homebar `launch`/single
+`luna-send` rules in Input Hook and `launch_app` rules in Magic Mapper are backed
+up and removed. Conditional entries and lists are handled individually: unrelated
+actions and `magic_mapper_settings` are preserved. A remaining conflicting HOME
+action blocks takeover. Active supported Magic Mapper is restarted and its new
+process checked; old or custom setups that cannot be verified require manual
+attention rather than a guessed rewrite.
+
+Additional overlay keeps LG Home, Luma or Glasshouse and does not force HDMI when
+an app closes. Set another button to `org.rawin.launcher` in your mapper, or open
+the Homebar app tile. Earlier non-HOME shortcuts are restored only if their current
+values match the previous cleanup; your later edits are never overwritten.
+Homebar does not choose a spare button or uninstall either mapper for you.
+
+Checks run on opening Homebar, entering Launch method and during boot. New
+conflicts are reported with instructions. Homebar never reclaims HOME from
+another launcher automatically. Even when a later takeover prevents the native
+Homebar from owning HOME, its app tile can open its settings to choose an
+additional overlay. Restart also targets that fallback instance safely.
+
+An older overlay already opened by a supported Magic Mapper HOME shortcut keeps
+that shortcut on update without requiring Input Hook or creating a second HOME
+binding. An inactive mapper is reported so you can check its startup.
+
+Updates keep the selected mode. Interrupted changes have a recovery journal;
+failed changes restore the previous data and mapper rules where safe. If a
+concurrent edit prevents recovery, it is preserved and Diagnose retains the
+recovery information. Older releases do not understand these modes: reverting
+requires a separate rollback procedure.
+
+Magic Mapper support follows the [upstream configuration format](https://github.com/andrewfraley/magic_mapper#configuring-buttons).
+Known 1.0.0/1.1.0 script layouts are inspected at the standard location, through
+the known startup script, or through a running `magic_mapper.py` process. Custom
+renamed installations outside these locations need manual checking. Supervised
+restart support is required only when changing an active mapper. Unknown layouts are reported as
+unverified. Actual coexistence across TVs and mapper versions still needs tests;
+local fixtures do not establish full hardware compatibility.

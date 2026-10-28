@@ -11,9 +11,9 @@
         xhr.onreadystatechange = function() {
             if (xhr.readyState !== XMLHttpRequest.DONE) return;
             var answer = null;
-            if (xhr.status === 200) { try { answer = JSON.parse(xhr.responseText); } catch (e) {} }
-            if (answer) { if (done) done(answer); }
-            else if (failed) failed(xhr.status);
+            try { answer = JSON.parse(xhr.responseText); } catch (e) {}
+            if (xhr.status === 200 && answer) { if (done) done(answer); }
+            else if (failed) failed(xhr.status, answer);
         };
         var post = body !== undefined && body !== null;
         xhr.open(post ? "POST" : "GET", helper + pathname);
@@ -92,7 +92,7 @@
         function callService(p) {
             shell.http("/locale", function(r) { if (r.locale) systemLang = r.locale; });
             shell.http("/home", function(r) { stockHomeAvailable = !!r.lgHome; });
-            shell.loadLaunchStatus();
+            shell.loadMode();
         }
     }
     onExitTargetChosen: http("/exit-target?id=" + encodeURIComponent(target))
@@ -107,18 +107,33 @@
         if (step === "save") http("/backup", function(r) { backupResult("save", r); }, function() { backupResult("save", null); }, data);
         else http("/restore", function(r) { backupResult(step, r.saved ? r : null); }, function() { backupResult(step, null); });
     }
-    property string launchWarningFingerprint: ""
     property string launchWarningLanguage: ""
-    function loadLaunchStatus() {
-        http("/launch-status", function(r) {
-            if (r.inspection && (r.inspection.fingerprint !== launchWarningFingerprint || launchWarningLanguage !== lang)) {
-                launchWarningFingerprint = r.inspection.fingerprint;
-                launchWarningLanguage = lang;
-                if (r.inspection.issues.length) message = t("launch_diagnose");
+    function loadMode() {
+        http("/mode", function(r) {
+            if (modeConfirm && r.inspection && modeConfirmFingerprint !== r.inspection.fingerprint) {
+                modeConfirm = ""; modeError = "launch_changed";
             }
+            modeInfo = r;
+            if (!r.busy && r.inspection && (r.inspection.fingerprint !== launchLastWarning || launchWarningLanguage !== lang)) {
+                launchLastWarning = r.inspection.fingerprint;
+                launchWarningLanguage = lang;
+                if (r.inspection.issues.length) message = t("launch_attention");
+                else if (r.migrationAvailable) notice = t("launch_migrate");
+            }
+            if (r.busy) modePoll.restart();
+            if (r.result && r.result.ok === false)
+                modeError = r.result.error || "launch_failed";
         });
     }
-    onLaunchCheckRequested: loadLaunchStatus()
+    onLaunchCheckRequested: loadMode()
+    Timer { id: modePoll; interval: 1000; onTriggered: loadMode() }
+    function modeRun(mode, fingerprint) {
+        http("/mode", function(r) {
+            if (!r.ok) { modeError = r.error || "launch_failed"; return; }
+            message = r.pending ? t("mode_switching") : "";
+            loadMode();
+        }, function(status, answer) { modeError = answer && answer.error ? answer.error : "launch_failed"; loadMode(); }, {mode: mode, fingerprint: fingerprint});
+    }
     // The helper closes and launches the overlay process after replying, so
     // this QML instance never has to restart itself while handling a click.
     function restartHomebar() {

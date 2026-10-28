@@ -11,10 +11,10 @@
   and a root shell (SSH or telnet, enabled in the Homebrew Channel settings).
 - Overlay builds need node 8 or newer. The Home-panel variant uses the TV's
   older node runtime and does not need a mapper.
-- On this development branch, webOS 10/11 use direct system HOME without
-  requiring Input Hook. Other overlay installs require Input Hook or an existing
-  supported Magic Mapper HOME shortcut. Published 0.18.0 uses the previous
-  overlay and requires Input Hook.
+- System HOME (webOS 10/11) and the additional overlay need no Input Hook.
+  The compatibility overlay (webOS 6 to 9, or by choice) requires Input Hook
+  or an existing supported Magic Mapper HOME shortcut to Homebar: install and
+  open Input Hook from the Homebrew Channel if you do not already have one.
 - The TV's own `node`, `tar` and `curl`/`wget` (present on the tested TVs).
 - For the Home panel on a TV with LG's two Home screens (some 2019 models):
   the TV's *Home screen* setting on *Basic*, see
@@ -49,16 +49,17 @@ Installer options:
 | :--- | :--- |
 | `--probe` | Only says which variant fits this TV and why; changes nothing |
 | `--home-panel` | The panel inside LG's Home, or fail (no overlay instead) |
-| `--overlay` | The helper-based installation; system HOME on webOS 10/11, compatibility overlay elsewhere |
-| `--keep-lg-home` | Compatibility overlay only: leave LG's Home in place; *System → Original Home* opens it |
-| `--replace-lg-home` | Compatibility overlay on an untested webOS: put the black stand-in in LG Home's place anyway (unavailable with system HOME) |
-| `--native-home` | Experimental system Home takeover on webOS 10/11, without an Input Hook binding; branch builds only. See [experiments](experiments.md#direct-system-home-experimental-branch) |
-| `--home-key=CODE` | Compatibility overlay: bind this key code as HOME (the number Input Hook logs for it) |
-| `--home-key=ask` | Compatibility overlay: ask for a press of HOME, also when a key is already bound |
-| `--home-key-exec` | Compatibility overlay: send that press through Input Hook's *Execute* action with `noSplash`/`spinner:false`, so the app manager does not show its loading spinner when the panel has to start. Experimental: Input Hook must be able to run commands, so try it and keep the plain binding if HOME stops opening the panel |
+| `--overlay` | The overlay app with the root helper, or fail |
+| `--keep-lg-home` | Overlay: leave LG's Home in place; *System → Original Home* opens it |
+| `--replace-lg-home` | Overlay on an untested webOS: put the black stand-in in LG Home's place anyway (on webOS 10 it always is) |
+| `--native-home` | System HOME on webOS 10/11, without an Input Hook binding. See [Launch method](#launch-method) |
+| `--additional-overlay` | Keep the main Home (LG's, Luma's or Glasshouse's); Homebar is added and you map a button to it |
+| `--home-key=CODE` | Overlay: bind this key code as HOME (the number Input Hook logs for it) |
+| `--home-key=ask` | Overlay: ask for a press of HOME, also when a key is already bound |
+| `--home-key-exec` | Overlay: send that press through Input Hook's *Execute* action with `noSplash`/`spinner:false`, so the app manager does not show its loading spinner when the panel has to start. Experimental: Input Hook must be able to run commands, so try it and keep the plain binding if HOME stops opening the panel |
 | `--try-webos10` | The same as `--overlay`; older instructions use it |
 
-On the compatibility overlay the installer, run from a terminal, asks for a press of HOME
+On the overlay the installer, run from a terminal, asks for a press of HOME
 and binds the key Input Hook logs for it (15 s; without a press, the tested
 Magic Remote's `773`). An install that finds the launcher already bound to a
 key keeps that key; an update from the panel never asks. The panel is started
@@ -131,38 +132,40 @@ LG's Home and the HOME button are given back at once; nothing needs a reboot.
 What the uninstaller removes is listed in
 [How it works → What it changes on the TV](how-it-works.md#what-it-changes-on-the-tv).
 
-## System HOME on this development branch
+## Launch method
 
-On webOS 10/11, both fresh installs and upgrades select direct system HOME
-(takeover). Older ribbon-Home TVs keep the Home-panel integration; other webOS
-versions retain the mapper-based compatibility overlay. webOS 10.3 has been
-verified on B4; webOS 11 is gated as supported by the implementation but still
-needs real-TV validation. No new mode is added to C9.
+A fresh automatic install prefers the compatible LG ribbon Home integration,
+then direct system HOME on webOS 10/11 when launch checks pass. Another Home
+replacement or unverifiable mapper configuration selects an additional overlay,
+with an explanation; no foreign HOME mapping is overwritten. Where direct HOME
+is unsupported, the previous mapper-based overlay remains a compatibility option.
+A recognised Magic Mapper HOME shortcut is kept without creating a second Input Hook binding.
+
+Choose explicitly from the unpacked release:
 
 ```sh
-sh install.sh              # automatic platform selection
-sh install.sh --native-home # explicit system HOME on webOS 10/11
-sh install.sh --probe       # read-only capability and conflict checks
+sh install.sh --native-home          # direct system HOME; checks conflicts
+sh install.sh --additional-overlay   # keep the main Home; choose your own button
+sh install.sh --overlay              # previous mapper-based overlay
+sh install.sh --probe                # read-only capabilities and launch checks
 ```
 
-Before changing a supported newer TV, the installer checks Home ownership and
-mapper configuration. Another launcher owning HOME, a conflicting HOME action,
-or configuration that cannot be safely inspected blocks installation; resolve
-the reported conflict and retry. Homebar never silently replaces another launcher.
-An experimental additional-overlay install must first be restored using its own
-branch; this build does not convert it automatically.
+Existing installations retain their mode. Legacy users on supported TVs receive
+an offer under **Launcher settings → Help → Launch method**. Applying it is an
+explicit change, not a silent update migration. An unknown or conflicting HOME
+rule must be resolved first, or use the additional overlay instead.
 
 Recognised Homebar rules in Input Hook and supported Magic Mapper configurations
-are backed up and removed during migration, including older Homebar shortcuts
-on other buttons. Other actions and mapper settings stay. Active supported Magic
-Mapper is restarted; a failed reload rolls back the change. Favourites and
-settings are copied to the system Home host. A transaction journal supports
-rollback and recovery after interrupted migration.
+are backed up and removed during a system-HOME transition. Other actions,
+conditions and mapper settings stay. Active supported Magic Mapper is restarted;
+a failed reload rolls back the change. Additional overlay restores earlier
+non-HOME shortcuts only where the current rule has not been changed by the user.
+Assign its button to `org.rawin.launcher` in your mapper, or use the app tile.
 
-There is no Launch method setting, companion-overlay option or runtime mode
-switch API in this branch. Those features are deferred. The internal migration
-script handles installation/recovery only. Uninstall restores LG Home and removes
-only recognised Homebar mappings; it does not uninstall either mapper.
+Uninstall removes only recognised Homebar rules from both mappers. If an
+unsupported mapper cannot be updated safely, it stops with instructions to inspect
+and fix the unsupported configuration first. It does not uninstall either mapper.
 
-Do not install a published/older overlay-only release over native Home until
-native ownership is restored using this build's uninstall procedure.
+System HOME has been checked on an LG B4 (webOS 10.3). Changing the launch
+method in the settings, webOS 11 and the full matrix of mapper versions and
+other launchers have been tested locally only so far; reports are welcome.

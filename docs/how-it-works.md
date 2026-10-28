@@ -90,21 +90,20 @@ app:
   (`"enabled": true` in `/var/lib/tvweb/home.json`), Home is Glasshouse's:
   the stand-in is not mounted and the helper does not switch away from it.
 
-## Experimental direct Home
+## System Home (webOS 10/11)
 
-On the `codex/native-home-release` branch, automatic installation stages the same
+On webOS 10/11 a fresh install (or `--native-home`) stages the same
 panel as `com.webos.app.home` on webOS 10/11. The firmware's QML runner is the
 native host and registers lifecycle v2 with SAM, which dispatches HOME directly.
 The window remains an overlay. This replaces the black stand-in and the
-recognised Homebar Input Hook/Magic Mapper bindings, rather than adding another renderer.
+Homebar Input Hook binding, rather than adding another native renderer.
 The helper still supplies services. Native after-exit redirection runs only when
 an app leaves no card, using the selected last input, TV or physical input; it
 does not redirect ordinary HOME. Its standard Home-triggered redirection and
 process preloader are disabled in this mode. Restart targets the Home host.
 `native-home.sh disable` copies Homebar's database back and restores the prior
-Homebar bindings during teardown; it retains other user key bindings. Runtime mode
-switching is deferred to `codex/native-home-modes`. See
-[the experiment](experiments.md#direct-system-home-experimental-branch).
+Homebar binding; it retains other user key bindings. See
+[the notes](experiments.md#direct-system-home).
 
 ## The panel on any screen
 

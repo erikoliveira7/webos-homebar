@@ -314,14 +314,14 @@ Integration.prototype.legacyKey = function(key, execute) {
 Integration.ihOwn=ihOwn;Integration.mmOwn=mmOwn;
 module.exports=Integration;
 var messages={
-    launch_home_other:'Another launcher owns HOME. Disable its takeover before installing Homebar.',
-    launch_home_unknown:'HOME ownership could not be verified. Inspect Diagnose before installing Homebar.',
-    launch_config_unknown:'Mapper configuration could not be verified. Fix it before installing Homebar.',
-    launch_home_mapping:'HOME has another action assigned. Remove the conflicting rule before installing Homebar.',
+    launch_home_other:'Another launcher owns HOME. Disable its takeover or choose --additional-overlay.',
+    launch_home_unknown:'HOME ownership could not be verified. Use --additional-overlay or inspect Diagnose.',
+    launch_config_unknown:'Mapper configuration could not be verified. Fix it or choose --additional-overlay.',
+    launch_home_mapping:'HOME has another action assigned. Keep it with --additional-overlay, or remove the conflicting rule first.',
     launch_reload_unknown:'Active Magic Mapper cannot be reloaded safely. Update or stop it first.',
     launch_reload_failed:'Magic Mapper did not restart correctly. Check /tmp/magic_mapper.log.',
     launch_changed:'Configuration changed. Review and confirm again.',
-    launch_scan_unknown:'A running mapper could not be inspected. Inspect Diagnose before installing Homebar.',
+    launch_scan_unknown:'A running mapper could not be inspected. Use --additional-overlay or inspect Diagnose.',
     launch_rollback_changed:'A concurrent mapper edit was preserved. The recovery journal was retained for inspection.',
     launch_unsupported:'Direct system HOME requires webOS 10/11 and qml-runner.'
 };

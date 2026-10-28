@@ -87,7 +87,7 @@ overlay_fits() {
 }
 
 case "$1" in
-    additional-overlay) echo "Additional overlay is not included in this build" >&2; exit 2 ;;
+    additional-overlay) overlay_fits additional; r=$?; printf '%s\n' "$overlay_why"; exit $r ;;
     panel) panel_fits; r=$?; printf '%s\n' "$panel_why"; full_home_note; exit $r ;;
     full-home) full_home_note ;;
     native-home)
@@ -102,9 +102,6 @@ case "$1" in
 
     overlay) overlay_fits; r=$?; printf '%s\n' "$overlay_why"; exit $r ;;
     "")
-        if grep -qE 'release (10|11)\.' /etc/starfish-release; then
-            if sh "$0" native-home; then say 'system HOME: fits'; else say 'system HOME: requirements not met'; fi
-        fi
         if panel_fits; then say "Home panel: fits"; else say "Home panel: does not fit"; fi
         detail "$panel_why"
         note=$(full_home_note)

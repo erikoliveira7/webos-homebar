@@ -27,55 +27,50 @@ HOME_KEY=773   # the remote's HOME button as Input Hook reports it
 # Recover using the installed scripts before reading the mode or updating files.
 if [ -d "$BASE/mode-switch-lock" ]; then sh "$BASE/mode-switch.sh" recover || exit 1; fi
 NATIVE_HOME=
-NATIVE_EXPLICIT=
+WAS_NATIVE=
+[ ! -f "$BASE/native-home" ] || WAS_NATIVE=1
 [ ! -f "$BASE/native-home" ] || NATIVE_HOME=1
 KEEP_LG_HOME=
-REPLACE_LG_HOME=
-[ ! -f "$BASE/additional-overlay" ] || { echo 'additional-overlay installs require the experimental mode-switching branch' >&2; exit 1; }
+ADDITIONAL_OVERLAY=
+WAS_ADDITIONAL=
+[ ! -f "$BASE/additional-overlay" ] || WAS_ADDITIONAL=1
+[ ! -f "$BASE/additional-overlay" ] || { ADDITIONAL_OVERLAY=1; KEEP_LG_HOME=1; }
 HOME_KEY_OPT=
 HOME_KEY_EXEC=
 MANUAL_MAPPER=
 for a in "$@"; do
     case "$a" in
         --keep-lg-home) KEEP_LG_HOME=1 ;;
-        --native-home) NATIVE_HOME=1; NATIVE_EXPLICIT=1 ;;
-        --additional-overlay) echo "additional overlay is not included in this build" >&2; exit 2 ;;
-        --replace-lg-home) KEEP_LG_HOME=; REPLACE_LG_HOME=1 ;;
+        --native-home) NATIVE_HOME=1 ;;
+        --additional-overlay) ADDITIONAL_OVERLAY=1; KEEP_LG_HOME=1 ;;
+        --replace-lg-home) KEEP_LG_HOME= ;;
         --home-key=*) HOME_KEY_OPT=${a#--home-key=} ;;
         --home-key-exec) HOME_KEY_EXEC=exec ;;
         *) echo "unknown option: $a" >&2; exit 2 ;;
     esac
 done
 
-# System HOME is the default on webOS 10/11, unless LG's Home was chosen to stay.
-if [ -z "$NATIVE_HOME" ] && [ -z "$KEEP_LG_HOME" ] && [ ! -f "$BASE/keep-lg-home" ]; then
-    case "$(sed -n 's/.*release \([0-9]*\)\..*/\1/p' /etc/starfish-release)" in
-        10|11) NATIVE_HOME=1 ;;
-    esac
-fi
-# --replace-lg-home from an update only means "keep the setup" here.
-[ -z "$NATIVE_HOME" ] || [ -n "$NATIVE_EXPLICIT" ] || REPLACE_LG_HOME=
 say() { echo "rawin-launcher: $*"; }
 fail() { echo "rawin-launcher: $*" >&2; exit 1; }
 luna() { luna-send -n 1 "$1" "$2" </dev/null 2>/dev/null; }
 
 [ "$(id -u)" = 0 ] || fail "run this as root on the TV"
 [ -x "$HBC/elevate-service" ] || fail "the Homebrew Channel (root) is not set up on this TV"
-command -v node >/dev/null || fail "node is missing on this TV"
 if [ -n "$NATIVE_HOME" ]; then
-    [ -z "$KEEP_LG_HOME$REPLACE_LG_HOME$HOME_KEY_OPT$HOME_KEY_EXEC" ] || fail "--native-home cannot be combined with Home replacement or key mapping options"
+    [ -z "$KEEP_LG_HOME$HOME_KEY_OPT$HOME_KEY_EXEC" ] || fail "--native-home cannot be combined with keep-lg-home or key mapping options"
     grep -qE 'release (10|11)\.' /etc/starfish-release || fail "--native-home currently supports webOS 10/11 only"
-    node "$HERE/integration.js" check || fail "system HOME ownership or mapper checks failed; nothing installed"
-else
+elif [ -z "$ADDITIONAL_OVERLAY" ]; then
     if [ -f "$HERE/integration.js" ] && node "$HERE/integration.js" legacy-mapper >/dev/null 2>&1; then MANUAL_MAPPER=magic; fi
     [ -n "$MANUAL_MAPPER" ] || [ -d /media/developer/apps/usr/palm/applications/org.webosbrew.inputhook ] ||
         fail "installation blocked: Input Hook is required. Install and open 'Input Hook' from the Homebrew Channel, then run this installer again"
 fi
 [ -z "$MANUAL_MAPPER" ] || [ -z "$HOME_KEY_OPT$HOME_KEY_EXEC" ] || fail "edit the existing Magic Mapper shortcut in its configuration"
-[ -z "$NATIVE_HOME" ] || [ -z "$HOME_KEY_OPT$HOME_KEY_EXEC" ] || fail "change button mappings in your mapper in this mode"
-if [ -z "$NATIVE_HOME" ] && [ -f "$HERE/integration.js" ]; then
-    node "$HERE/integration.js" legacy-check "$MANUAL_MAPPER" || fail "HOME mapping could not be kept safely; fix the reported mapper configuration"
+[ -z "$ADDITIONAL_OVERLAY$NATIVE_HOME" ] || [ -z "$HOME_KEY_OPT$HOME_KEY_EXEC" ] || fail "change button mappings in your mapper in this mode"
+[ -z "$ADDITIONAL_OVERLAY" ] || [ -n "$KEEP_LG_HOME" ] || fail "switch runtime mode in Launcher settings first"
+if [ -z "$NATIVE_HOME$ADDITIONAL_OVERLAY" ] && [ -f "$HERE/integration.js" ]; then
+    node "$HERE/integration.js" legacy-check "$MANUAL_MAPPER" || fail "HOME mapping could not be kept safely; use --additional-overlay or fix the reported mapper configuration"
 fi
+command -v node >/dev/null || fail "node is missing on this TV"
 node -e 'process.exit(parseInt(process.versions.node, 10) >= 8 ? 0 : 1)' 2>/dev/null ||
     fail "the helper needs node 8 or newer; this TV has node $(node -v 2>/dev/null) (the Home panel may fit instead: sh install.sh --home-panel)"
 IPK=$(ls "$HERE"/org.rawin.launcher_*_all.ipk 2>/dev/null | head -n 1)
@@ -126,9 +121,13 @@ cp "$HERE/../update.sh" "$HERE/../diagnose.sh" "$HERE/../VERSION" "$BASE/"
 # The probe (which variant fits) next to diagnose.sh, with the patch it checks with.
 cp "$HERE/../probe.sh" "$HERE/../webos4/patch-home.js" "$BASE/"
 chmod 755 "$BASE/takeover.sh" "$BASE/uninstall.sh" "$BASE/update.sh" "$BASE/probe.sh"
+if [ -n "$ADDITIONAL_OVERLAY" ] && [ -z "$NATIVE_HOME" ]; then
+    if [ -z "$WAS_ADDITIONAL" ]; then sh "$BASE/mode-switch.sh" overlay || fail "additional overlay setup failed"; fi
+    sed -i 's/^var exitTarget = .*/var exitTarget = false;/' "$APPDIR/Config.js"
+fi
 if [ -n "$NATIVE_HOME" ]; then
     rm -f "$BASE/keep-lg-home"
-    sh "$BASE/mode-switch.sh" native || fail "native Home activation failed; see $BASE/native-home.sh status"
+    if [ -n "$WAS_NATIVE" ]; then sh "$BASE/native-home.sh" activate; else sh "$BASE/mode-switch.sh" native; fi || fail "native Home activation failed; see $BASE/native-home.sh status"
 elif [ -n "$KEEP_LG_HOME" ]; then
     touch "$BASE/keep-lg-home"
     sh "$BASE/takeover.sh" restore >/dev/null 2>&1 || true
@@ -140,10 +139,10 @@ else
     sh "$BASE/takeover.sh" apply >/dev/null 2>&1 || say "LG Home kept: the app manager did not take the stand-in"
 fi
 
-if [ -z "$NATIVE_HOME" ] && [ -n "$MANUAL_MAPPER" ]; then
+if [ -z "$NATIVE_HOME$ADDITIONAL_OVERLAY" ] && [ -n "$MANUAL_MAPPER" ]; then
     touch "$BASE/manual-home-mapping"
     say "existing Magic Mapper HOME shortcut kept; no Input Hook binding created"
-elif [ -z "$NATIVE_HOME" ]; then
+elif [ -z "$NATIVE_HOME$ADDITIONAL_OVERLAY" ]; then
 rm -f "$BASE/manual-home-mapping"
 if [ -n "$HOME_KEY_EXEC" ]; then
     say "HOME button ($HOME_KEY) -> rawin-launcher, Input Hook Execute without the spinner"
@@ -180,6 +179,8 @@ elif [ -t 0 ] && log=$(ls -t /tmp/lginput-hook-*.log 2>/dev/null | head -n 1) &&
 fi
 node "$BASE/integration.js" legacy-key "$HOME_KEY" "$HOME_KEY_EXEC"
 
+elif [ -n "$ADDITIONAL_OVERLAY" ]; then
+    say "additional overlay: existing mapper bindings preserved; HOME belongs to your main launcher"
 else
     say "HOME -> system Homebar QML host (native takeover, no Input Hook mapping)"
 fi
@@ -194,5 +195,5 @@ until wget -q -O - http://127.0.0.1:8899/ping >/dev/null 2>&1; do
     n=$((n + 1)); [ $n -lt 30 ] || fail "the helper did not start (see: luna-send -n 1 luna://$SERVICE/ping '{}')"
     sleep 2
 done
-say "done. Press HOME on the remote."
+if [ -n "$ADDITIONAL_OVERLAY" ] && [ -z "$NATIVE_HOME" ]; then say "done. Open Homebar with your configured button or app tile."; else say "done. Press HOME on the remote."; fi
 say "uninstall: sh $BASE/uninstall.sh"

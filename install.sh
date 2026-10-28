@@ -12,6 +12,7 @@
 #   --home-panel       the Home panel, or fail (no overlay instead)
 #   --overlay          the overlay, or fail (needs Input Hook and node 8+)
 #   --native-home      experimental direct system Home on webOS 10/11
+#   --additional-overlay  keep the main Home; configure a button in your mapper
 #   --probe            only say which variant fits and why; change nothing
 #   --keep-lg-home     overlay: leave LG's Home in place (no black stand-in)
 #   --replace-lg-home  overlay on an untested webOS: put the black stand-in in
@@ -32,14 +33,14 @@ probe=
 keep=
 replace=
 native=
-explicit=
+additional=
 pass=
 for a in "$@"; do
     case "$a" in
         --home-panel) force=panel ;;
         --overlay|--try-webos10) force=overlay ;;
-        --native-home) native=1; explicit=1; force=overlay; pass="$pass --native-home" ;;
-        --additional-overlay) fail "additional overlay and runtime mode switching are not included in this build" ;;
+        --native-home) native=1; force=overlay; pass="$pass --native-home" ;;
+        --additional-overlay) additional=1; force=overlay; keep=1; pass="$pass --additional-overlay" ;;
         --probe) probe=1 ;;
         --keep-lg-home) keep=1 ;;
         --replace-lg-home) replace=1 ;;
@@ -62,6 +63,7 @@ say "webOS ${version:-unknown}$name ($tested)"
 
 if [ -n "$probe" ]; then
     if [ -n "$native" ]; then sh "$PROBE" native-home
+    elif [ -n "$additional" ]; then sh "$PROBE" additional-overlay
     else sh "$PROBE"; fi
     say "probe only; nothing was changed"
     exit 0
@@ -70,35 +72,35 @@ fi
 if [ -d /var/lib/webosbrew/rawin-launcher-home/mode-switch-lock ]; then
     sh /var/lib/webosbrew/rawin-launcher-home/mode-switch.sh recover || fail "mode recovery failed"
 fi
-# The ribbon Home remains unchanged. Supported newer TVs use system HOME for
-# both fresh installs and updates, with migration checks before any installation.
-if [ -f /var/lib/webosbrew/rawin-launcher-home/additional-overlay ]; then
-    fail "this experimental additional-overlay install belongs to the mode-switching branch; restore its previous configuration before installing this build"
+# Keep an explicitly enabled native Home across updates without needing a mapper.
+if [ "$force" = panel ] && { [ -f /var/lib/webosbrew/rawin-launcher-home/native-home ] || [ -f /var/lib/webosbrew/rawin-launcher-home/additional-overlay ]; }; then
+    fail "restore the ordinary overlay before changing installation variants"
 fi
-# Whoever chose to keep LG's Home (--keep-lg-home, or an install made with it)
-# stays on the compatibility overlay: system HOME replaces that Home.
-if [ "$force" != panel ] && [ -z "$keep" ] && [ ! -f /var/lib/webosbrew/rawin-launcher-home/keep-lg-home ]; then
-    case "$major" in
-        10|11) force=overlay; native=1 ;;
-    esac
+if [ -f /var/lib/webosbrew/rawin-launcher-home/additional-overlay ]; then force=overlay; keep=1; fi
+if [ -f /var/lib/webosbrew/rawin-launcher-home/native-home ]; then
+    force=overlay
+    native=1
 fi
-if [ -n "$native" ]; then
-    [ -z "$keep" ] || fail "system HOME cannot be combined with --keep-lg-home"
-    # The panel's updater always passes --replace-lg-home on webOS 10: it only
-    # means "keep the setup", so it is dropped when system HOME is picked for
-    # the TV; asked for with --native-home it is a conflict.
-    [ -z "$explicit" ] || [ -z "$replace" ] || fail "system HOME cannot be combined with replace-lg-home"
-    replace=
-    sh "$PROBE" native-home || fail "system HOME checks failed; nothing installed"
-    pass="$pass --native-home"
-elif [ -f /var/lib/webosbrew/rawin-launcher-home/native-home ]; then
-    fail "an existing native Home requires a supported webOS; inspect Diagnose before updating"
-fi
+# Existing installs keep their launch policy. Fresh installs choose a safe
+# default; another Home or an unverifiable mapper gets a companion, never an
+# automatic takeover. The same inspector supplies the settings UI.
 if [ -z "$force" ] && [ -f /var/lib/webosbrew/rawin-launcher-home/VERSION ]; then force=overlay; fi
 if [ -z "$force" ] && [ -f /var/lib/webosbrew/rawin-launcher/VERSION ]; then force=panel; fi
+choice=
+if [ -z "$force" ] && [ -f "$HERE/webos10/integration.js" ] && command -v node >/dev/null 2>&1; then
+    choice=$(node "$HERE/webos10/integration.js" select 2>/dev/null) || fail "launch configuration could not be checked; run --probe"
+    if [ "$choice" = mapped ]; then force=overlay; say "compatibility overlay selected: keeping the existing mapper shortcut"; fi
+    if [ "$choice" = overlay ]; then
+        force=overlay; additional=1; keep=1; pass="$pass --additional-overlay"
+        say "additional overlay selected: keeping HOME and existing mapper settings; open the app tile or configure another button"
+    fi
+fi
 variant=$force
 if [ -z "$variant" ]; then
     if panel_why=$(sh "$PROBE" panel 2>&1); then variant=panel
+    elif [ "$choice" = native ]; then
+        variant=overlay; native=1; pass="$pass --native-home"
+        say "system HOME selected: no mapper required; recognised old Homebar mappings will be backed up and removed"
     elif overlay_why=$(sh "$PROBE" overlay 2>&1); then variant=overlay
     else
         { say "installation blocked; see the requirements below"

@@ -82,32 +82,163 @@ dst.unlink();Path(str(dst)+'.stock').rename(dst);(r/'proc/mounts').write_text(''
 
 def test():
  count=0
- for old in ['legacy','native']:
-  t=TV(old)
-  try:
-   before=t.p(STORE+'/'+('com.webos.app.home' if old=='native' else 'org.rawin.launcher')+'/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_bytes()
-   t.switch('native');assert t.p(BASE+'/native-home').exists() and t.p(HOME).is_symlink()
-   assert t.p(STORE+'/com.webos.app.home/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_bytes()==before
-   assert t.keys()['1042']['id']=='other.app'
-   assert not any(v.get('id')=='org.rawin.launcher' for v in t.keys().values())
-   t.switch('native');t.switch('overlay',False)
-   assert t.p(BASE+'/native-home').exists();count+=1
-  finally:t.clean()
+ for old in ['legacy','native','overlay']:
+  for new in ['native','overlay']:
+   t=TV(old)
+   try:
+    t.switch(new);assert t.p(BASE+('/native-home' if new=='native' else '/additional-overlay')).exists()
+    assert t.keys()['1042']['id']=='other.app'
+    if new=='overlay':
+     assert not t.p(HOME).is_symlink();assert '773' not in t.keys()
+     if old=='native':assert t.p(STORE+'/org.rawin.launcher/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_text()=='latest-native-data'
+    else:
+     assert t.p(HOME).is_symlink();assert not any(v.get('id')=='org.rawin.launcher' for v in t.keys().values())
+    t.switch(new);count+=1
+   finally:t.clean()
  for fail in ['fail-mount','fail-launch']:
-  t=TV();before=t.p(KEYS).read_bytes()
+  t=TV();before=t.p(KEYS).read_bytes();data=t.p(STORE+'/org.rawin.launcher/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_bytes()
   try:
    t.put('/'+fail,'');t.switch('native',False)
    assert not t.p(BASE+'/native-home').exists();assert t.p(KEYS).read_bytes()==before
+   assert t.p(STORE+'/org.rawin.launcher/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_bytes()==data
    assert not t.p(BASE+'/mode-switch-lock').exists();count+=1
   finally:t.clean()
- for release in ['4.10.2','6.5.0','9.0.0']:
+ t=TV('native')
+ try:
+  before=t.p(STORE+'/com.webos.app.home/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_bytes()
+  t.put('/fail-launch','');t.switch('overlay',False)
+  assert t.p(BASE+'/native-home').exists() and t.p(HOME).is_symlink()
+  assert t.p(STORE+'/com.webos.app.home/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_bytes()==before;count+=1
+ finally:t.clean()
+ for release,glass,foreign in [('9.0',False,False),('10.3',True,False),('10.3',False,True)]:
   t=TV(release=release)
-  try:t.switch('native',False);assert not t.p(HOME).is_symlink();count+=1
+  try:
+   if glass:t.put('/var/lib/tvweb/home.json','{"enabled":true}')
+   if foreign:t.foreign()
+   before=t.p(KEYS).read_bytes();t.switch('native',False);assert t.p(KEYS).read_bytes()==before
+   assert not t.p(BASE+'/mode-switch-lock').exists();count+=1
   finally:t.clean()
+ t=TV(mapper=False)
+ try:
+  t.switch('native');t.switch('overlay');assert not t.p(KEYS).exists();count+=1
+ finally:t.clean()
  t=TV()
  try:
-  t.foreign();before=t.p(KEYS).read_bytes();t.switch('native',False)
-  assert t.p(KEYS).read_bytes()==before;count+=1
+  t.foreign();t.switch('overlay');assert t.p(HOME).resolve()==t.p('/foreign').resolve()
+  assert 'closeByAppId {"id":"com.webos.app.home"}' not in t.p('/calls').read_text();count+=1
  finally:t.clean()
- print('PASS',count,'native migration cases: old/new data, mappings, rollback, unsupported TV, foreign HOME and no companion switch')
+ for old,new in [('legacy','native'),('native','overlay'),('overlay','native')]:
+  t=TV(old)
+  try:
+   original=t.p(KEYS).read_bytes();t.put('/pause-launch','')
+   proc=subprocess.Popen(['sh',str(t.p(BASE+'/mode-switch.sh')),new],env=t.env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+   for _ in range(300):
+    if t.p('/paused').exists():break
+    time.sleep(.02)
+   assert t.p('/paused').exists(),'did not reach launch phase'
+   os.killpg(proc.pid,signal.SIGKILL);proc.wait();t.p('/pause-launch').unlink()
+   assert t.p(BASE+'/mode-switch-lock/ready').exists()
+   t.switch('recover')
+   assert t.p(KEYS).read_bytes()==original
+   assert t.p(BASE+'/native-home').exists()==(old=='native')
+   assert t.p(BASE+'/additional-overlay').exists()==(old=='overlay')
+   assert not t.p(BASE+'/mode-switch-lock').exists();count+=1
+  finally:t.clean()
+ t=TV('native')
+ try:
+  t.put('/fail-umount','');t.switch('overlay',False)
+  assert t.p(BASE+'/native-home').exists() and t.p(HOME).is_symlink();count+=1
+ finally:t.clean()
+ t=TV()
+ try:
+  t.put(KEYS,'invalid json');t.switch('native',False)
+  assert t.p(KEYS).read_text()=='invalid json' and not t.p(BASE+'/native-home').exists();count+=1
+ finally:t.clean()
+ t=TV()
+ try:
+  keys=t.keys();keys['773']={'action':'launch','id':'another.launcher'};t.put(KEYS,json.dumps(keys))
+  before=t.p(KEYS).read_bytes();t.switch('native',False)
+  assert t.p(KEYS).read_bytes()==before and not t.p(BASE+'/native-home').exists();count+=1
+ finally:t.clean()
+ for current in ['native','overlay','fresh-overlay','manual','manual-update']:
+  t=TV('legacy' if current=='fresh-overlay' else current,mapper=False)
+  manual=current.startswith('manual')
+  if current!='native' and not manual:t.foreign()
+  if manual:
+   t.put('/etc/starfish-release','release 6.5.0')
+   t.put('/home/root/magic_mapper.py','VERSION = "1.1.0"\ndef get_button_map(): magic_mapper_config.json\ndef launch_app(inputs): pass')
+   mm_config=json.dumps({'home':{'function':'launch_app','inputs':{'app_id':'org.rawin.launcher'}},'green':{'function':'screen_off'}})
+   t.put('/home/root/magic_mapper_config.json',mm_config)
+   t.put('/var/lib/webosbrew/init.d/start_magic_mapper','SCRIPT='+str(t.p('/home/root/magic_mapper.py'))+'\nPYTHON_PIDFILE=/tmp/magic_mapper_python.pid\nrestart)\n')
+   if current=='manual-update':t.put(BASE+'/VERSION','0.17.2')
+  try:
+   bundle=t.p('/bundle');(bundle/'webos10').mkdir(parents=True);(bundle/'ui').mkdir()
+   (bundle/'ui/icon.png').write_text('icon')
+   for name in ['update.sh','diagnose.sh','VERSION','probe.sh']:(bundle/name).write_text('test')
+   (bundle/'webos4').mkdir();(bundle/'webos4/patch-home.js').write_text('test')
+   for name in ['native-home.sh','native-stage.js','mode-switch.sh','integration.js','uninstall.sh']:
+    source=t.p(BASE+'/'+name)
+    if source.exists():shutil.copyfile(source,bundle/'webos10'/name)
+    else:(bundle/'webos10'/name).write_text('exit 0')
+   shutil.copyfile(t.p(BASE+'/takeover.sh'),bundle/'webos10/home-takeover.sh')
+   (bundle/'webos10/boot-hook.sh').write_text('exit 0')
+   (bundle/'webos10/home-stub').mkdir();(bundle/'webos10/home-stub/appinfo.json').write_text('{"type":"web"}')
+   (bundle/'webos10/org.rawin.launcher_0.17.2_all.ipk').write_text('mock package')
+   script=(ROOT/'webos10/install.sh').read_text()
+   script=re.sub(r'(?<![\w/])(?:/var/lib/|/media/developer/|/usr/palm/|/usr/bin/qml-runner|/usr/bin/com.webos.app.home|/home/root/|/etc/starfish-release|/tmp/)',lambda m:str(t.root)+m[0],script)
+   (bundle/'webos10/install.sh').write_text(script)
+   hbc='/media/developer/apps/usr/palm/services/org.webosbrew.hbchannel.service/elevate-service'
+   t.put(hbc,'#!/bin/sh\nexit 0\n');t.p(hbc).chmod(0o755)
+   t.put('/bin/sed', '''#!/bin/sh
+if [ "$1" = -i ]; then shift; exec /usr/bin/sed -i '' "$@"; fi
+exec /usr/bin/sed "$@"
+''');t.p('/bin/sed').chmod(0o755)
+   t.put('/bin/id','#!/bin/sh\necho 0\n');t.p('/bin/id').chmod(0o755)
+   t.put('/bin/wget',"#!/bin/sh\necho '{}'\n");t.p('/bin/wget').chmod(0o755)
+   t.env['HOMEBAR_WEBOS']='10.3.1'
+   r=subprocess.run(['sh',str(bundle/'webos10/install.sh')]+(['--keep-lg-home'] if manual else ['--additional-overlay'] if current=='fresh-overlay' else []),env=t.env,capture_output=True,text=True,timeout=20)
+   assert r.returncode==0,(r.stdout,r.stderr)
+   assert t.p(BASE+('/manual-home-mapping' if manual else '/native-home' if current=='native' else '/additional-overlay')).exists()
+   assert not t.p(KEYS).exists(),'update wrote mapper bindings'
+   if manual:
+    assert t.p('/home/root/magic_mapper_config.json').read_text()==mm_config
+    assert 'existing Magic Mapper HOME shortcut kept' in r.stdout
+   elif current!='native':
+    assert 'var exitTarget = false;' in t.p(APP+'/Config.js').read_text()
+    assert t.p(HOME).resolve()==t.p('/foreign').resolve()
+   else:assert t.p(STORE+'/com.webos.app.home/QML/OfflineStorage/Databases/'+DB+'.sqlite').read_text()=='latest-native-data'
+   count+=1
+  finally:t.clean()
+ for current in ['native','overlay']:
+  for release in ['10.3.1','11.0.0']:
+   t=TV(current,mapper=False)
+   try:
+    bundle=t.p('/dispatch');(bundle/'webos10').mkdir(parents=True)
+    script=(ROOT/'install.sh').read_text()
+    script=re.sub(r'(?<![\w/])(?:/var/lib/|/etc/starfish-release)',lambda m:str(t.root)+m[0],script)
+    (bundle/'install.sh').write_text(script)
+    (bundle/'webos10/install.sh').write_text('echo ARG:$*\n')
+    t.env['HOMEBAR_WEBOS']=release
+    r=subprocess.run(['sh',str(bundle/'install.sh'),'--overlay'],env=t.env,capture_output=True,text=True,timeout=5)
+    assert r.returncode==0,(r.stdout,r.stderr)
+    assert ('ARG:--keep-lg-home' in r.stdout)==(current=='overlay'),r.stdout
+    r=subprocess.run(['sh',str(bundle/'install.sh'),'--home-panel'],env=t.env,capture_output=True,text=True,timeout=5)
+    assert r.returncode!=0 and 'restore the ordinary overlay' in r.stderr
+    count+=1
+   finally:t.clean()
+ t=TV(mapper=False)
+ try:
+  hbc='/media/developer/apps/usr/palm/services/org.webosbrew.hbchannel.service/elevate-service'
+  t.put(hbc,'#!/bin/sh\nexit 0\n');t.p(hbc).chmod(0o755)
+  script=(ROOT/'probe.sh').read_text()
+  script=re.sub(r'(?<![\w/])(?:/var/lib/|/media/developer/|/usr/palm/|/etc/starfish-release)',lambda m:str(t.root)+m[0],script)
+  t.put('/probe.sh',script)
+  r=subprocess.run(['sh',str(t.p('/probe.sh')),'additional-overlay'],env=t.env,capture_output=True,text=True,timeout=5)
+  assert r.returncode==0,(r.stdout,r.stderr)
+  assert not t.p(BASE+'/additional-overlay').exists(),'probe changed mode'
+  r=subprocess.run(['sh',str(t.p('/probe.sh')),'overlay'],env=t.env,capture_output=True,text=True,timeout=5)
+  assert r.returncode!=0 and 'Input Hook is required' in r.stdout
+  count+=1
+ finally:t.clean()
+ print('PASS',count,'real-shell mode scenarios: migration, no-op, keys, rollback, conflicts, no mapper, foreign Home')
 if __name__=='__main__':test()

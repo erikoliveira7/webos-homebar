@@ -201,8 +201,15 @@ FocusScope {
     // values. pane 0 is the list of settings, pane 1 their values. The
     // keys and the values do not depend on the settings themselves, so
     // choosing a value does not rebuild the menu around it.
+    property var modeInfo: ({available: false, nativeSupported: false, current: "legacy", busy: false})
+    property string modeConfirm: ""
+    property string modeConfirmFingerprint: ""
+    property string modeError: ""
+    property string launchLastWarning: ""
+    property real modeDetailsOffset: 0
+    signal modeDetailsScroll(int direction)
     signal launchCheckRequested()
-    readonly property var settingGroups: groupsFor(Config.exitTarget)
+    readonly property var settingGroups: groupsFor(Config.exitTarget, modeInfo.available)
     readonly property var settingKeys: keysOf(settingGroups)
     readonly property var menuRows: rowsOf(settingGroups, lang)
     readonly property var settingsItems: settingKeys.map(function(k) { return settingFor(k); })
@@ -222,6 +229,7 @@ FocusScope {
     readonly property bool valueToggles: valueTogglesFor(valueKey)
     function valueTogglesFor(key) { return key === "sources" || key === "homeShortcuts" || key === "topBar"; }
     function valueOn(id) {
+        if (valueKey === "mode") return modeInfo.current === id;
         if (!valueToggles) return settings[valueKey] === id;
         for (var i=0; i<valueOptions.length; i++) if (valueOptions[i].id === id) return valueOptions[i].on === true;
         return false;
@@ -484,7 +492,7 @@ FocusScope {
     // The settings menu's groups: a name and the settings in it. About comes
     // first, so it is what the menu opens on. The BACK-hold target is the
     // overlay's alone.
-    function groupsFor(exitTarget) {
+    function groupsFor(exitTarget, modes) {
         return [
             {title: "grp_about", keys: ["about"]},
             {title: "grp_look", keys: ["lang", "theme", "size", "motion"]},
@@ -495,7 +503,7 @@ FocusScope {
             {title: "grp_screen", keys: ["title", "hints", "timeout"]},
             {title: "grp_backup", keys: ["backup", "restore"]},
             {title: "grp_updates", keys: ["update", "beta"]},
-            {title: "grp_support", keys: ["restart"]}
+            {title: "grp_support", keys: modes ? ["mode", "restart"] : ["restart"]}
         ];
     }
     function keysOf(groups) {
@@ -520,7 +528,7 @@ FocusScope {
                      showHidden: "set_hidden", exitTo: "set_exit", hours: "set_hours", title: "set_title", backup: "set_backup",
                      restore: "set_restore", update: "set_update", beta: "set_beta",
                      place: "set_place", units: "set_units", temperature: "set_temperature", about: "set_about", hints: "set_hints",
-                     timeout: "set_timeout", restart: "set_restart_homebar",
+                     mode: "set_mode", timeout: "set_timeout", restart: "set_restart_homebar",
                      sources: "set_sources", inputText: "set_input_text", inputHeading: "set_input_heading", inputOverflow: "set_input_overflow", homeShortcuts: "set_home_shortcuts",
                      closeAppsMode: "set_close_apps_mode",
                      topBar: "set_topbar"};
@@ -552,7 +560,10 @@ FocusScope {
     // target uses every physical input, including those hidden on the rail.
     function optionsFor(key, language, inputList) {
         var list = [], i;
-        if (key === "lang") {
+        if (key === "mode") {
+            if (modeInfo.nativeSupported) list.push({id: "native", title: t("val_mode_native")});
+            list.push({id: "overlay", title: t("val_mode_overlay")});
+        } else if (key === "lang") {
             list.push({id: "system", title: Strings.format(t("val_system"), {lang: Strings.names[Strings.supported(systemLang) || "en"]})});
             for (i=0; i<Strings.languages.length; i++) list.push({id: Strings.languages[i], title: Strings.names[Strings.languages[i]]});
         } else if (key === "theme") {
@@ -608,6 +619,7 @@ FocusScope {
         return list;
     }
     function valueTitle(key) {
+        if (key === "mode") return t("val_mode_" + modeInfo.current);
         // A list of switches says how many of its items are on ("3/5").
         if (valueTogglesFor(key)) {
             var items = checkItems(key), on = items.filter(function(c) { return c.on === true; }).length;
@@ -882,6 +894,7 @@ FocusScope {
                 var o = valueOptions[valueIndex], on = o && valueOn(o.id);
                 return [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], on ? t("hint_hide") : t("hint_unhide")), hint([back], t("hint_done"))];
             }
+            if (currentPane === 1 && valueKey === "mode") return modeInfo.busy ? [hint([back], t("hint_done"))] : [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], t(modeConfirm ? "hint_confirm" : "hint_choose")), hint([back], t("hint_done"))];
             if (currentPane === 1) return [hint([hintKey("▲ ▼")], t("hint_choose")), hint([ok], t("hint_done"))];
             var key = settingKeys[index], verb = actionVerb(key);
             if (key === "backup" || key === "restore" || key === "update" || key === "place" || key === "about" || key === "restart")
@@ -1087,7 +1100,7 @@ FocusScope {
         var options = valueOptions, at = 0;
         if (!valueKey || settingFor(valueKey).action !== "setting") return;
         if (!valueToggles)
-            for (var i=0; i<options.length; i++) if (options[i].id === settings[valueKey]) at = i;
+            for (var i=0; i<options.length; i++) if (options[i].id === (valueKey === "mode" ? modeInfo.current : settings[valueKey])) at = i;
         valueIndex = at;
         pane = 1;
     }
@@ -1095,13 +1108,47 @@ FocusScope {
     // the preview, OK and left keep it.
     function applyValue() {
         var o = valueOptions[valueIndex];
-        if (page === "settings" && pane === 1 && o && !valueToggles) setSetting(valueKey, o.id);
+        if (page === "settings" && pane === 1 && o && !valueToggles && valueKey !== "mode") setSetting(valueKey, o.id);
+    }
+    function launchDetails(info, confirmation, failure, language) {
+        var r = info.inspection, lines = [];
+        if (failure) lines.push(t(failure));
+        if (!r) return lines.length ? lines.join("\n\n") : t("launch_checking");
+        lines.push(t("set_mode") + ": " + t("val_mode_" + info.current));
+        if (info.recoveryNeeded) lines.push(t("launch_failed"));
+        else if (info.busy) lines.push(t("mode_switching"));
+        if (r.migrationAvailable) lines.push(t("launch_migrate"));
+        for (var i=0; i<r.issues.length; i++) {
+            var line = t(r.issues[i].code);
+            if (r.issues[i].source) line = r.issues[i].source + ": " + line;
+            if (lines.indexOf(line) < 0) lines.push(line);
+        }
+        if (!failure && !info.busy && !r.issues.length && !r.migrationAvailable) lines.push(t("launch_ready"));
+        if (confirmation) {
+            lines.push(t("launch_confirm_" + confirmation));
+            if (confirmation === "native" && r.cleanup)
+                lines.push(Strings.format(t("launch_cleanup"), {count: r.cleanup}));
+            lines.push(t("launch_confirm_apply"));
+        }
+        return lines.join("\n\n");
+    }
+    function chooseMode() {
+        var o = valueOptions[valueIndex], r = modeInfo.inspection;
+        if (!o || !r || modeInfo.busy) return;
+        modeError = "";
+        if (o.id === "native" && r.blockers.length) { modeError = r.blockers[0].code; return; }
+        if (o.id === modeInfo.current && !(o.id === "native" && (r.cleanup || r.owner === "lg"))) return;
+        if (modeConfirm !== o.id || modeConfirmFingerprint !== r.fingerprint) {
+            modeConfirm = o.id; modeConfirmFingerprint = r.fingerprint; return;
+        }
+        modeRun(o.id, modeConfirmFingerprint);
+        modeConfirm = "";
     }
     function toggleValue() {
         var o = valueOptions[valueIndex];
         if (page === "settings" && pane === 1 && o && valueToggles) toggleCheck(valueKey, o.id);
     }
-    onValueIndexChanged: applyValue()
+    onValueIndexChanged: { modeConfirm = ""; modeError = ""; applyValue(); }
     function activate(item) {
         pendingRemoval = "";
         if (!ready || launching || !item) return;
@@ -1109,7 +1156,9 @@ FocusScope {
         message = "";
         if (item.action === "stock") { stockRequested(); return; }
         if (item.action === "close") { closeHome(); return; }
-        if (item.action === "setting") { if (pane === 1) pane = 0; else enterValues(); return; }
+        if (item.action === "setting") {
+            if (pane === 1 && valueKey === "mode") { chooseMode(); return; }
+            if (pane === 1) pane = 0; else enterValues(); return; }
         if (item.action === "update") { updateAction(); return; }
         if (item.action === "place") { loadSetupInfo(); return; }
         if (item.action === "about") return;
@@ -1183,10 +1232,14 @@ FocusScope {
     function isRed(key) { return key === WebOS.Key_webOS_Red || key === 403; }
     function navigateMenu(key) {
         if (pane === 1) {
+            if (valueKey === "mode" && ((key === Qt.Key_Down && valueIndex === valueOptions.length-1) || (key === Qt.Key_Up && modeDetailsOffset > 0))) {
+                modeDetailsScroll(key === Qt.Key_Down ? 1 : -1); return true;
+            }
             if (key === Qt.Key_Up) { if (valueIndex > 0) valueIndex--; }
             else if (key === Qt.Key_Down) { if (valueIndex < valueOptions.length-1) valueIndex++; }
+            else if (isOk(key) && valueKey === "mode") chooseMode();
             else if (isOk(key) && valueToggles) toggleValue();
-            else if (key === Qt.Key_Left || isOk(key) || isBack(key)) pane = 0;
+            else if (key === Qt.Key_Left || isOk(key) || isBack(key)) { modeConfirm = ""; pane = 0; }
             else return false;
             return true;
         }
@@ -1393,7 +1446,7 @@ FocusScope {
     // While the Weather place row is focused, a place chosen on the phone
     // shows within a few seconds.
     Timer { interval: 3000; repeat: true; running: shell.foreground && shell.valueKey === "place"; onTriggered: loadSetupInfo() }
-    onValueKeyChanged: if (valueKey === "place") loadSetupInfo()
+    onValueKeyChanged: { modeConfirm = ""; modeError = ""; if (valueKey === "place") loadSetupInfo(); if (valueKey === "mode") launchCheckRequested(); }
 
     // A QR code (rows of "1" and "0") on a Canvas, cell pixels a module.
     function drawQr(c, m, cell) {
@@ -1688,6 +1741,8 @@ FocusScope {
         onCallFailure: backupResult(step, null)
         onError: backupResult(step, null)
     }
+    // Only the overlay bridge implements runtime mode changes.
+    function modeRun(mode, fingerprint) { message = t("err_mode"); }
     // Home-panel variant: apply.sh restarts only LG Home, which hosts the
     // panel. The launch after it brings the freshly loaded Homebar back.
     function restartHomebar() {
@@ -2835,6 +2890,34 @@ FocusScope {
                             }
                         }
                     }
+                    Flickable {
+                        id: modeHelp
+                        visible: shell.valueKey === "mode"
+                        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+                        height: Math.min(modeDetailsText.implicitHeight, Math.max(shell.px(100), parent.height - shell.px(210)))
+                        clip: true; interactive: true
+                        contentWidth: width; contentHeight: modeDetailsText.implicitHeight
+                        onContentYChanged: shell.modeDetailsOffset = Math.max(0, contentY)
+                        Text {
+                            id: modeDetailsText; width: parent.width
+                            text: shell.launchDetails(shell.modeInfo, shell.modeConfirm, shell.modeError, shell.lang) + "\n\n" + shell.t("mode_help")
+                            textFormat: Text.PlainText
+                            wrapMode: Text.WordWrap; font.family: shell.fontName; font.pixelSize: shell.pt(18); color: shell.ink2
+                            onTextChanged: modeHelp.contentY = 0
+                        }
+                        MouseArea {
+                            anchors.fill: parent; acceptedButtons: Qt.NoButton
+                            onWheel: {
+                                shell.noteActivity();
+                                var delta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y / 120 * shell.px(90);
+                                modeHelp.contentY = Math.max(0, Math.min(modeHelp.contentY - delta, modeHelp.contentHeight - modeHelp.height));
+                            }
+                        }
+                        Connections {
+                            target: shell
+                            onModeDetailsScroll: modeHelp.contentY = Math.max(0, Math.min(modeHelp.contentY + direction*shell.px(90), modeHelp.contentHeight - modeHelp.height))
+                        }
+                    }
                     // "Input appearance": a pill below the choices, drawn as on Home with
                     // the value being tried, so the choice is clear in the menu.
                     Column {
@@ -2900,9 +2983,8 @@ FocusScope {
                         onHeightChanged: follow()
                         onContentHeightChanged: follow()
                         visible: !valuesPane.actionRow
-                        x: 0; y: valuesTitle.y + valuesTitle.height + shell.px(14)
-                        width: parent.width
-                        height: parent.height - y - (inputPreview.visible ? inputPreview.height+shell.px(18) : 0)
+                        x: 0; y: valuesTitle.y + valuesTitle.height + shell.px(14); width: parent.width
+                        height: parent.height - y - (inputPreview.visible ? inputPreview.height + shell.px(18) : modeHelp.visible ? modeHelp.height + shell.px(18) : 0)
                         clip: true; interactive: false
                         contentWidth: width; contentHeight: Math.max(height, valueColumn.height)
                         Behavior on contentY { NumberAnimation { duration: shell.dur(180); easing.type: Easing.OutCubic } }
@@ -2954,7 +3036,7 @@ FocusScope {
                                         onPressed: shell.noteActivity()
                                         onClicked: {
                                             shell.valueHover = -1; shell.pane = 1; shell.valueIndex = index;
-                                            if (shell.valueToggles) shell.toggleValue(); else shell.applyValue();
+                                            if (shell.valueKey === "mode") shell.chooseMode(); else if (shell.valueToggles) shell.toggleValue(); else shell.applyValue();
                                         }
                                     }
                                 }

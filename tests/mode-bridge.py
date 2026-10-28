@@ -13,7 +13,7 @@ state={'available':True,'nativeSupported':True,'current':'native','busy':False,'
 class Handler(BaseHTTPRequestHandler):
  def log_message(self,*args):pass
  def do_GET(self):
-  answer=state if self.path=='/launch-status' else {'foregroundAppInfo':[{'appId':'com.webos.app.livedmost','windowGroupOwnerId':'com.webos.app.livetv','windowType':'_WEBOS_WINDOW_TYPE_CARD'}]} if self.path=='/foreground' else {}
+  answer=state if self.path=='/mode' else {'foregroundAppInfo':[{'appId':'com.webos.app.livedmost','windowGroupOwnerId':'com.webos.app.livetv','windowType':'_WEBOS_WINDOW_TYPE_CARD'}]} if self.path=='/foreground' else {}
   self.send_response(200);self.end_headers();self.wfile.write(json.dumps(answer).encode())
  def do_POST(self):
   # Qt appends a charset; the helper accepts MIME parameters too.
@@ -29,15 +29,20 @@ try:
   q=q.replace('http://127.0.0.1:8899','http://127.0.0.1:'+str(server.server_port))
   (d/'Launcher.qml').write_text(q)
   engine=QQmlApplicationEngine();engine.load(QUrl.fromLocalFile(str(d/'Launcher.qml')));assert engine.rootObjects()
-  shell=engine.rootObjects()[0];shell.loadLaunchStatus();rp.wait(250)
+  shell=engine.rootObjects()[0];shell.loadMode();rp.wait(250)
+  info=shell.property('modeInfo').toVariant();assert info['current']=='native' and info['available']
+  shell.modeRun('overlay','a'*64);rp.wait(250);assert posts==[('/mode',{'mode':'overlay','fingerprint':'a'*64})]
+  assert shell.property('modeInfo').toVariant()['busy']
+  state.update(busy=False,result={'ok':False,'error':'launch_home_mapping'})
+  rp.wait(1200);assert not shell.property('modeInfo').toVariant()['busy']
+  assert shell.property('modeError')=='launch_home_mapping'
   state['inspection']['fingerprint']='b'*64
-  state['inspection']['issues']=[{'code':'launch_home_mapping','source':''}]
-  shell.setProperty('ready',True);shell.loadLaunchStatus();rp.wait(250)
-  english=shell.property('message');assert english.startswith('HOME configuration'),english
+  state['inspection']['issues']=[{'code':'launch_button_setup','source':''}]
+  shell.setProperty('ready',True);shell.loadMode();rp.wait(250)
+  english=shell.property('message');assert english.startswith('Launch setup')
   shell.setProperty('systemLang','pl');rp.wait(250)
-  assert 'Konfiguracja HOME' in shell.property('message'),shell.property('message')
-  assert not posts,'Read-only status must never change launch mode'
+  assert shell.property('message')!=english and 'uruchamiania' in shell.property('message'),shell.property('message')
   shell.setProperty('foreground',True);rp.wait(250)
   assert shell.property('nowTitle')=='TV',shell.property('nowTitle')
-  print('PASS generated overlay bridge: read-only status, translated warnings, no POST, livedmost TV title')
+  print('PASS generated overlay bridge: capability load, POST mode choice, poll after failed migration')
 finally:server.shutdown();server.server_close()

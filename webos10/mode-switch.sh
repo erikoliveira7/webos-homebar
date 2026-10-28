@@ -81,8 +81,8 @@ recover() {
 }
 case "${1:-}" in
   recover) recover; exit ;;
-  native) mode=native ;;
-  *) echo 'usage: mode-switch.sh native|recover' >&2; exit 2 ;;
+  native|overlay) mode=$1 ;;
+  *) echo 'usage: mode-switch.sh native|overlay|recover' >&2; exit 2 ;;
 esac
 expected=${2:-}
 [ -z "$expected" ] || node "$BASE/integration.js" match "$expected"
@@ -93,6 +93,8 @@ fi
 if [ "$mode" = native ]; then
     grep -qE 'release (10|11)\.' /etc/starfish-release || { echo 'Native Home currently supports webOS 10/11 only' >&2; exit 1; }
     sh "$BASE/native-home.sh" check-owner
+elif [ -f "$BASE/additional-overlay" ] && [ ! -f "$BASE/native-home" ]; then
+    exit 0
 fi
 mkdir "$TX"
 echo "$$" >"$TX/pid"
@@ -109,6 +111,15 @@ if [ "$mode" = native ]; then
     node "$BASE/integration.js" clean native "$TX/mapper-journal.json" "$expected"
     sh "$BASE/native-home.sh" activate
     rm -f "$BASE/additional-overlay"
+else
+    if owned; then sh "$BASE/takeover.sh" restore; fi
+    if [ -f "$BASE/native-home" ]; then sh "$BASE/native-home.sh" copy-back; fi
+    rm -f "$BASE/native-home"
+    touch "$BASE/additional-overlay" "$BASE/keep-lg-home"
+    node "$BASE/integration.js" restore overlay "$TX/mapper-journal.json" >"$TX/result.json"
+    node "$BASE/integration.js" clean overlay "$TX/mapper-journal.json"
+    node -e 'var fs=require("fs"),f=process.argv[1],s=fs.readFileSync(f,"utf8");fs.writeFileSync(f,s.replace(/^var exitTarget = .*$/m,"var exitTarget = false;"));' "$APP/Config.js"
+    launch org.rawin.launcher
 fi
 if [ -f "$TX/result.json" ]; then cat "$TX/result.json"; else echo '{"restoreSkipped":false}'; fi
 rm -rf "$TX"

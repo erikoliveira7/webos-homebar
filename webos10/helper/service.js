@@ -17,7 +17,7 @@ const { AfterExit, cardOf } = require('./after-exit');
 const { Preloader, panelRunning, foregroundSafe } = require('./preload');
 const setup = require('./setup');
 const ModeControl = require('./mode');
-const modeControl = new ModeControl(fs);
+const modeControl = new ModeControl(fs, execFile, () => preloader.pause(0));
 let restarting = false, updateBusy = false;
 function installingUpdate() {
   try { return fs.readFileSync('/tmp/rawin-launcher-update/state', 'utf8').trim() === 'running'; } catch (e) { return false; }
@@ -175,9 +175,25 @@ const server = http.createServer(async (req, res) => {
       // LG also closes our overlay; the watchdog preloads it again afterward.
       return send(res, 200, await luna('luna://com.webos.applicationManager/closeAllApps', {}));
     }
-    if (url.pathname === '/launch-status') {
-      if (req.method !== 'GET') return send(res, 405, { ok: false, error: 'method' });
-      return send(res, 200, modeControl.status());
+    if (url.pathname === '/mode') {
+      if (req.method === 'GET') return send(res, 200, modeControl.status());
+      if (req.method !== 'POST') return send(res, 405, { ok: false, error: 'method' });
+      if (!/^application\/json(?:\s*;|$)/i.test(String((req.headers || {})['content-type'] || '')))
+        return send(res, 415, { ok: false, error: 'launch_confirm' });
+      let body;
+      try { body = JSON.parse(await readBody(req)); } catch (e) {}
+      if (restarting || updateBusy || installingUpdate()) return send(res, 409, { ok: false, error: 'busy' });
+      // Finish the response before the shell stops the QML host. The mode
+      // journal survives both that host and a helper/system restart.
+      if (!body || typeof body.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(body.fingerprint))
+        return send(res, 409, { ok: false, error: 'launch_confirm' });
+      let replied = false;
+      const result = modeControl.start(body && body.mode, () => {
+        preloader.pause(150000);
+        send(res, 200, { ok: true, pending: true }); replied = true;
+      }, body.fingerprint);
+      if (!replied) send(res, result.ok ? 200 : 409, result);
+      return;
     }
     if (url.pathname === '/restart' && req.method === 'POST') {
       if (modeControl.isBusy() || restarting || updateBusy || installingUpdate()) return send(res, 409, { ok: false, error: 'busy' });
